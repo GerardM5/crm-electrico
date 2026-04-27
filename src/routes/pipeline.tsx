@@ -20,7 +20,7 @@ export function PipelineRoute() {
     <div>
       <PageHeader title="Pipeline Kanban" description="Arrastra oportunidades entre fases o usa los botones de fase en cada tarjeta." action={<DealFormDialog />} />
       <DndContext onDragEnd={onDragEnd}>
-        <div className="grid gap-4 overflow-x-auto pb-2 xl:grid-cols-4 2xl:grid-cols-8">
+        <div className="grid min-w-0 grid-cols-1 gap-4 pb-2 md:grid-cols-2 xl:flex xl:items-start xl:overflow-x-auto xl:pb-4">
           {pipelineStages.map((stage) => {
             const stageDeals = deals.filter((deal) => deal.stage_id === stage.id)
             return (
@@ -67,7 +67,12 @@ export function PipelineRoute() {
 function PipelineColumn({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id })
   return (
-    <Card ref={setNodeRef} className={`min-h-80 min-w-72 p-3 ${isOver ? 'ring-2 ring-emerald-500' : ''}`}>
+    <Card
+      ref={setNodeRef}
+      className={`min-h-40 min-w-0 p-3 transition-shadow xl:min-h-80 xl:w-80 xl:shrink-0 ${
+        isOver ? 'ring-2 ring-emerald-500' : ''
+      }`}
+    >
       {children}
     </Card>
   )
@@ -85,7 +90,9 @@ function DealCard({ id, children }: { id: string; children: React.ReactNode }) {
       style={style}
       {...listeners}
       {...attributes}
-      className={`touch-none rounded-md border border-slate-200 bg-white p-3 shadow-sm ${isDragging ? 'z-10 opacity-70 ring-2 ring-sky-500' : ''}`}
+      className={`min-w-0 touch-pan-y rounded-md border border-slate-200 bg-white p-3 shadow-sm ${
+        isDragging ? 'z-10 opacity-70 ring-2 ring-sky-500' : ''
+      }`}
     >
       {children}
     </article>
