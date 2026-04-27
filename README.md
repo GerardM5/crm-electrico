@@ -1,73 +1,117 @@
-# React + TypeScript + Vite
+# Energiza CRM MVP
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+SPA demo-ready para empresas electricas, asesorias energeticas e instaladores solares.
 
-Currently, two official plugins are available:
+Flujo MVP:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+`Lead -> Cliente -> Perfil energetico -> Factura PDF -> Simulacion -> Propuesta -> Pipeline -> Contrato/Instalacion -> Tarea -> Dashboard`
 
-## React Compiler
+## Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19 + TypeScript
+- Vite SPA
+- Tailwind CSS + componentes estilo shadcn/Radix
+- React Query
+- React Hook Form + Zod
+- Supabase preparado: PostgreSQL, Auth, RLS, Storage
+- PWA con `vite-plugin-pwa`
 
-## Expanding the ESLint configuration
+## Ejecutar En Local
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+La app arranca en modo demo local si no existen variables de Supabase. Los datos se guardan en `localStorage` para permitir una demo completa sin backend.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Variables Supabase
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Copia `.env.example` a `.env`:
+
+```bash
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
+
+## Comandos
+
+```bash
+npm run dev
+npm run build
+npm run preview
+```
+
+## Demo
+
+Usuarios demo disponibles desde `/login`:
+
+- Laura Martinez · owner
+- Carlos Rivas · admin
+- Marta Soler · sales
+- Javier Nunez · technician
+- Ana Beltran · viewer
+
+Datos demo incluidos:
+
+- 1 organizacion
+- 5 usuarios
+- 15 leads
+- 10 clientes
+- 8 oportunidades
+- 6 facturas
+- 5 simulaciones
+- 4 propuestas
+- 3 contratos
+- 5 instalaciones
+- 10 tareas
+- actividad reciente
+
+## Supabase
+
+Migraciones:
+
+```bash
+supabase db push
+```
+
+Archivos:
+
+- `supabase/migrations/0001_initial_schema.sql`: enums, tablas, relaciones, indices y triggers.
+- `supabase/migrations/0002_rls_storage.sql`: helpers RLS, politicas por rol y buckets Storage privados.
+
+Buckets privados:
+
+- `invoices`
+- `proposals`
+- `contracts`
+- `customer-documents`
+- `installation-photos`
+
+Estructura de path:
+
+```txt
+{organization_id}/{customer_id}/{entity_id}/{filename}
+```
+
+## Flujo De Validacion Demo
+
+1. Entrar como Laura Martinez.
+2. Crear lead en `/leads`.
+3. Convertir lead en cliente.
+4. Abrir ficha del cliente y guardar perfil energetico.
+5. Registrar factura en `/invoices`.
+6. Crear simulacion en `/simulations`.
+7. Crear propuesta en `/proposals` e imprimir la vista.
+8. Crear oportunidad en `/deals`.
+9. Mover oportunidad en `/pipeline`.
+10. Crear contrato en `/contracts`.
+11. Crear instalacion en `/installations`.
+12. Guardar ubicacion puntual desde el navegador.
+13. Registrar foto tecnica mockeada.
+14. Crear tarea de seguimiento en `/tasks`.
+15. Ver KPIs y actividad en `/dashboard`.
+
+## Estado Actual
+
+El MVP funciona en modo demo local y compila para produccion. La integracion Supabase real esta preparada a nivel de cliente, migraciones, RLS y Storage; el siguiente paso natural es cambiar los services demo por queries/mutations reales contra Supabase.
