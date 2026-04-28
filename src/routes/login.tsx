@@ -25,7 +25,7 @@ export function LoginRoute() {
           </div>
           <div className="grid gap-3">
             {profiles.map((profile) => (
-              <Button key={profile.id} variant={profile.role === 'admin' ? 'primary' : 'secondary'} onClick={() => loginDemo(profile.id)}>
+              <Button key={profile.id} variant={profile.role === 'admin' ? 'default' : 'secondary'} onClick={() => loginDemo(profile.id)}>
                 Entrar como {profile.full_name} · {profile.role}
               </Button>
             ))}

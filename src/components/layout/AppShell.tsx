@@ -1,11 +1,14 @@
 import { LogOut, Menu, Search, User } from 'lucide-react'
 import { DropdownMenu } from 'radix-ui'
-import { useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { appBrand, navItems } from '../../config/nav'
 import { initials } from '../../lib/utils'
 import { useDemoStore } from '../../store/demo-store'
+import { ErrorBoundary } from '../feedback/ErrorBoundary'
+import { PageSkeleton } from '../feedback/Skeleton'
 import { Button } from '../ui/button'
+import { CommandPalette } from './CommandPalette'
 
 type NavBadges = Record<string, number>
 
@@ -142,7 +145,11 @@ export function AppShell() {
           </DropdownMenu.Root>
         </header>
         <main className="mx-auto w-full max-w-[1600px] p-4 md:p-6">
-          <Outlet />
+          <ErrorBoundary level="page">
+            <Suspense fallback={<PageSkeleton />}>
+              <Outlet />
+            </Suspense>
+          </ErrorBoundary>
         </main>
       </div>
     </div>

@@ -1,30 +1,43 @@
 import { Slot } from 'radix-ui'
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { type ButtonHTMLAttributes, forwardRef } from 'react'
 import { cn } from '../../lib/utils'
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
-  size?: 'sm' | 'md' | 'icon'
+export type ButtonVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
+export type ButtonSize = 'default' | 'sm' | 'lg' | 'icon'
+
+export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: ButtonVariant
+  size?: ButtonSize
   asChild?: boolean
-  children: ReactNode
 }
 
-export function Button({ className, variant = 'primary', size = 'md', asChild, ...props }: ButtonProps) {
-  const Comp = asChild ? Slot.Root : 'button'
-  return (
-    <Comp
-      className={cn(
-        'focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-md border font-medium transition-colors disabled:opacity-50',
-        variant === 'primary' && 'border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700',
-        variant === 'secondary' && 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50',
-        variant === 'ghost' && 'border-transparent bg-transparent text-slate-700 hover:bg-slate-100',
-        variant === 'danger' && 'border-red-600 bg-red-600 text-white hover:bg-red-700',
-        size === 'sm' && 'min-h-9 px-3 text-sm',
-        size === 'md' && 'px-4 py-2 text-sm',
-        size === 'icon' && 'h-11 w-11 p-0',
-        className,
-      )}
-      {...props}
-    />
-  )
-}
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant = 'default', size = 'default', asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot.Root : 'button'
+    return (
+      <Comp
+        ref={ref}
+        className={cn(
+          'focus-ring inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+          variant === 'default' &&
+          'bg-primary text-primary-foreground shadow hover:bg-primary/90',
+          variant === 'destructive' &&
+          'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90',
+          variant === 'outline' &&
+          'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground',
+          variant === 'secondary' &&
+          'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80',
+          variant === 'ghost' && 'hover:bg-accent hover:text-accent-foreground',
+          variant === 'link' && 'text-primary underline-offset-4 hover:underline',
+          size === 'default' && 'h-9 px-4 py-2',
+          size === 'sm' && 'h-8 rounded-md px-3 text-xs',
+          size === 'lg' && 'h-10 rounded-md px-8',
+          size === 'icon' && 'h-9 w-9',
+          className,
+        )}
+        {...props}
+      />
+    )
+  },
+)
+Button.displayName = 'Button'
