@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { addMonths } from 'date-fns'
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react'
+import { type ReactNode, createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { initialDemoState } from '../data/demo-data'
 import { getRenewalAlertDate } from '../lib/customer-workflow'
@@ -45,6 +45,8 @@ type DemoStore = DemoState & {
   convertLead: (id: string) => Customer
   createCustomer: (input: CreateInput<Customer>) => Customer
   updateCustomer: (id: string, patch: Partial<Customer>) => void
+  touchCustomer: (id: string) => void
+  renewCustomer: (id: string) => void
   upsertEnergyProfile: (input: Omit<CreateInput<CustomerEnergyProfile>, 'has_solar'> & { has_solar?: boolean }) => CustomerEnergyProfile
   createInvoice: (input: CreateInput<Invoice>) => Invoice
   createSimulation: (
@@ -283,6 +285,33 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
             activityLogs: [activity(draft, 'customer_updated', 'customer', id, 'Ficha de cliente actualizada'), ...draft.activityLogs],
           }),
           'Cliente actualizado',
+        )
+      },
+      touchCustomer: (id) => {
+        mutate(
+          (draft) => ({
+            ...draft,
+            customers: draft.customers.map((customer) =>
+              customer.id === id ? { ...customer, last_contact_at: new Date().toISOString(), updated_at: new Date().toISOString() } : customer,
+            ),
+            activityLogs: [activity(draft, 'customer_contacted', 'customer', id, 'Contacto registrado'), ...draft.activityLogs],
+          }),
+          'Contacto registrado',
+        )
+      },
+      renewCustomer: (id) => {
+        mutate(
+          (draft) => ({
+            ...draft,
+            customers: draft.customers.map((customer) => {
+              if (customer.id !== id) return customer
+              const newSigned = new Date().toISOString().slice(0, 10)
+              const newRenewal = addMonths(new Date(), 12).toISOString().slice(0, 10)
+              return { ...customer, status: 'renewed', contract_signed_at: newSigned, renewal_date: newRenewal, updated_at: new Date().toISOString() }
+            }),
+            activityLogs: [activity(draft, 'customer_renewed', 'customer', id, 'Contrato renovado'), ...draft.activityLogs],
+          }),
+          'Contrato renovado',
         )
       },
       upsertEnergyProfile: (input) => {

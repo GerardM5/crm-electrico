@@ -1,5 +1,6 @@
 import { AlertTriangle, RefreshCw, RotateCcw } from 'lucide-react'
 import { Component, type ReactNode } from 'react'
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { Button } from '../ui/button'
 
 type Level = 'root' | 'page' | 'section'
@@ -97,17 +98,17 @@ function PageError({ error, onReset }: { error: Error; onReset: () => void }) {
 /* ── Section: inline, para secciones dentro de una pagina ── */
 function SectionError({ error, onReset }: { error: Error; onReset: () => void }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-lg border border-red-200 bg-red-50 p-4">
-      <div className="flex items-center gap-3">
-        <AlertTriangle className="h-4 w-4 shrink-0 text-red-500" />
-        <div>
-          <p className="text-sm font-medium text-slate-900">Error en este componente</p>
-          {import.meta.env.DEV && <p className="text-xs text-red-600">{error.message}</p>}
-        </div>
+    <Alert variant="destructive" className="flex items-center justify-between">
+      <AlertTriangle className="h-4 w-4" />
+      <div className="flex-1">
+        <AlertTitle>Error en este componente</AlertTitle>
+        {import.meta.env.DEV && (
+          <AlertDescription>{error.message}</AlertDescription>
+        )}
       </div>
       <Button variant="secondary" size="sm" onClick={onReset}>
         <RotateCcw className="h-3.5 w-3.5" />
       </Button>
-    </div>
+    </Alert>
   )
 }

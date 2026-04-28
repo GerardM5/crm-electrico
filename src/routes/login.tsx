@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
+import { appBrand } from '../config/nav'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { useDemoStore } from '../store/demo-store'
 
@@ -17,11 +18,11 @@ export function LoginRoute() {
       <Card className="w-full max-w-lg">
         <CardContent className="p-8">
           <div className="mb-8">
-            <div className="mb-4 grid h-12 w-12 place-items-center rounded-lg bg-primary text-xl font-bold text-primary-foreground">E</div>
-            <h1 className="text-2xl font-semibold text-foreground">Renovaciones CRM</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Demo centrada en cartera de clientes, contratos y avisos de renovacion.
-            </p>
+            <div className="mb-4 grid h-12 w-12 place-items-center rounded-lg bg-primary text-primary-foreground">
+              <appBrand.icon className="h-6 w-6" />
+            </div>
+            <h1 className="text-2xl font-semibold text-foreground">{appBrand.name}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">{appBrand.description}</p>
           </div>
           <div className="grid gap-3">
             {profiles.map((profile) => (

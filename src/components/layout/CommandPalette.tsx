@@ -9,11 +9,11 @@ import {
   SquareCheck,
   Zap,
 } from 'lucide-react'
-import { Dialog as DialogPrimitive } from 'radix-ui'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { navItems } from '../../config/nav'
 import { useDemoStore } from '../../store/demo-store'
+import { DialogClose, DialogContent, DialogOverlay, DialogPortal, DialogRoot } from '../ui/dialog'
 
 type ResultItem = {
   id: string
@@ -136,10 +136,10 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
   }
 
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
-      <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="animate-fade-in fixed inset-0 z-40 bg-foreground/50 backdrop-blur-sm" />
-        <DialogPrimitive.Content
+    <DialogRoot open={open} onOpenChange={onOpenChange}>
+      <DialogPortal>
+        <DialogOverlay className="animate-fade-in fixed inset-0 z-40 bg-foreground/50 backdrop-blur-sm" />
+        <DialogContent
           aria-label="Búsqueda global"
           onKeyDown={onKeyDown}
           className="animate-fade-in fixed left-1/2 top-[12vh] z-50 w-[calc(100vw-24px)] max-w-xl -translate-x-1/2 rounded-xl border border-border bg-popover shadow-2xl overflow-hidden"
@@ -217,8 +217,8 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
               <span>Renovaciones CRM</span>
             </div>
           </div>
-        </DialogPrimitive.Content>
-      </DialogPrimitive.Portal>
-    </DialogPrimitive.Root>
+        </DialogContent>
+      </DialogPortal>
+    </DialogRoot>
   )
 }

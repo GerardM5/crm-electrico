@@ -1,5 +1,4 @@
 import { Menu, Search, Settings } from 'lucide-react'
-import { Dialog as DialogPrimitive } from 'radix-ui'
 import { Suspense, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { appBrand, navItems } from '../../config/nav'
@@ -8,6 +7,8 @@ import { useDemoStore } from '../../store/demo-store'
 import { ErrorBoundary } from '../feedback/ErrorBoundary'
 import { PageSkeleton } from '../feedback/Skeleton'
 import { Button } from '../ui/button'
+import { DialogOverlay, DialogPortal, DialogRoot } from '../ui/dialog'
+import { Separator } from '../ui/separator'
 import { CommandPalette } from './CommandPalette'
 import { ThemeToggleButton } from './ThemeToggleButton'
 import { UserMenu } from './UserMenu'
@@ -32,8 +33,7 @@ function SidebarContent({ onNavigate, badges }: { onNavigate?: () => void; badge
         </div>
       </div>
 
-      {/* Divider */}
-      <div className="mx-4 h-px bg-sidebar-border/50" />
+      <Separator className="mx-4 w-auto bg-sidebar-border/50" />
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-4">
@@ -86,7 +86,7 @@ function SidebarContent({ onNavigate, badges }: { onNavigate?: () => void; badge
       </nav>
 
       {/* Footer — user menu */}
-      <div className="mx-4 h-px bg-sidebar-border/50" />
+      <Separator className="mx-4 w-auto bg-sidebar-border/50" />
       <div className="m-3 flex items-center gap-2">
         <UserMenu
           fullName={currentUser.full_name}
@@ -131,17 +131,17 @@ export function AppShell() {
       </aside>
 
       {/* Mobile drawer via Radix Dialog */}
-      <DialogPrimitive.Root open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <DialogPrimitive.Portal>
-          <DialogPrimitive.Overlay className="animate-fade-in fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden" />
-          <DialogPrimitive.Content
+      <DialogRoot open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <DialogPortal>
+          <DialogOverlay className="animate-fade-in fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden" />
+          <div
             aria-label="Menu de navegacion"
             className="animate-slide-in-left fixed inset-y-0 left-0 z-50 w-64 shadow-2xl shadow-black/10 lg:hidden"
           >
             <SidebarContent onNavigate={() => setDrawerOpen(false)} badges={navBadges} />
-          </DialogPrimitive.Content>
-        </DialogPrimitive.Portal>
-      </DialogPrimitive.Root>
+          </div>
+        </DialogPortal>
+      </DialogRoot>
 
       <div className="lg:pl-64">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border/60 bg-background/90 px-4 backdrop-blur-md">

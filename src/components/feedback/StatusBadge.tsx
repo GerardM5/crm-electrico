@@ -1,7 +1,7 @@
 import { Badge } from '../ui/badge'
 
 export function StatusBadge({ value }: { value: string }) {
-  const tone =
+  const variant =
     value.includes('Ganado') ||
       value.includes('Acept') ||
       value.includes('Firm') ||
@@ -16,5 +16,5 @@ export function StatusBadge({ value }: { value: string }) {
             ? 'sky'
             : 'outline'
 
-  return <Badge tone={tone}>{value}</Badge>
+  return <Badge variant={variant}>{value}</Badge>
 }

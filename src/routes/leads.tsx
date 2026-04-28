@@ -5,7 +5,7 @@ import { PageHeader } from '../components/data-table/Toolbar'
 import { StatusBadge } from '../components/feedback/StatusBadge'
 import { Button } from '../components/ui/button'
 import { Dialog } from '../components/ui/dialog'
-import { Input, Select } from '../components/ui/input'
+import { Field, Input, Select } from '../components/ui/input'
 import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
 import { leadStatusLabels } from '../config/constants'
 import { LeadFormDialog } from '../features/leads/LeadFormDialog'
@@ -35,25 +35,29 @@ export function LeadsRoute() {
         description="Captacion comercial con conversion directa a cliente y actividad trazada."
         action={<LeadFormDialog />}
       />
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <Input
-            placeholder="Buscar por nombre..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option value="all">Todos los estados</option>
-          {Object.entries(leadStatusLabels).map(([key, label]) => (
-            <option key={key} value={key}>{label}</option>
-          ))}
-        </Select>
+      <div className="mb-6 flex flex-wrap items-end gap-3">
+        <Field label="Buscar" className="flex-1 min-w-48">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nombre..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+        </Field>
+        <Field label="Estado" className="w-52">
+          <Select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="all">Todos los estados</option>
+            {Object.entries(leadStatusLabels).map(([key, label]) => (
+              <option key={key} value={key}>{label}</option>
+            ))}
+          </Select>
+        </Field>
       </div>
       {visibleLeads.length === 0 ? (
         <EmptyState

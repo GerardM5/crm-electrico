@@ -4,6 +4,15 @@ import type { ReactNode } from 'react'
 import { cn } from '../../lib/utils'
 import { Button } from './button'
 
+// Re-export primitives so consumers don't need to import radix directly
+export const DialogRoot = DialogPrimitive.Root
+export const DialogPortal = DialogPrimitive.Portal
+export const DialogOverlay = DialogPrimitive.Overlay
+export const DialogContent = DialogPrimitive.Content
+export const DialogClose = DialogPrimitive.Close
+export const DialogTitle = DialogPrimitive.Title
+export const DialogDescription = DialogPrimitive.Description
+
 const sizeClasses: Record<DialogSize, string> = {
   sm: 'max-w-sm',
   md: 'max-w-lg',

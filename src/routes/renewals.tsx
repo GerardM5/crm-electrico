@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { StatusBadge } from '../components/feedback/StatusBadge'
 import { Button } from '../components/ui/button'
@@ -14,6 +14,7 @@ type StageFilter = 'all' | 'due' | 'urgent' | 'overdue' | 'scheduled'
 
 export function RenewalsRoute() {
   const store = useDemoStore()
+  const navigate = useNavigate()
   const [stage, setStage] = useState<StageFilter>('all')
   const customers = getVisibleCustomers(store.customers, store.currentUser.id, store.currentUser.role)
 
@@ -38,8 +39,8 @@ export function RenewalsRoute() {
         }
       />
 
-      <div className="mb-5 grid gap-4 rounded-lg border border-border bg-card p-4 md:grid-cols-3">
-        <Field label="Estado de aviso">
+      <div className="mb-6 flex flex-wrap items-end gap-3">
+        <Field label="Estado de aviso" className="w-52">
           <Select value={stage} onChange={(event) => setStage(event.target.value as StageFilter)}>
             <option value="all">Todos</option>
             <option value="scheduled">Programados</option>
@@ -56,12 +57,17 @@ export function RenewalsRoute() {
           description="No hay clientes en periodo de renovacion (10-12 meses desde firma)."
         />
       ) : (
-        <DataTable headers={['Cliente', 'Estado', 'Avisar desde', 'Renovacion', 'Dias', 'Comercial', 'Acciones']}>
+        <DataTable headers={['Cliente', 'Estado', 'Avisar desde', 'Renovacion', 'Dias', 'Comercial']}>
           {renewalQueue.map((customer) => {
             const alertDate = getRenewalAlertDate(customer)
             const days = getDaysToRenewal(customer)
             return (
-              <Tr key={customer.id} hover>
+              <Tr
+                key={customer.id}
+                hover
+                className="cursor-pointer"
+                onClick={() => navigate(`/customers/${customer.id}`)}
+              >
                 <Td>
                   <p className="font-medium text-foreground">{customer.name}</p>
                   <p className="text-xs text-muted-foreground">{customer.products_services.join(', ') || 'Sin servicios'}</p>
@@ -71,11 +77,6 @@ export function RenewalsRoute() {
                 <Td variant="muted">{formatDate(customer.renewal_date)}</Td>
                 <Td variant="muted">{typeof days === 'number' ? days : '-'}</Td>
                 <Td variant="muted">{store.profiles.find((profile) => profile.id === customer.assigned_to)?.full_name ?? '-'}</Td>
-                <Td>
-                  <Button asChild size="sm" variant="secondary">
-                    <Link to={`/customers/${customer.id}`}>Abrir ficha</Link>
-                  </Button>
-                </Td>
               </Tr>
             )
           })}

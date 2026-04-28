@@ -62,7 +62,7 @@ export function DashboardRoute() {
       />
 
       {/* KPIs */}
-      <section className="grid grid-cols-2 gap-px bg-border xl:grid-cols-4">
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border xl:grid-cols-4">
         <Kpi title="Leads activos" value={store.leads.filter((l) => l.status !== 'lost').length} icon={<Users />} trend={+12} />
         <Kpi title="Clientes activos" value={store.customers.length} icon={<Activity />} trend={+5} />
         <Kpi title="Renovaciones urgentes" value={dueCount} icon={<CalendarClock />} />
@@ -73,36 +73,38 @@ export function DashboardRoute() {
       <section className="grid gap-8 xl:grid-cols-[1.2fr_1fr]">
         {/* Left column: pipeline + renewals */}
         <div className="space-y-8">
-          <div>
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Pipeline comercial</h2>
-            <div className="space-y-4">
-              {stagesWithTotals.map(({ stage, deals, total }) => (
-                <div key={stage.id} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-foreground">{stage.name}</span>
-                    <span className="tabular-nums text-muted-foreground">{deals.length} · {money.format(total)}</span>
+          {pipelineValue > 0 && (
+            <div>
+              <h2 className="mb-3 text-sm font-semibold text-foreground">Pipeline comercial</h2>
+              <div className="overflow-hidden rounded-lg border border-border bg-card p-4 space-y-4">
+                {stagesWithTotals.filter(({ deals }) => deals.length > 0).map(({ stage, deals, total }) => (
+                  <div key={stage.id} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium text-foreground">{stage.name}</span>
+                      <span className="tabular-nums text-muted-foreground">{deals.length} · {money.format(total)}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-muted">
+                      <div className="h-1.5 rounded-full bg-primary transition-all duration-500" style={{ width: `${Math.round((total / maxTotal) * 100)}%` }} />
+                    </div>
                   </div>
-                  <div className="h-1.5 rounded-full bg-muted">
-                    <div className="h-1.5 rounded-full bg-primary transition-all duration-500" style={{ width: `${Math.round((total / maxTotal) * 100)}%` }} />
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {urgentRenewals.length > 0 && (
             <div>
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Renovaciones urgentes</h2>
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-foreground">Renovaciones urgentes</h2>
                 <Button asChild size="sm" variant="ghost">
                   <Link to="/renewals">Ver todas</Link>
                 </Button>
               </div>
-              <div className="divide-y divide-border">
+              <div className="overflow-hidden rounded-lg border border-border bg-card divide-y divide-border">
                 {urgentRenewals.map(({ customer, stage, days }) => {
                   const style = renewalStageStyle[stage] ?? renewalStageStyle.due
                   return (
-                    <div key={customer.id} className="flex items-center gap-3 py-3 first:pt-0">
+                    <Link key={customer.id} to={`/customers/${customer.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-foreground">{customer.name}</p>
                         <p className="text-xs text-muted-foreground">{customer.products_services.join(', ') || 'Sin servicios'}</p>
@@ -111,7 +113,7 @@ export function DashboardRoute() {
                         <p className={`text-xs font-semibold ${style.className}`}>{style.label}</p>
                         <p className="text-xs text-muted-foreground">{typeof days === 'number' ? (days < 0 ? `${Math.abs(days)}d vencido` : `${days}d`) : '-'}</p>
                       </div>
-                    </div>
+                    </Link>
                   )
                 })}
               </div>
@@ -123,15 +125,15 @@ export function DashboardRoute() {
         <div className="space-y-8">
           {topTasks.length > 0 && (
             <div>
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Tareas abiertas</h2>
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-foreground">Tareas abiertas</h2>
                 <Button asChild size="sm" variant="ghost">
                   <Link to="/tasks">Ver todas</Link>
                 </Button>
               </div>
-              <div className="divide-y divide-border">
+              <div className="overflow-hidden rounded-lg border border-border bg-card divide-y divide-border">
                 {topTasks.map((task) => (
-                  <div key={task.id} className="flex items-center gap-3 py-3 first:pt-0">
+                  <Link key={task.id} to="/tasks" className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
                     <CheckCircle2 className="h-4 w-4 shrink-0 text-muted-foreground/50" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
@@ -140,17 +142,17 @@ export function DashboardRoute() {
                       </p>
                     </div>
                     <StatusBadge value={task.priority === 'urgent' ? 'Urgente' : task.priority === 'high' ? 'Alta' : task.priority === 'medium' ? 'Media' : 'Baja'} />
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
           )}
 
           <div>
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Actividad reciente</h2>
-            <div className="divide-y divide-border">
+            <h2 className="mb-3 text-sm font-semibold text-foreground">Actividad reciente</h2>
+            <div className="overflow-hidden rounded-lg border border-border bg-card divide-y divide-border">
               {store.activityLogs.slice(0, 8).map((log) => (
-                <div key={log.id} className="flex items-start gap-3 py-3 first:pt-0">
+                <div key={log.id} className="flex items-start gap-3 px-4 py-3">
                   <div className="mt-0.5 shrink-0 text-muted-foreground">
                     {entityIcons[log.entity_type] ?? <Clock className="h-3.5 w-3.5" />}
                   </div>

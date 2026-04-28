@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { StatusBadge } from '../components/feedback/StatusBadge'
 import { Button } from '../components/ui/button'
-import { Input, Select } from '../components/ui/input'
+import { Field, Input, Select } from '../components/ui/input'
 import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
 import { customerStatusLabels } from '../config/constants'
 import { CustomerFormDialog } from '../features/customers/CustomerFormDialog'
@@ -42,28 +42,34 @@ export function CustomersRoute() {
       />
 
       <div className="mb-6 flex flex-wrap items-end gap-3">
-        <div className="relative min-w-52 flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input className="pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nombre, DNI, empresa..." />
-        </div>
-        <Select className="w-44" value={status} onChange={(event) => setStatus(event.target.value as 'all' | Customer['status'])}>
-          <option value="all">Todos los estados</option>
-          <option value="active">Activos</option>
-          <option value="renewal_due">Renovacion pendiente</option>
-          <option value="renewed">Renovados</option>
-          <option value="inactive">Baja</option>
-          <option value="lost">Perdidos</option>
-        </Select>
-        <Select className="w-44" value={owner} onChange={(event) => setOwner(event.target.value)}>
-          <option value="all">Todos los comerciales</option>
-          {store.profiles
-            .filter((profile) => profile.role === 'owner' || profile.role === 'admin' || profile.role === 'sales')
-            .map((profile) => (
-              <option key={profile.id} value={profile.id}>
-                {profile.full_name}
-              </option>
-            ))}
-        </Select>
+        <Field label="Buscar" className="min-w-52 flex-1">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input className="pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nombre, DNI, empresa..." />
+          </div>
+        </Field>
+        <Field label="Estado" className="w-44">
+          <Select value={status} onChange={(event) => setStatus(event.target.value as 'all' | Customer['status'])}>
+            <option value="all">Todos</option>
+            <option value="active">Activos</option>
+            <option value="renewal_due">Renovacion pendiente</option>
+            <option value="renewed">Renovados</option>
+            <option value="inactive">Baja</option>
+            <option value="lost">Perdidos</option>
+          </Select>
+        </Field>
+        <Field label="Comercial" className="w-44">
+          <Select value={owner} onChange={(event) => setOwner(event.target.value)}>
+            <option value="all">Todos</option>
+            {store.profiles
+              .filter((profile) => profile.role === 'owner' || profile.role === 'admin' || profile.role === 'sales')
+              .map((profile) => (
+                <option key={profile.id} value={profile.id}>
+                  {profile.full_name}
+                </option>
+              ))}
+          </Select>
+        </Field>
       </div>
 
       {filteredCustomers.length === 0 ? (

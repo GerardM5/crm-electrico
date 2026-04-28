@@ -59,7 +59,7 @@ export function PdfViewerDialog({
               <p className="truncate text-xs text-muted-foreground">{source.file_path}</p>
             </div>
           </div>
-          <Badge tone={canPreview ? 'emerald' : 'amber'}>{canPreview ? 'Vista PDF lista' : 'Sin vista previa'}</Badge>
+          <Badge variant={canPreview ? 'emerald' : 'amber'}>{canPreview ? 'Vista PDF lista' : 'Sin vista previa'}</Badge>
         </div>
 
         {canPreview && url ? (

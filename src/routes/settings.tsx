@@ -2,6 +2,7 @@ import { Building2, Download, Monitor, Moon, RotateCcw, Sun, Users } from 'lucid
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../components/data-table/Toolbar'
+import { Avatar, AvatarFallback } from '../components/ui/avatar'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Field, Input, Select } from '../components/ui/input'
@@ -171,9 +172,9 @@ function TeamTab() {
               <Tr key={profile.id} hover>
                 <Td>
                   <div className="flex items-center gap-2.5">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
-                      {profile.full_name.slice(0, 2).toUpperCase()}
-                    </span>
+                    <Avatar size="sm">
+                      <AvatarFallback>{profile.full_name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                    </Avatar>
                     <div>
                       <span className="font-medium text-foreground">{profile.full_name}</span>
                       {isMe && (

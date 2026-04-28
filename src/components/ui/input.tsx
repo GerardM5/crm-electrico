@@ -10,16 +10,18 @@ export function Field({
   error,
   hint,
   required,
+  className,
   children,
 }: {
   label: string
   error?: string
   hint?: string
   required?: boolean
+  className?: string
   children: ReactNode
 }) {
   return (
-    <label className="grid gap-1.5 text-sm font-medium text-foreground">
+    <label className={cn('grid gap-1.5 text-sm font-medium text-foreground', className)}>
       <span className="flex items-center gap-1">
         {label}
         {required && <span className="text-destructive" aria-hidden>*</span>}
