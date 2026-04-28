@@ -1,21 +1,17 @@
-import type { ReactNode } from 'react'
+import { Activity, AlertTriangle, CalendarClock, Euro, TrendingDown, TrendingUp, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, Archive, CalendarClock, ShieldCheck, Users } from 'lucide-react'
 import { PageHeader } from '../components/data-table/Toolbar'
-import { StatusBadge } from '../components/feedback/StatusBadge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
-import { customerStatusLabels } from '../config/constants'
-import { getDaysToRenewal, getRenewalStage, getVisibleCustomers } from '../lib/customer-workflow'
-import { formatDate } from '../lib/formatters'
+import { getRenewalStage, getVisibleCustomers } from '../lib/customer-workflow'
+import { formatDate, money } from '../lib/formatters'
 import { useDemoStore } from '../store/demo-store'
 
 export function DashboardRoute() {
   const store = useDemoStore()
   const visibleCustomers = getVisibleCustomers(store.customers, store.currentUser.id, store.currentUser.role)
-  const dueCustomers = visibleCustomers.filter((customer) => ['due', 'urgent', 'overdue'].includes(getRenewalStage(customer)))
-  const activeCustomers = visibleCustomers.filter((customer) => customer.status === 'active' || customer.status === 'renewed')
-  const lostCustomers = visibleCustomers.filter((customer) => customer.status === 'lost' || customer.status === 'inactive')
+  const dueCount = visibleCustomers.filter((customer) => ['due', 'urgent', 'overdue'].includes(getRenewalStage(customer))).length
+  const pipelineValue = store.deals.filter((deal) => deal.status === 'open').reduce((sum, deal) => sum + deal.value_eur, 0)
 
   return (
     <div>
@@ -30,10 +26,11 @@ export function DashboardRoute() {
       />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Kpi title="Clientes visibles" value={visibleCustomers.length} icon={<Users />} />
-        <Kpi title="Activos" value={activeCustomers.length} icon={<ShieldCheck />} />
-        <Kpi title="Pendientes de renovacion" value={dueCustomers.length} icon={<CalendarClock />} />
-        <Kpi title="Bajas y perdidos" value={lostCustomers.length} icon={<Archive />} />
+        <Kpi title="Leads activos" value={store.leads.filter((lead) => lead.status !== 'lost').length} icon={<Users />} trend={+12} />
+        <Kpi title="Clientes activos" value={store.customers.length} icon={<Activity />} trend={+5} />
+        <Kpi title="Renovaciones urgentes" value={dueCount} icon={<CalendarClock />} />
+        <Kpi title="Pipeline abierto" value={money.format(pipelineValue)} icon={<Euro />} trend={+8} />
+
       </section>
 
       <section className="mt-6 grid gap-4 xl:grid-cols-[1.2fr_1fr]">
@@ -42,28 +39,30 @@ export function DashboardRoute() {
             <CardTitle>Clientes a contactar</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3">
-            {dueCustomers.slice(0, 6).map((customer) => {
-              const days = getDaysToRenewal(customer)
-              return (
-                <div key={customer.id} className="rounded-md border border-slate-100 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-medium text-slate-950">{customer.name}</p>
-                      <p className="mt-1 text-sm text-slate-500">
-                        {customer.company ?? 'Particular'} · {customer.products_services.join(', ') || 'Sin servicios definidos'}
-                      </p>
-                    </div>
-                    <StatusBadge value={customerStatusLabels[customer.status]} />
+            {(() => {
+              const stagesWithTotals = store.pipelineStages.map((stage) => {
+                const deals = store.deals.filter((deal) => deal.stage_id === stage.id)
+                const total = deals.reduce((sum, deal) => sum + deal.value_eur, 0)
+                return { stage, deals, total }
+              })
+              const maxTotal = Math.max(...stagesWithTotals.map((s) => s.total), 1)
+              return stagesWithTotals.map(({ stage, deals, total }) => (
+                <div key={stage.id} className="grid gap-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-slate-700">{stage.name}</span>
+                    <span className="text-slate-500">
+                      {deals.length} · {money.format(total)}
+                    </span>
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                    <span>Renueva: {formatDate(customer.renewal_date)}</span>
-                    <span>{typeof days === 'number' ? `${days} dias` : 'Sin fecha'}</span>
-                    <span>{store.profiles.find((profile) => profile.id === customer.assigned_to)?.full_name}</span>
+                  <div className="h-2 rounded-full bg-slate-100">
+                    <div
+                      className="h-2 rounded-full bg-emerald-600 transition-all duration-500"
+                      style={{ width: `${Math.round((total / maxTotal) * 100)}%` }}
+                    />
                   </div>
                 </div>
-              )
-            })}
-            {!dueCustomers.length ? <p className="text-sm text-slate-500">No hay avisos pendientes en esta cartera.</p> : null}
+              ))
+            })()}
           </CardContent>
         </Card>
 
@@ -90,13 +89,20 @@ export function DashboardRoute() {
   )
 }
 
-function Kpi({ title, value, icon }: { title: string; value: string | number; icon: ReactNode }) {
+function Kpi({ title, value, icon, trend }: { title: string; value: string | number; icon: React.ReactNode; trend?: number }) {
+  const isPositive = (trend ?? 0) >= 0
   return (
     <Card>
       <CardContent className="flex items-center justify-between p-5">
         <div>
           <p className="text-sm font-medium text-slate-500">{title}</p>
           <p className="mt-2 text-2xl font-semibold text-slate-950">{value}</p>
+          {trend !== undefined && (
+            <p className={`mt-1 flex items-center gap-1 text-xs font-medium ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
+              {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+              {isPositive ? '+' : ''}{trend}% vs mes anterior
+            </p>
+          )}
         </div>
         <div className="grid h-11 w-11 place-items-center rounded-md bg-emerald-50 text-emerald-700">
           <span className="[&>svg]:h-5 [&>svg]:w-5">{icon}</span>

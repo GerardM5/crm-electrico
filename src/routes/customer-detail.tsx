@@ -28,7 +28,7 @@ export function CustomerDetailRoute() {
   if (!customer) {
     return (
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-5">
           <p className="text-slate-600">Cliente no encontrado o sin permisos para verlo.</p>
           <Button asChild className="mt-4">
             <Link to="/customers">Volver a clientes</Link>
@@ -120,3 +120,4 @@ function Detail({ label, value }: { label: string; value: string }) {
     </div>
   )
 }
+

@@ -1,16 +1,16 @@
+import { Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search } from 'lucide-react'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { StatusBadge } from '../components/feedback/StatusBadge'
 import { Button } from '../components/ui/button'
 import { Field, Input, Select } from '../components/ui/input'
 import { DataTable } from '../components/ui/table'
 import { customerStatusLabels } from '../config/constants'
+import { CustomerFormDialog } from '../features/customers/CustomerFormDialog'
 import { getVisibleCustomers } from '../lib/customer-workflow'
 import { formatDate } from '../lib/formatters'
 import { useDemoStore } from '../store/demo-store'
-import { CustomerFormDialog } from '../features/customers/CustomerFormDialog'
 import type { Customer } from '../types/domain'
 
 export function CustomersRoute() {

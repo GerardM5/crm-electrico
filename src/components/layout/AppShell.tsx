@@ -1,4 +1,5 @@
-import { Menu, Search } from 'lucide-react'
+import { LogOut, Menu, Search, User } from 'lucide-react'
+import { DropdownMenu } from 'radix-ui'
 import { useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { appBrand, navItems } from '../../config/nav'
@@ -6,7 +7,9 @@ import { initials } from '../../lib/utils'
 import { useDemoStore } from '../../store/demo-store'
 import { Button } from '../ui/button'
 
-function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+type NavBadges = Record<string, number>
+
+function Sidebar({ onNavigate, badges }: { onNavigate?: () => void; badges?: NavBadges }) {
   const BrandIcon = appBrand.icon
   return (
     <aside className="flex h-full w-72 shrink-0 flex-col border-r border-slate-200 bg-white">
@@ -22,6 +25,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       <nav className="grid gap-1 overflow-y-auto p-3">
         {navItems.map((item) => {
           const Icon = item.icon
+          const count = badges?.[item.href] ?? 0
           return (
             <NavLink
               key={item.href}
@@ -34,8 +38,13 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                 ].join(' ')
               }
             >
-              <Icon className="h-4 w-4" />
-              {item.label}
+              <Icon className="h-4 w-4 shrink-0" />
+              <span className="flex-1">{item.label}</span>
+              {count > 0 && (
+                <span className="ml-auto rounded-full bg-emerald-100 px-1.5 py-0.5 text-xs font-semibold text-emerald-700">
+                  {count}
+                </span>
+              )}
             </NavLink>
           )
         })}
@@ -45,26 +54,32 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 export function AppShell() {
-  const { currentUser, organization, logout } = useDemoStore()
+  const { currentUser, organization, logout, leads, tasks } = useDemoStore()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
   const currentNav = navItems.find((item) => location.pathname.startsWith(item.href))
 
+  const navBadges: NavBadges = {
+    '/leads': leads.filter((l) => l.status === 'new').length,
+    '/tasks': tasks.filter((t) => t.status !== 'done' && t.status !== 'cancelled').length,
+  }
+
   return (
     <div className="min-h-dvh bg-slate-50">
       <div className="fixed inset-y-0 left-0 z-30 hidden lg:block">
-        <Sidebar />
+        <Sidebar badges={navBadges} />
       </div>
 
       {sidebarOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
+            type="button"
             className="absolute inset-0 bg-slate-950/40"
             aria-label="Cerrar navegacion"
             onClick={() => setSidebarOpen(false)}
           />
           <div className="relative h-full">
-            <Sidebar onNavigate={() => setSidebarOpen(false)} />
+            <Sidebar onNavigate={() => setSidebarOpen(false)} badges={navBadges} />
           </div>
         </div>
       ) : null}
@@ -84,20 +99,47 @@ export function AppShell() {
             <Search className="h-4 w-4" />
             Buscar clientes, DNI, empresa o renovacion
           </div>
-          <div className="flex items-center gap-3">
-            <div className="hidden text-right sm:block">
-              <p className="text-sm font-medium text-slate-950">{currentUser.full_name}</p>
-              <p className="text-xs text-slate-500">
-                {organization.name} · {currentUser.role}
-              </p>
-            </div>
-            <div className="grid h-10 w-10 place-items-center rounded-full bg-sky-100 text-sm font-semibold text-sky-700">
-              {initials(currentUser.full_name)}
-            </div>
-            <Button variant="secondary" size="sm" onClick={logout}>
-              Salir
-            </Button>
-          </div>
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <button
+                type="button"
+                className="focus-ring flex items-center gap-2 rounded-full outline-none"
+                aria-label="Menu de usuario"
+              >
+                <div className="hidden text-right sm:block">
+                  <p className="text-sm font-medium text-slate-950">{currentUser.full_name}</p>
+                  <p className="text-xs text-slate-500">{organization.name} · {currentUser.role}</p>
+                </div>
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sky-100 text-sm font-semibold text-sky-700">
+                  {initials(currentUser.full_name)}
+                </div>
+              </button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                align="end"
+                sideOffset={8}
+                className="z-50 min-w-48 rounded-lg border border-slate-200 bg-white p-1 shadow-lg"
+              >
+                <div className="border-b border-slate-100 px-3 py-2 mb-1">
+                  <p className="text-sm font-medium text-slate-950">{currentUser.full_name}</p>
+                  <p className="text-xs text-slate-500">{currentUser.role}</p>
+                </div>
+                <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-700 outline-none hover:bg-slate-50 focus:bg-slate-50">
+                  <User className="h-4 w-4 text-slate-400" />
+                  Perfil
+                </DropdownMenu.Item>
+                <DropdownMenu.Separator className="my-1 h-px bg-slate-100" />
+                <DropdownMenu.Item
+                  onSelect={logout}
+                  className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-red-600 outline-none hover:bg-red-50 focus:bg-red-50"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Cerrar sesión
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
         </header>
         <main className="mx-auto w-full max-w-[1600px] p-4 md:p-6">
           <Outlet />
