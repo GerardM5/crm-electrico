@@ -5,7 +5,7 @@ import { PdfViewerDialog } from '../components/documents/PdfViewerDialog'
 import { StatusBadge } from '../components/feedback/StatusBadge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
-import { DataTable, TruncatePath } from '../components/ui/table'
+import { DataTable, Td, Tr, TruncatePath } from '../components/ui/table'
 import { customerStatusLabels } from '../config/constants'
 import { getDaysToRenewal, getRenewalAlertDate, getVisibleCustomers } from '../lib/customer-workflow'
 import { formatDate } from '../lib/formatters'
@@ -89,19 +89,19 @@ export function CustomerDetailRoute() {
         <CardContent>
           <DataTable headers={['Archivo', 'Tipo', 'Fecha', 'Ruta', 'Vista']}>
             {documents.map((document) => (
-              <tr key={document.id}>
-                <td className="px-4 py-3 font-medium text-foreground">{document.file_name}</td>
-                <td className="px-4 py-3 text-muted-foreground">{document.type}</td>
-                <td className="px-4 py-3 text-muted-foreground">{formatDate(document.created_at)}</td>
-                <td className="px-4 py-3 text-muted-foreground max-w-48"><TruncatePath path={document.file_path} /></td>
-                <td className="px-4 py-3">
+              <Tr key={document.id} hover>
+                <Td variant="primary">{document.file_name}</Td>
+                <Td variant="muted">{document.type}</Td>
+                <Td variant="muted">{formatDate(document.created_at)}</Td>
+                <Td className="max-w-48"><TruncatePath path={document.file_path} /></Td>
+                <Td>
                   {isPdfDocument(document.file_name, document.mime_type) ? (
                     <PdfViewerDialog source={document} title={document.file_name} description={`Archivo asociado a ${customer.name}`} />
                   ) : (
                     <span className="text-xs text-muted-foreground">No PDF</span>
                   )}
-                </td>
-              </tr>
+                </Td>
+              </Tr>
             ))}
           </DataTable>
         </CardContent>

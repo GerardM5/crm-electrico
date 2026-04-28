@@ -6,7 +6,7 @@ import { StatusBadge } from '../components/feedback/StatusBadge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Field, Input, Select, Textarea } from '../components/ui/input'
-import { DataTable } from '../components/ui/table'
+import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
 import { proposalStatusLabels } from '../config/constants'
 import { money } from '../lib/formatters'
 import { type ProposalFormValues, proposalSchema } from '../schemas/forms.schema'
@@ -127,27 +127,29 @@ export function ProposalsRoute() {
               </div>
             </CardContent>
           </Card>
-          <DataTable headers={['Propuesta', 'Cliente', 'Importe', 'Validez', 'Estado', 'Acciones']} className="no-print">
-            {store.proposals.map((proposal) => (
-              <tr key={proposal.id}>
-                <td className="px-4 py-3 font-medium text-foreground">{proposal.title}</td>
-                <td className="px-4 py-3 text-muted-foreground">{store.customers.find((customer) => customer.id === proposal.customer_id)?.name}</td>
-                <td className="px-4 py-3">{money.format(proposal.estimated_price_eur)}</td>
-                <td className="px-4 py-3">{proposal.valid_until}</td>
-                <td className="px-4 py-3">
-                  <StatusBadge value={proposalStatusLabels[proposal.status]} />
-                </td>
-                <td className="px-4 py-3">
-                  <select className="min-h-10 rounded-md border border-border bg-background px-2" value={proposal.status} onChange={(event) => store.updateProposalStatus(proposal.id, event.target.value as typeof proposal.status)}>
-                    <option value="draft">Borrador</option>
-                    <option value="sent">Enviada</option>
-                    <option value="accepted">Aceptada</option>
-                    <option value="rejected">Rechazada</option>
-                  </select>
-                </td>
-              </tr>
-            ))}
-          </DataTable>
+          {store.proposals.length === 0 ? (
+            <EmptyState title="Sin propuestas" description="Crea una propuesta comercial para un cliente y aparecera aqui." />
+          ) : (
+            <DataTable headers={['Propuesta', 'Cliente', 'Importe', 'Validez', 'Estado', 'Acciones']} className="no-print">
+              {store.proposals.map((proposal) => (
+                <Tr key={proposal.id} hover>
+                  <Td variant="primary">{proposal.title}</Td>
+                  <Td variant="muted">{store.customers.find((customer) => customer.id === proposal.customer_id)?.name}</Td>
+                  <Td>{money.format(proposal.estimated_price_eur)}</Td>
+                  <Td variant="muted">{proposal.valid_until}</Td>
+                  <Td><StatusBadge value={proposalStatusLabels[proposal.status]} /></Td>
+                  <Td>
+                    <select className="min-h-10 rounded-md border border-border bg-background px-2" value={proposal.status} onChange={(event) => store.updateProposalStatus(proposal.id, event.target.value as typeof proposal.status)}>
+                      <option value="draft">Borrador</option>
+                      <option value="sent">Enviada</option>
+                      <option value="accepted">Aceptada</option>
+                      <option value="rejected">Rechazada</option>
+                    </select>
+                  </Td>
+                </Tr>
+              ))}
+            </DataTable>
+          )}
         </div>
       </div>
     </div>

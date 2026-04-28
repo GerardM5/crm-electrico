@@ -5,7 +5,7 @@ import { PdfViewerDialog } from '../components/documents/PdfViewerDialog'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Field, Input, Select } from '../components/ui/input'
-import { DataTable, TruncatePath } from '../components/ui/table'
+import { DataTable, EmptyState, Td, Tr, TruncatePath } from '../components/ui/table'
 import { getVisibleCustomers } from '../lib/customer-workflow'
 import { formatDate } from '../lib/formatters'
 import { isPdfDocument } from '../lib/storage'
@@ -71,28 +71,32 @@ export function DocumentsRoute() {
           </CardContent>
         </Card>
 
-        <DataTable headers={['Archivo', 'Cliente', 'Tipo', 'Fecha', 'Ruta', 'Vista']}>
-          {visibleDocuments.map((document) => (
-            <tr key={document.id}>
-              <td className="px-4 py-3 font-medium text-foreground">{document.file_name}</td>
-              <td className="px-4 py-3 text-muted-foreground">{customers.find((customer) => customer.id === document.customer_id)?.name ?? '-'}</td>
-              <td className="px-4 py-3 text-muted-foreground">{document.type}</td>
-              <td className="px-4 py-3 text-muted-foreground">{formatDate(document.created_at)}</td>
-              <td className="px-4 py-3 text-muted-foreground max-w-48"><TruncatePath path={document.file_path} /></td>
-              <td className="px-4 py-3">
-                {isPdfDocument(document.file_name, document.mime_type) ? (
-                  <PdfViewerDialog
-                    source={document}
-                    title={document.file_name}
-                    description={`Documento asociado a ${customers.find((customer) => customer.id === document.customer_id)?.name ?? '-'}`}
-                  />
-                ) : (
-                  <span className="text-xs text-muted-foreground">No PDF</span>
-                )}
-              </td>
-            </tr>
-          ))}
-        </DataTable>
+        {visibleDocuments.length === 0 ? (
+          <EmptyState title="Sin documentos" description="Registra un archivo (PDF, DNI, contrato) para un cliente y aparecera aqui." />
+        ) : (
+          <DataTable headers={['Archivo', 'Cliente', 'Tipo', 'Fecha', 'Ruta', 'Vista']}>
+            {visibleDocuments.map((document) => (
+              <Tr key={document.id} hover>
+                <Td variant="primary">{document.file_name}</Td>
+                <Td variant="muted">{customers.find((customer) => customer.id === document.customer_id)?.name ?? '-'}</Td>
+                <Td variant="muted">{document.type}</Td>
+                <Td variant="muted">{formatDate(document.created_at)}</Td>
+                <Td className="max-w-48"><TruncatePath path={document.file_path} /></Td>
+                <Td>
+                  {isPdfDocument(document.file_name, document.mime_type) ? (
+                    <PdfViewerDialog
+                      source={document}
+                      title={document.file_name}
+                      description={`Documento asociado a ${customers.find((customer) => customer.id === document.customer_id)?.name ?? '-'}`}
+                    />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">No PDF</span>
+                  )}
+                </Td>
+              </Tr>
+            ))}
+          </DataTable>
+        )}
       </div>
     </div>
   )

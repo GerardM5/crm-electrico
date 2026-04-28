@@ -6,7 +6,7 @@ import { StatusBadge } from '../components/feedback/StatusBadge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Field, Input, Select, Textarea } from '../components/ui/input'
-import { DataTable } from '../components/ui/table'
+import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
 import { priorityLabels, taskStatusLabels } from '../config/constants'
 import { formatDateTime } from '../lib/formatters'
 import { type TaskFormValues, taskSchema } from '../schemas/forms.schema'
@@ -85,30 +85,34 @@ export function TasksRoute() {
             </form>
           </CardContent>
         </Card>
-        <DataTable headers={['Tarea', 'Cliente', 'Prioridad', 'Estado', 'Vence', 'Asignado', 'Acciones']}>
-          {visibleTasks.map((task) => (
-            <tr key={task.id} className="hover:bg-accent">
-              <td className="px-4 py-3 font-medium text-foreground">{task.title}</td>
-              <td className="px-4 py-3 text-muted-foreground">{store.customers.find((customer) => customer.id === task.customer_id)?.name ?? '-'}</td>
-              <td className="px-4 py-3">
-                <StatusBadge value={priorityLabels[task.priority]} />
-              </td>
-              <td className="px-4 py-3">
-                <StatusBadge value={taskStatusLabels[task.status]} />
-              </td>
-              <td className="px-4 py-3 text-muted-foreground">{formatDateTime(task.due_at)}</td>
-              <td className="px-4 py-3 text-muted-foreground">{store.profiles.find((profile) => profile.id === task.assigned_to)?.full_name}</td>
-              <td className="px-4 py-3">
-                {task.status !== 'done' ? (
-                  <Button size="sm" variant="secondary" onClick={() => store.completeTask(task.id)}>
-                    <CheckCircle2 className="h-4 w-4" />
-                    Completar
-                  </Button>
-                ) : null}
-              </td>
-            </tr>
-          ))}
-        </DataTable>
+        {visibleTasks.length === 0 ? (
+          <EmptyState
+            icon={<CheckCircle2 />}
+            title="Sin tareas"
+            description="Crea una tarea para llevar el seguimiento comercial y operativo."
+          />
+        ) : (
+          <DataTable headers={['Tarea', 'Cliente', 'Prioridad', 'Estado', 'Vence', 'Asignado', 'Acciones']}>
+            {visibleTasks.map((task) => (
+              <Tr key={task.id} hover>
+                <Td variant="primary">{task.title}</Td>
+                <Td variant="muted">{store.customers.find((customer) => customer.id === task.customer_id)?.name ?? '-'}</Td>
+                <Td><StatusBadge value={priorityLabels[task.priority]} /></Td>
+                <Td><StatusBadge value={taskStatusLabels[task.status]} /></Td>
+                <Td variant="muted">{formatDateTime(task.due_at)}</Td>
+                <Td variant="muted">{store.profiles.find((profile) => profile.id === task.assigned_to)?.full_name}</Td>
+                <Td>
+                  {task.status !== 'done' ? (
+                    <Button size="sm" variant="secondary" onClick={() => store.completeTask(task.id)}>
+                      <CheckCircle2 className="h-4 w-4" />
+                      Completar
+                    </Button>
+                  ) : null}
+                </Td>
+              </Tr>
+            ))}
+          </DataTable>
+        )}
       </div>
     </div>
   )

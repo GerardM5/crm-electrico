@@ -4,7 +4,7 @@ import { PageHeader } from '../components/data-table/Toolbar'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Field, Input, Select, Textarea } from '../components/ui/input'
-import { DataTable } from '../components/ui/table'
+import { DataTable, Td, Tr } from '../components/ui/table'
 import { money } from '../lib/formatters'
 import { type SimulationFormValues, simulationSchema } from '../schemas/simulation.schema'
 import { useDemoStore } from '../store/demo-store'
@@ -91,14 +91,14 @@ export function SimulationsRoute() {
         </Card>
         <DataTable headers={['Cliente', 'Actual', 'Propuesto', 'Ahorro mensual', 'Ahorro anual', 'ROI']}>
           {store.simulations.map((simulation) => (
-            <tr key={simulation.id}>
-              <td className="px-4 py-3 font-medium text-foreground">{store.customers.find((customer) => customer.id === simulation.customer_id)?.name}</td>
-              <td className="px-4 py-3">{money.format(simulation.current_monthly_cost_eur)}</td>
-              <td className="px-4 py-3">{money.format(simulation.proposed_monthly_cost_eur)}</td>
-              <td className="px-4 py-3">{money.format(simulation.monthly_saving_eur)}</td>
-              <td className="px-4 py-3">{money.format(simulation.annual_saving_eur)}</td>
-              <td className="px-4 py-3">{simulation.roi_years ? `${simulation.roi_years} anos` : '-'}</td>
-            </tr>
+            <Tr key={simulation.id} hover>
+              <Td variant="primary">{store.customers.find((customer) => customer.id === simulation.customer_id)?.name}</Td>
+              <Td>{money.format(simulation.current_monthly_cost_eur)}</Td>
+              <Td>{money.format(simulation.proposed_monthly_cost_eur)}</Td>
+              <Td>{money.format(simulation.monthly_saving_eur)}</Td>
+              <Td>{money.format(simulation.annual_saving_eur)}</Td>
+              <Td variant="muted">{simulation.roi_years ? `${simulation.roi_years} anos` : '-'}</Td>
+            </Tr>
           ))}
         </DataTable>
       </div>

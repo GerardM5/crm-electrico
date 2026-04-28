@@ -5,7 +5,7 @@ import { PageHeader } from '../components/data-table/Toolbar'
 import { StatusBadge } from '../components/feedback/StatusBadge'
 import { Button } from '../components/ui/button'
 import { Input, Select } from '../components/ui/input'
-import { DataTable, Td, Tr } from '../components/ui/table'
+import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
 import { customerStatusLabels } from '../config/constants'
 import { CustomerFormDialog } from '../features/customers/CustomerFormDialog'
 import { getVisibleCustomers } from '../lib/customer-workflow'
@@ -66,28 +66,36 @@ export function CustomersRoute() {
         </Select>
       </div>
 
-      <DataTable headers={['Cliente', 'Estado', 'Contrato', 'Renovacion', 'Servicios', 'Comercial', 'Acciones']}>
-        {filteredCustomers.map((customer) => (
-          <Tr key={customer.id} hover>
-            <Td>
-              <p className="font-medium text-foreground">{customer.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {customer.dni ?? 'Sin DNI'} · {customer.company ?? 'Sin empresa'}
-              </p>
-            </Td>
-            <Td><StatusBadge value={customerStatusLabels[customer.status]} /></Td>
-            <Td variant="muted">{formatDate(customer.contract_signed_at)}</Td>
-            <Td variant="muted">{formatDate(customer.renewal_date)}</Td>
-            <Td variant="muted">{customer.products_services.join(', ') || '-'}</Td>
-            <Td variant="muted">{store.profiles.find((profile) => profile.id === customer.assigned_to)?.full_name ?? '-'}</Td>
-            <Td>
-              <Button asChild size="sm" variant="secondary">
-                <Link to={`/customers/${customer.id}`}>Abrir ficha</Link>
-              </Button>
-            </Td>
-          </Tr>
-        ))}
-      </DataTable>
+      {filteredCustomers.length === 0 ? (
+        <EmptyState
+          title={baseCustomers.length === 0 ? 'Sin clientes' : 'Sin resultados'}
+          description={baseCustomers.length === 0 ? 'Crea el primer cliente para empezar a gestionar la cartera.' : 'Prueba a ajustar los filtros de busqueda.'}
+          action={baseCustomers.length === 0 ? <CustomerFormDialog /> : undefined}
+        />
+      ) : (
+        <DataTable headers={['Cliente', 'Estado', 'Contrato', 'Renovacion', 'Servicios', 'Comercial', 'Acciones']}>
+          {filteredCustomers.map((customer) => (
+            <Tr key={customer.id} hover>
+              <Td>
+                <p className="font-medium text-foreground">{customer.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {customer.dni ?? 'Sin DNI'} · {customer.company ?? 'Sin empresa'}
+                </p>
+              </Td>
+              <Td><StatusBadge value={customerStatusLabels[customer.status]} /></Td>
+              <Td variant="muted">{formatDate(customer.contract_signed_at)}</Td>
+              <Td variant="muted">{formatDate(customer.renewal_date)}</Td>
+              <Td variant="muted">{customer.products_services.join(', ') || '-'}</Td>
+              <Td variant="muted">{store.profiles.find((profile) => profile.id === customer.assigned_to)?.full_name ?? '-'}</Td>
+              <Td>
+                <Button asChild size="sm" variant="secondary">
+                  <Link to={`/customers/${customer.id}`}>Abrir ficha</Link>
+                </Button>
+              </Td>
+            </Tr>
+          ))}
+        </DataTable>
+      )}
     </div>
   )
 }

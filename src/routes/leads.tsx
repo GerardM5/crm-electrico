@@ -6,7 +6,7 @@ import { StatusBadge } from '../components/feedback/StatusBadge'
 import { Button } from '../components/ui/button'
 import { Dialog } from '../components/ui/dialog'
 import { Input, Select } from '../components/ui/input'
-import { DataTable, EmptyState } from '../components/ui/table'
+import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
 import { leadStatusLabels } from '../config/constants'
 import { LeadFormDialog } from '../features/leads/LeadFormDialog'
 import { money } from '../lib/formatters'
@@ -66,20 +66,18 @@ export function LeadsRoute() {
       ) : (
         <DataTable headers={['Lead', 'Origen', 'Estado', 'Factura estimada', 'Asignado', 'Acciones']}>
           {filtered.map((lead) => (
-            <tr key={lead.id} className="hover:bg-accent">
-              <td className="px-4 py-3">
+            <Tr key={lead.id} hover>
+              <Td>
                 <p className="font-medium text-foreground">{lead.company_name ?? lead.contact_name}</p>
                 <p className="text-xs text-muted-foreground">
                   {lead.contact_name} · {lead.phone ?? lead.email}
                 </p>
-              </td>
-              <td className="px-4 py-3 text-muted-foreground">{lead.source}</td>
-              <td className="px-4 py-3">
-                <StatusBadge value={leadStatusLabels[lead.status]} />
-              </td>
-              <td className="px-4 py-3 text-foreground">{lead.estimated_monthly_bill ? money.format(lead.estimated_monthly_bill) : '-'}</td>
-              <td className="px-4 py-3 text-muted-foreground">{profiles.find((profile) => profile.id === lead.assigned_to)?.full_name ?? '-'}</td>
-              <td className="px-4 py-3">
+              </Td>
+              <Td variant="muted">{lead.source}</Td>
+              <Td><StatusBadge value={leadStatusLabels[lead.status]} /></Td>
+              <Td>{lead.estimated_monthly_bill ? money.format(lead.estimated_monthly_bill) : '-'}</Td>
+              <Td variant="muted">{profiles.find((profile) => profile.id === lead.assigned_to)?.full_name ?? '-'}</Td>
+              <Td>
                 <div className="flex gap-2">
                   <LeadFormDialog lead={lead} />
                   {lead.status !== 'converted' ? (
@@ -93,8 +91,8 @@ export function LeadsRoute() {
                     </Button>
                   ) : null}
                 </div>
-              </td>
-            </tr>
+              </Td>
+            </Tr>
           ))}
         </DataTable>
       )}

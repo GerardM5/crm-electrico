@@ -4,7 +4,7 @@ import { PageHeader } from '../components/data-table/Toolbar'
 import { StatusBadge } from '../components/feedback/StatusBadge'
 import { Button } from '../components/ui/button'
 import { Field, Select } from '../components/ui/input'
-import { DataTable } from '../components/ui/table'
+import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
 import { customerStatusLabels } from '../config/constants'
 import { getDaysToRenewal, getRenewalAlertDate, getRenewalStage, getVisibleCustomers } from '../lib/customer-workflow'
 import { formatDate } from '../lib/formatters'
@@ -50,32 +50,37 @@ export function RenewalsRoute() {
         </Field>
       </div>
 
-      <DataTable headers={['Cliente', 'Estado', 'Avisar desde', 'Renovacion', 'Dias', 'Comercial', 'Acciones']}>
-        {renewalQueue.map((customer) => {
-          const alertDate = getRenewalAlertDate(customer)
-          const days = getDaysToRenewal(customer)
-          return (
-            <tr key={customer.id}>
-              <td className="px-4 py-3">
-                <p className="font-medium text-foreground">{customer.name}</p>
-                <p className="text-xs text-muted-foreground">{customer.products_services.join(', ') || 'Sin servicios'}</p>
-              </td>
-              <td className="px-4 py-3">
-                <StatusBadge value={customerStatusLabels[customer.status]} />
-              </td>
-              <td className="px-4 py-3 text-muted-foreground">{alertDate ? formatDate(alertDate.toISOString()) : '-'}</td>
-              <td className="px-4 py-3 text-muted-foreground">{formatDate(customer.renewal_date)}</td>
-              <td className="px-4 py-3 text-muted-foreground">{typeof days === 'number' ? days : '-'}</td>
-              <td className="px-4 py-3 text-muted-foreground">{store.profiles.find((profile) => profile.id === customer.assigned_to)?.full_name ?? '-'}</td>
-              <td className="px-4 py-3">
-                <Button asChild size="sm" variant="secondary">
-                  <Link to={`/customers/${customer.id}`}>Abrir ficha</Link>
-                </Button>
-              </td>
-            </tr>
-          )
-        })}
-      </DataTable>
+      {renewalQueue.length === 0 ? (
+        <EmptyState
+          title="Sin renovaciones pendientes"
+          description="No hay clientes en periodo de renovacion (10-12 meses desde firma)."
+        />
+      ) : (
+        <DataTable headers={['Cliente', 'Estado', 'Avisar desde', 'Renovacion', 'Dias', 'Comercial', 'Acciones']}>
+          {renewalQueue.map((customer) => {
+            const alertDate = getRenewalAlertDate(customer)
+            const days = getDaysToRenewal(customer)
+            return (
+              <Tr key={customer.id} hover>
+                <Td>
+                  <p className="font-medium text-foreground">{customer.name}</p>
+                  <p className="text-xs text-muted-foreground">{customer.products_services.join(', ') || 'Sin servicios'}</p>
+                </Td>
+                <Td><StatusBadge value={customerStatusLabels[customer.status]} /></Td>
+                <Td variant="muted">{alertDate ? formatDate(alertDate.toISOString()) : '-'}</Td>
+                <Td variant="muted">{formatDate(customer.renewal_date)}</Td>
+                <Td variant="muted">{typeof days === 'number' ? days : '-'}</Td>
+                <Td variant="muted">{store.profiles.find((profile) => profile.id === customer.assigned_to)?.full_name ?? '-'}</Td>
+                <Td>
+                  <Button asChild size="sm" variant="secondary">
+                    <Link to={`/customers/${customer.id}`}>Abrir ficha</Link>
+                  </Button>
+                </Td>
+              </Tr>
+            )
+          })}
+        </DataTable>
+      )}
     </div>
   )
 }

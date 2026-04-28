@@ -5,7 +5,7 @@ import { PageHeader } from '../components/data-table/Toolbar'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Field, Input, Select } from '../components/ui/input'
-import { DataTable } from '../components/ui/table'
+import { DataTable, Td, Tr } from '../components/ui/table'
 import { Tabs } from '../components/ui/tabs'
 import { useTheme } from '../hooks/use-theme'
 import { formatDateTime } from '../lib/formatters'
@@ -168,8 +168,8 @@ function TeamTab() {
             const fullAccess = profile.role === 'owner' || profile.role === 'admin'
             const isMe = profile.id === currentUser.id
             return (
-              <tr key={profile.id}>
-                <td className="px-4 py-3">
+              <Tr key={profile.id} hover>
+                <Td>
                   <div className="flex items-center gap-2.5">
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
                       {profile.full_name.slice(0, 2).toUpperCase()}
@@ -182,11 +182,11 @@ function TeamTab() {
                       <p className="text-xs text-muted-foreground">{profile.email}</p>
                     </div>
                   </div>
-                </td>
-                <td className="px-4 py-3 text-sm text-muted-foreground">{ROLE_LABELS[profile.role] ?? profile.role}</td>
-                <td className="px-4 py-3 text-sm text-muted-foreground">{fullAccess ? 'Cartera completa' : 'Solo su cartera'}</td>
-                <td className="px-4 py-3 text-sm text-muted-foreground">{assigned}</td>
-                <td className="px-4 py-3">
+                </Td>
+                <Td variant="muted" className="text-sm">{ROLE_LABELS[profile.role] ?? profile.role}</Td>
+                <Td variant="muted" className="text-sm">{fullAccess ? 'Cartera completa' : 'Solo su cartera'}</Td>
+                <Td variant="muted" className="text-sm">{assigned}</Td>
+                <Td>
                   {canEditRoles ? (
                     <div className="grid gap-2 sm:min-w-60">
                       <Select value={profile.role} onChange={(e) => updateProfileRole(profile.id, e.target.value as AppRole)}>
@@ -203,8 +203,8 @@ function TeamTab() {
                   ) : (
                     <p className="text-xs text-muted-foreground">Solo lectura</p>
                   )}
-                </td>
-              </tr>
+                </Td>
+              </Tr>
             )
           })}
         </DataTable>
@@ -263,11 +263,11 @@ function DataTab() {
           ) : (
             <DataTable headers={['Fecha', 'Motivo', 'Clientes']}>
               {store.backupSnapshots.map((backup) => (
-                <tr key={backup.id}>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">{formatDateTime(backup.created_at)}</td>
-                  <td className="px-4 py-3 text-sm font-medium text-foreground">{backup.label}</td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">{backup.customers}</td>
-                </tr>
+                <Tr key={backup.id} hover>
+                  <Td variant="muted" className="text-sm">{formatDateTime(backup.created_at)}</Td>
+                  <Td variant="primary" className="text-sm">{backup.label}</Td>
+                  <Td variant="muted" className="text-sm">{backup.customers}</Td>
+                </Tr>
               ))}
             </DataTable>
           )}
