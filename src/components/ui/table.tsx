@@ -1,4 +1,4 @@
-import { FileX2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, FileX2 } from 'lucide-react'
 import {
   type HTMLAttributes,
   type ReactNode,
@@ -7,6 +7,74 @@ import {
   forwardRef,
 } from 'react'
 import { cn } from '../../lib/utils'
+
+// ── Pagination ────────────────────────────────────────────────────────────────
+
+export interface TablePaginationProps {
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
+  onPageChange: (page: number) => void
+  onPageSizeChange: (size: number) => void
+  pageSizeOptions?: number[]
+}
+
+function TablePagination({
+  page,
+  pageSize,
+  total,
+  totalPages,
+  onPageChange,
+  onPageSizeChange,
+  pageSizeOptions = [25, 50, 100],
+}: TablePaginationProps) {
+  const from = total === 0 ? 0 : (page - 1) * pageSize + 1
+  const to = Math.min(page * pageSize, total)
+
+  return (
+    <div className="flex items-center justify-between border-t border-border px-4 py-3 text-sm text-muted-foreground">
+      <span>
+        {total === 0 ? 'Sin resultados' : `${from}–${to} de ${total}`}
+      </span>
+      <div className="flex items-center gap-3">
+        <label className="flex items-center gap-1.5">
+          Filas
+          <select
+            value={pageSize}
+            onChange={(e) => onPageSizeChange(Number(e.target.value))}
+            className="rounded border border-border bg-background px-1 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            {pageSizeOptions.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </label>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            disabled={page <= 1}
+            onClick={() => onPageChange(page - 1)}
+            className="rounded p-1 hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
+            aria-label="Página anterior"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <span className="tabular-nums">{page} / {totalPages}</span>
+          <button
+            type="button"
+            disabled={page >= totalPages}
+            onClick={() => onPageChange(page + 1)}
+            className="rounded p-1 hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
+            aria-label="Página siguiente"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ── Primitives ────────────────────────────────────────────────────────────────
 
@@ -92,10 +160,12 @@ export function DataTable({
   headers,
   children,
   className,
+  pagination,
 }: {
   headers: ColDef[]
   children: ReactNode
   className?: string
+  pagination?: TablePaginationProps
 }) {
   return (
     <div className={cn('overflow-hidden rounded-lg border border-border bg-card', className)}>
@@ -118,6 +188,7 @@ export function DataTable({
           <TableBody>{children}</TableBody>
         </table>
       </div>
+      {pagination && <TablePagination {...pagination} />}
     </div>
   )
 }
