@@ -50,15 +50,6 @@ const profiles: Profile[] = [
 		created_at: nowIso,
 	},
 	{
-		id: "user-admin",
-		organization_id: orgId,
-		full_name: "Carlos Rivas",
-		email: "carlos@electrico.local",
-		role: "admin",
-		phone: "+34 600 111 001",
-		created_at: nowIso,
-	},
-	{
 		id: "user-sales-1",
 		organization_id: orgId,
 		full_name: "Marta Soler",
@@ -84,25 +75,7 @@ const profiles: Profile[] = [
 		role: "sales",
 		phone: "+34 600 111 004",
 		created_at: nowIso,
-	},
-	{
-		id: "user-tech-1",
-		organization_id: orgId,
-		full_name: "Javier Nunez",
-		email: "javier@electrico.local",
-		role: "technician",
-		phone: "+34 600 111 005",
-		created_at: nowIso,
-	},
-	{
-		id: "user-viewer",
-		organization_id: orgId,
-		full_name: "Ana Beltran",
-		email: "ana@electrico.local",
-		role: "viewer",
-		phone: "+34 600 111 006",
-		created_at: nowIso,
-	},
+	}
 ];
 
 const pipelineStages: PipelineStage[] = [

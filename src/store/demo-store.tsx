@@ -525,7 +525,9 @@ const useDemoStoreBase = create<DemoStore>()((set, get) => {
 })
 
 export function useDemoStore() {
-  return useDemoStoreBase()
+  const store = useDemoStoreBase()
+  const currentUser = store.profiles.find((p) => p.id === store.currentUserId) ?? store.profiles[0]
+  return { ...store, currentUser }
 }
 
 /** No-op provider — Zustand doesn't need a React tree wrapper */

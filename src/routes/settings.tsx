@@ -150,10 +150,12 @@ function MemberFormDialog() {
   const [open, setOpen] = useState(false)
   const { createProfile } = useDemoStore()
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<MemberFormValues>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors, isSubmitting } } = useForm<MemberFormValues>({
     resolver: zodResolver(memberSchema),
     defaultValues: { role: 'sales', phone: '' },
   })
+
+  const selectedRole = watch('role')
 
   function onSubmit(values: MemberFormValues) {
     createProfile(values)
@@ -164,7 +166,7 @@ function MemberFormDialog() {
   return (
     <Dialog
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={(next) => { setOpen(next); if (!next) reset() }}
       title="Añadir miembro"
       description="El nuevo miembro tendrá acceso según el rol asignado."
       size="sm"
@@ -175,23 +177,75 @@ function MemberFormDialog() {
         </Button>
       }
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 pt-2">
-        <Field label="Nombre completo" error={errors.full_name?.message}>
-          <Input {...register('full_name')} placeholder="Ana García" autoFocus />
+      <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 pt-2" noValidate>
+        <Field label="Nombre completo" error={errors.full_name?.message} required>
+          <Input
+            {...register('full_name')}
+            id="member-full-name"
+            placeholder="Ana García"
+            autoComplete="name"
+            autoFocus
+            aria-required
+            aria-invalid={!!errors.full_name}
+            aria-describedby={errors.full_name ? 'member-full-name-error' : undefined}
+          />
         </Field>
-        <Field label="Email" error={errors.email?.message}>
-          <Input type="email" {...register('email')} placeholder="ana@empresa.com" />
+        <Field label="Email" error={errors.email?.message} required>
+          <Input
+            {...register('email')}
+            id="member-email"
+            type="email"
+            inputMode="email"
+            placeholder="ana@empresa.com"
+            autoComplete="email"
+            aria-required
+            aria-invalid={!!errors.email}
+            aria-describedby={errors.email ? 'member-email-error' : undefined}
+          />
         </Field>
-        <Field label="Teléfono" error={errors.phone?.message}>
-          <Input type="tel" {...register('phone')} placeholder="+34 600 000 000" />
+        <Field label="Teléfono" error={errors.phone?.message} hint="Opcional · formato +34 600 000 000">
+          <Input
+            {...register('phone')}
+            id="member-phone"
+            type="tel"
+            inputMode="tel"
+            placeholder="+34 600 000 000"
+            autoComplete="tel"
+            aria-invalid={!!errors.phone}
+          />
         </Field>
-        <Field label="Rol" error={errors.role?.message}>
-          <Select {...register('role')}>
-            {ROLE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </Select>
-        </Field>
+        <fieldset className="grid gap-2">
+          <legend className="text-sm font-medium text-foreground">
+            Rol <span className="text-destructive" aria-hidden>*</span>
+          </legend>
+          <div className="grid grid-cols-3 gap-2">
+            {ROLE_OPTIONS.map((opt) => {
+              const active = selectedRole === opt.value
+              return (
+                <label
+                  key={opt.value}
+                  className={cn(
+                    'focus-within:ring-ring flex cursor-pointer flex-col gap-1 rounded-lg border p-3 text-left transition-all focus-within:ring-2 focus-within:ring-offset-2',
+                    active
+                      ? 'border-primary bg-primary/5 text-foreground shadow-sm shadow-primary/10'
+                      : 'border-border bg-muted/30 text-muted-foreground hover:border-border hover:bg-muted/60 hover:text-foreground',
+                  )}
+                >
+                  <input
+                    type="radio"
+                    className="sr-only"
+                    value={opt.value}
+                    checked={active}
+                    onChange={() => setValue('role', opt.value, { shouldValidate: true })}
+                  />
+                  <span className={cn('text-sm font-medium', active && 'text-primary')}>{opt.label}</span>
+                  <span className="text-[11px] leading-tight">{opt.description}</span>
+                </label>
+              )
+            })}
+          </div>
+          {errors.role && <span className="text-xs font-medium text-destructive">{errors.role.message}</span>}
+        </fieldset>
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
           <Button type="submit" disabled={isSubmitting}>Añadir</Button>
@@ -207,7 +261,9 @@ const ROLE_LABELS: Record<string, string> = {
   sales: 'Comercial',
 }
 
-const ROLE_OPTIONS: Array<{ value: AppRole; label: string; description: string }> = [
+type AssignableRole = 'owner' | 'admin' | 'sales'
+
+const ROLE_OPTIONS: Array<{ value: AssignableRole; label: string; description: string }> = [
   { value: 'owner', label: 'Propietario', description: 'Acceso total, configuración y seguridad' },
   { value: 'admin', label: 'Administrador', description: 'Gestión de equipo y cartera completa' },
   { value: 'sales', label: 'Comercial', description: 'Solo su cartera asignada' },
