@@ -2,7 +2,7 @@ import { addMonths, differenceInCalendarDays, isAfter, startOfDay } from 'date-f
 import type { AppRole, Customer } from '../types/domain'
 
 export function canViewAllCustomers(role: AppRole) {
-  return role === 'owner' || role === 'admin'
+  return role === 'admin'
 }
 
 export function getVisibleCustomers(customers: Customer[], userId: string, role: AppRole) {
