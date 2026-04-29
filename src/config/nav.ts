@@ -17,6 +17,6 @@ export const navItems = [
 
 export const appBrand = {
 	name: "Renovaciones CRM",
-	description: "Cartera, contratos y avisos",
+	description: "Panel de administración",
 	icon: Zap,
 };
