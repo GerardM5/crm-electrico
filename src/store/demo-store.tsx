@@ -45,7 +45,7 @@ type DemoStore = DemoState & {
   convertLead: (id: string) => Customer
   createCustomer: (input: CreateInput<Customer>) => Customer
   updateCustomer: (id: string, patch: Partial<Customer>) => void
-  touchCustomer: (id: string) => void
+  touchCustomer: (id: string, payload?: { contacted_at?: string; notes?: string }) => void
   renewCustomer: (id: string) => void
   upsertEnergyProfile: (input: Omit<CreateInput<CustomerEnergyProfile>, 'has_solar'> & { has_solar?: boolean }) => CustomerEnergyProfile
   createInvoice: (input: CreateInput<Invoice>) => Invoice
@@ -140,7 +140,15 @@ function stamp<T extends object>(state: DemoState, input: T): T & {
   }
 }
 
-function activity(state: DemoState, action: string, entityType: string, entityId: string, label: string): ActivityLog {
+function activity(
+  state: DemoState,
+  action: string,
+  entityType: string,
+  entityId: string,
+  label: string,
+  metadata: Record<string, unknown> = {},
+  createdAt = new Date().toISOString(),
+): ActivityLog {
   return {
     id: crypto.randomUUID(),
     organization_id: state.organization.id,
@@ -148,8 +156,8 @@ function activity(state: DemoState, action: string, entityType: string, entityId
     entity_type: entityType,
     entity_id: entityId,
     action,
-    metadata: { label },
-    created_at: new Date().toISOString(),
+    metadata: { label, ...metadata },
+    created_at: createdAt,
   }
 }
 
@@ -282,14 +290,27 @@ function makeActions(get: () => DemoStore, set: (fn: (s: DemoStore) => Partial<D
         'Cliente actualizado',
       )
     },
-    touchCustomer: (id) => {
+    touchCustomer: (id, payload) => {
+      const contactedAt = payload?.contacted_at ? new Date(payload.contacted_at).toISOString() : new Date().toISOString()
+      const notes = payload?.notes?.trim()
       mutate(
         (draft) => ({
           ...draft,
           customers: draft.customers.map((customer) =>
-            customer.id === id ? { ...customer, last_contact_at: new Date().toISOString(), updated_at: new Date().toISOString() } : customer,
+            customer.id === id ? { ...customer, last_contact_at: contactedAt, updated_at: new Date().toISOString() } : customer,
           ),
-          activityLogs: [activity(draft, 'customer_contacted', 'customer', id, 'Contacto registrado'), ...draft.activityLogs],
+          activityLogs: [
+            activity(
+              draft,
+              'customer_contacted',
+              'customer',
+              id,
+              notes ? `Llamada registrada: ${notes}` : 'Llamada registrada sin notas',
+              { customer_id: id, notes: notes ?? '', contacted_at: contactedAt },
+              contactedAt,
+            ),
+            ...draft.activityLogs,
+          ],
         }),
         'Contacto registrado',
       )

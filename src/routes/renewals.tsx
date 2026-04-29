@@ -1,10 +1,11 @@
 import { Phone, RefreshCw, Search } from 'lucide-react'
-import { useMemo } from 'react'
+import { type FormEvent, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { StatusBadge } from '../components/feedback/StatusBadge'
+import { Dialog } from '../components/ui/dialog'
 import { Button } from '../components/ui/button'
-import { Field, Input, Select } from '../components/ui/input'
+import { Field, Input, Select, Textarea } from '../components/ui/input'
 import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
 import { customerStatusLabels } from '../config/constants'
 import { useDebounce } from '../hooks/use-debounce'
@@ -34,6 +35,9 @@ export function RenewalsRoute() {
   const store = useDemoStore()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
+  const [contactingCustomerId, setContactingCustomerId] = useState<string | null>(null)
+  const [contactedAt, setContactedAt] = useState(() => formatDateTimeLocal(new Date()))
+  const [callNotes, setCallNotes] = useState('')
 
   const stage = (params.get('stage') ?? 'all') as StageFilter
   const search = params.get('q') ?? ''
@@ -66,6 +70,25 @@ export function RenewalsRoute() {
   }, [customers, stage, debouncedSearch])
 
   const pagination = usePagination(renewalQueue, 25)
+  const contactingCustomer = contactingCustomerId ? customers.find((customer) => customer.id === contactingCustomerId) : undefined
+
+  function openContactDialog(customerId: string) {
+    setContactingCustomerId(customerId)
+    setContactedAt(formatDateTimeLocal(new Date()))
+    setCallNotes('')
+  }
+
+  function closeContactDialog() {
+    setContactingCustomerId(null)
+    setCallNotes('')
+  }
+
+  function submitContactLog(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!contactingCustomerId) return
+    store.touchCustomer(contactingCustomerId, { contacted_at: contactedAt, notes: callNotes })
+    closeContactDialog()
+  }
 
   return (
     <div>
@@ -122,7 +145,7 @@ export function RenewalsRoute() {
                 <Td>
                   <div className="flex gap-1">
                     <Button size="sm" variant="ghost" className="h-7 px-2 text-xs"
-                      onClick={(e) => { e.stopPropagation(); store.touchCustomer(customer.id) }}>
+                      onClick={(e) => { e.stopPropagation(); openContactDialog(customer.id) }}>
                       <Phone className="h-3 w-3" />Contactado
                     </Button>
                     {customer.status !== 'renewed' && (
@@ -138,6 +161,45 @@ export function RenewalsRoute() {
           })}
         </DataTable>
       )}
+
+      <Dialog
+        open={Boolean(contactingCustomerId)}
+        onOpenChange={(open) => {
+          if (!open) closeContactDialog()
+        }}
+        title={contactingCustomer ? `Registrar llamada con ${contactingCustomer.name}` : 'Registrar llamada'}
+        description="Guarda fecha, hora y notas de la llamada en la actividad del cliente."
+      >
+        <form className="grid gap-4" onSubmit={submitContactLog}>
+          <Field label="Fecha y hora">
+            <Input type="datetime-local" value={contactedAt} onChange={(event) => setContactedAt(event.target.value)} required />
+          </Field>
+          <Field label="Notas de la llamada">
+            <Textarea
+              value={callNotes}
+              onChange={(event) => setCallNotes(event.target.value)}
+              placeholder="Resumen de la conversación, siguiente paso, objeciones, etc."
+            />
+          </Field>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={closeContactDialog}>
+              Cancelar
+            </Button>
+            <Button type="submit">
+              Guardar actividad
+            </Button>
+          </div>
+        </form>
+      </Dialog>
     </div>
   )
+}
+
+function formatDateTimeLocal(value: Date) {
+  const year = value.getFullYear()
+  const month = String(value.getMonth() + 1).padStart(2, '0')
+  const day = String(value.getDate()).padStart(2, '0')
+  const hours = String(value.getHours()).padStart(2, '0')
+  const minutes = String(value.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
 }

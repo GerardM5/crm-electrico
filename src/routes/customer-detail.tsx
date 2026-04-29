@@ -149,6 +149,10 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 }
 
 const actionIcons: Record<string, ReactNode> = {
+  customer_contacted: <Phone className="h-3.5 w-3.5" />,
+  customer_renewed: <RefreshCw className="h-3.5 w-3.5" />,
+  customer_created: <UserCheck className="h-3.5 w-3.5" />,
+  customer_updated: <FileText className="h-3.5 w-3.5" />,
   contacted: <Phone className="h-3.5 w-3.5" />,
   renewed: <RefreshCw className="h-3.5 w-3.5" />,
   created: <UserCheck className="h-3.5 w-3.5" />,
@@ -189,4 +193,3 @@ function ActivityLog({ customerId }: { customerId: string }) {
     </section>
   )
 }
-
