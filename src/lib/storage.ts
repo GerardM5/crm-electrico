@@ -42,6 +42,10 @@ export function getStoragePublicUrl(bucket: string, filePath: string) {
     return filePath
   }
 
+  if (filePath.startsWith('/')) {
+    return filePath
+  }
+
   if (!isSupabaseConfigured || !supabase) {
     return null
   }
