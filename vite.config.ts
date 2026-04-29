@@ -1,6 +1,6 @@
+import path from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import path from "node:path";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
@@ -10,7 +10,7 @@ export default defineConfig({
 		tailwindcss(),
 		VitePWA({
 			registerType: "autoUpdate",
-			includeAssets: ["favicon.svg", "offline.html"],
+			includeAssets: ["favicon.svg"],
 			manifest: {
 				name: "Energiza CRM Demo",
 				short_name: "Energiza CRM",
@@ -34,17 +34,8 @@ export default defineConfig({
 				],
 			},
 			workbox: {
-				navigateFallback: "/offline.html",
+				navigateFallback: "/index.html",
 				globPatterns: ["**/*.{js,css,html,svg,png,ico}"],
-				runtimeCaching: [
-					{
-						urlPattern: ({ url }) => url.hostname.includes("supabase.co"),
-						handler: "NetworkOnly",
-						options: {
-							cacheName: "supabase-private-network-only",
-						},
-					},
-				],
 			},
 		}),
 	],
