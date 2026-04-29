@@ -169,7 +169,7 @@ function MemberFormDialog() {
       onOpenChange={(next) => { setOpen(next); if (!next) reset() }}
       title="Añadir miembro"
       description="El nuevo miembro tendrá acceso según el rol asignado."
-      size="sm"
+      size="md"
       trigger={
         <Button size="sm">
           <Plus className="h-3.5 w-3.5" />

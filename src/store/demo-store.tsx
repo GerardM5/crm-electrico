@@ -23,9 +23,9 @@ import type {
   Task,
 } from '../types/domain'
 
-const STORAGE_KEY = 'renovaciones-crm-demo-state-v2'
-const BACKUP_INDEX_KEY = 'renovaciones-crm-backups-v2'
-const BACKUP_PREFIX = 'renovaciones-crm-backup-v2:'
+const STORAGE_KEY = 'renovaciones-crm-demo-state-v3'
+const BACKUP_INDEX_KEY = 'renovaciones-crm-backups-v3'
+const BACKUP_PREFIX = 'renovaciones-crm-backup-v3:'
 
 type CreateInput<T> = Omit<T, 'id' | 'organization_id' | 'created_at' | 'updated_at' | 'created_by'>
 
@@ -95,6 +95,7 @@ function downloadFile(filename: string, content: string, mimeType: string) {
 function isValidState(state: DemoState): boolean {
   return (
     Array.isArray(state.customers) &&
+    state.customers.length > 0 &&
     Array.isArray(state.profiles) &&
     state.profiles.length > 0 &&
     typeof state.organization?.id === 'string'
