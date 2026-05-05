@@ -31,7 +31,7 @@ export function CustomerFormDialog({ customer }: { customer?: CustomerRow }) {
   const defaultRenewal = useMemo(() => addMonths(new Date(), 12).toISOString().slice(0, 10), [])
 
   const { register, handleSubmit, setValue, reset, formState: { errors, isSubmitting } } = useForm<FullFormValues>({
-    resolver: zodResolver(customerSchema),
+    resolver: zodResolver(customerSchema) as never,
     defaultValues: customer
       ? {
         name: customer.name,
@@ -46,7 +46,7 @@ export function CustomerFormDialog({ customer }: { customer?: CustomerRow }) {
         status: customer.status,
         contract_signed_at: customer.contract_signed_at?.slice(0, 10) ?? today,
         renewal_date: customer.renewal_date?.slice(0, 10) ?? defaultRenewal,
-        assigned_to: customer.assigned_to ?? currentUser.id,
+        assigned_to: customer.assigned_to ?? currentUser?.id ?? '',
         products_services: customer.products_services.join(', '),
       }
       : {
@@ -54,7 +54,7 @@ export function CustomerFormDialog({ customer }: { customer?: CustomerRow }) {
         status: 'active',
         contract_signed_at: today,
         renewal_date: defaultRenewal,
-        assigned_to: currentUser.id,
+        assigned_to: currentUser?.id ?? '',
         products_services: '',
         email: '',
         phone: '',
