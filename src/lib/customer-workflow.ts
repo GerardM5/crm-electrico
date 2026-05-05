@@ -4,7 +4,9 @@ import {
 	isAfter,
 	startOfDay,
 } from "date-fns";
-import type { AppRole, Customer } from "../types/domain";
+import type { AppRole, Tables } from "../types/database.types";
+
+type Customer = Tables<'customers'>
 
 export function canViewAllCustomers(role: AppRole) {
 	return role === "owner" || role === "admin";

@@ -1,27 +1,43 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useMemo } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Field, Input, Select, Textarea } from '../components/ui/input'
-import { DataTable, Td, Tr } from '../components/ui/table'
+import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
 import { money } from '../lib/formatters'
 import { type SimulationFormValues, simulationSchema } from '../schemas/simulation.schema'
-import { useDemoStore } from '../store/demo-store'
+import { useCustomers } from '../services/customers.service'
+import { useCreateSimulation, useEnergyProfiles, useSimulations } from '../services/simulations.service'
 
 export function SimulationsRoute() {
-  const store = useDemoStore()
+  const { data: customersResult } = useCustomers({ pageSize: 500 })
+  const { data: simulations = [] } = useSimulations()
+  const { data: energyProfiles = [] } = useEnergyProfiles()
+  const createSimulation = useCreateSimulation()
+
+  const customers = customersResult?.data ?? []
+
+  const customersById = useMemo(
+    () => Object.fromEntries(customers.map((c) => [c.id, c.name])),
+    [customers],
+  )
+
   const form = useForm<SimulationFormValues>({
     resolver: zodResolver(simulationSchema) as never,
-    defaultValues: { customer_id: store.customers[0]?.id, estimated_saving_percent: 18, current_monthly_cost_eur: 500 },
+    defaultValues: { customer_id: customers[0]?.id ?? '', estimated_saving_percent: 18, current_monthly_cost_eur: 500 },
   })
   const currentCost = Number(useWatch({ control: form.control, name: 'current_monthly_cost_eur' }) || 0)
   const percent = Number(useWatch({ control: form.control, name: 'estimated_saving_percent' }) || 0)
+  const solarInvestment = Number(useWatch({ control: form.control, name: 'solar_investment_eur' }) || 0)
   const watchedCustomerId = useWatch({ control: form.control, name: 'customer_id' })
   const monthlySaving = currentCost * (percent / 100)
+  const annualSaving = monthlySaving * 12
+  const roiYears = solarInvestment > 0 && annualSaving > 0 ? solarInvestment / annualSaving : null
 
   function selectCustomer(customerId: string) {
-    const energy = store.energyProfiles.find((item) => item.customer_id === customerId)
+    const energy = energyProfiles.find((item) => item.customer_id === customerId)
     form.setValue('customer_id', customerId)
     if (energy) {
       form.setValue('energy_profile_id', energy.id)
@@ -33,12 +49,29 @@ export function SimulationsRoute() {
   }
 
   function onSubmit(values: SimulationFormValues) {
-    store.createSimulation(values)
+    const monthly = currentCost * (Number(values.estimated_saving_percent) / 100)
+    const annual = monthly * 12
+    const roi = values.solar_investment_eur && annual > 0 ? values.solar_investment_eur / annual : null
+    createSimulation.mutate({
+      customer_id: values.customer_id,
+      energy_profile_id: values.energy_profile_id ?? null,
+      current_monthly_cost_eur: values.current_monthly_cost_eur,
+      contracted_power_kw: values.contracted_power_kw ?? null,
+      monthly_consumption_kwh: values.monthly_consumption_kwh ?? null,
+      tariff_type: values.tariff_type ?? null,
+      estimated_saving_percent: values.estimated_saving_percent,
+      proposed_monthly_cost_eur: values.current_monthly_cost_eur - monthly,
+      monthly_saving_eur: monthly,
+      annual_saving_eur: annual,
+      solar_investment_eur: values.solar_investment_eur ?? null,
+      roi_years: roi,
+      notes: values.notes ?? null,
+    }, { onSuccess: () => form.reset({ customer_id: values.customer_id, estimated_saving_percent: 18, current_monthly_cost_eur: 500 }) })
   }
 
   return (
     <div>
-      <PageHeader title="Simulador de ahorro" description="Calculo simple demo-ready: ahorro mensual, ahorro anual y ROI solar." />
+      <PageHeader title="Simulador de ahorro" description="Calculo de ahorro mensual, anual y ROI solar para cada cliente." />
       <div className="grid gap-4 xl:grid-cols-[420px_1fr]">
         <Card>
           <CardHeader>
@@ -48,10 +81,8 @@ export function SimulationsRoute() {
             <form className="grid gap-4" onSubmit={form.handleSubmit(onSubmit)}>
               <Field label="Cliente" error={form.formState.errors.customer_id?.message}>
                 <Select value={watchedCustomerId} onChange={(event) => selectCustomer(event.target.value)}>
-                  {store.customers.map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.name}
-                    </option>
+                  {customers.map((customer) => (
+                    <option key={customer.id} value={customer.id}>{customer.name}</option>
                   ))}
                 </Select>
               </Field>
@@ -82,25 +113,37 @@ export function SimulationsRoute() {
                 </div>
                 <div>
                   <p className="text-primary">Ahorro anual</p>
-                  <p className="font-semibold text-foreground">{money.format(monthlySaving * 12)}</p>
+                  <p className="font-semibold text-foreground">{money.format(annualSaving)}</p>
                 </div>
+                {roiYears !== null && (
+                  <div className="col-span-2">
+                    <p className="text-primary">ROI solar estimado</p>
+                    <p className="font-semibold text-foreground">{roiYears.toFixed(1)} años</p>
+                  </div>
+                )}
               </div>
-              <Button type="submit">Guardar simulacion</Button>
+              <Button type="submit" disabled={createSimulation.isPending}>
+                {createSimulation.isPending ? 'Guardando…' : 'Guardar simulacion'}
+              </Button>
             </form>
           </CardContent>
         </Card>
-        <DataTable headers={['Cliente', 'Actual', 'Propuesto', 'Ahorro mensual', 'Ahorro anual', 'ROI']}>
-          {store.simulations.map((simulation) => (
-            <Tr key={simulation.id} hover>
-              <Td variant="primary">{store.customers.find((customer) => customer.id === simulation.customer_id)?.name}</Td>
-              <Td>{money.format(simulation.current_monthly_cost_eur)}</Td>
-              <Td>{money.format(simulation.proposed_monthly_cost_eur)}</Td>
-              <Td>{money.format(simulation.monthly_saving_eur)}</Td>
-              <Td>{money.format(simulation.annual_saving_eur)}</Td>
-              <Td variant="muted">{simulation.roi_years ? `${simulation.roi_years} anos` : '-'}</Td>
-            </Tr>
-          ))}
-        </DataTable>
+        {simulations.length === 0 ? (
+          <EmptyState title="Sin simulaciones" description="Crea la primera simulacion de ahorro para un cliente." />
+        ) : (
+          <DataTable headers={['Cliente', 'Actual', 'Propuesto', 'Ahorro mensual', 'Ahorro anual', 'ROI']}>
+            {simulations.map((simulation) => (
+              <Tr key={simulation.id} hover>
+                <Td variant="primary">{customersById[simulation.customer_id] ?? '-'}</Td>
+                <Td>{money.format(simulation.current_monthly_cost_eur)}</Td>
+                <Td>{money.format(simulation.proposed_monthly_cost_eur)}</Td>
+                <Td>{money.format(simulation.monthly_saving_eur)}</Td>
+                <Td>{money.format(simulation.annual_saving_eur)}</Td>
+                <Td variant="muted">{simulation.roi_years ? `${Number(simulation.roi_years).toFixed(1)} años` : '-'}</Td>
+              </Tr>
+            ))}
+          </DataTable>
+        )}
       </div>
     </div>
   )

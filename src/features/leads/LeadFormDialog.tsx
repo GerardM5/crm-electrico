@@ -6,12 +6,14 @@ import { Button } from '../../components/ui/button'
 import { Dialog } from '../../components/ui/dialog'
 import { Field, Input, Select, Textarea } from '../../components/ui/input'
 import { type LeadFormValues, leadSchema } from '../../schemas/lead.schema'
-import { useDemoStore } from '../../store/demo-store'
-import type { Lead } from '../../types/domain'
+import { type LeadRow, useCreateLead, useUpdateLead } from '../../services/leads.service'
+import { useProfiles } from '../../services/profiles.service'
 
-export function LeadFormDialog({ lead }: { lead?: Lead }) {
+export function LeadFormDialog({ lead }: { lead?: LeadRow }) {
   const [open, setOpen] = useState(false)
-  const { createLead, updateLead, profiles } = useDemoStore()
+  const { data: profiles = [] } = useProfiles()
+  const createLead = useCreateLead()
+  const updateLead = useUpdateLead()
   const {
     register,
     handleSubmit,
@@ -19,14 +21,28 @@ export function LeadFormDialog({ lead }: { lead?: Lead }) {
     reset,
   } = useForm<LeadFormValues>({
     resolver: zodResolver(leadSchema) as never,
-    defaultValues: lead ?? { status: 'new', source: 'web', assigned_to: 'user-sales' },
+    defaultValues: lead
+      ? {
+        company_name: lead.company_name ?? '',
+        contact_name: lead.contact_name,
+        email: lead.email ?? '',
+        phone: lead.phone ?? '',
+        source: lead.source,
+        status: lead.status,
+        city: lead.city ?? '',
+        notes: lead.notes ?? '',
+        estimated_monthly_bill: lead.estimated_monthly_bill ?? undefined,
+        assigned_to: lead.assigned_to ?? '',
+      }
+      : { status: 'new', source: 'web' },
   })
 
   function onSubmit(values: LeadFormValues) {
-    if (lead) updateLead(lead.id, values)
-    else createLead(values)
-    reset()
-    setOpen(false)
+    if (lead) {
+      updateLead.mutate({ id: lead.id, ...values }, { onSuccess: () => { reset(); setOpen(false) } })
+    } else {
+      createLead.mutate(values, { onSuccess: () => { reset(); setOpen(false) } })
+    }
   }
 
   return (

@@ -9,11 +9,13 @@ import { Field, Input, Select, Textarea } from '../components/ui/input'
 import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
 import { customerStatusLabels } from '../config/constants'
 import { useDebounce } from '../hooks/use-debounce'
-import { usePagination } from '../hooks/use-pagination'
-import { getDaysToRenewal, getRenewalStage, getVisibleCustomers } from '../lib/customer-workflow'
+import { getDaysToRenewal, getRenewalStage } from '../lib/customer-workflow'
 import { formatDate } from '../lib/formatters'
 import { cn } from '../lib/utils'
-import { useDemoStore } from '../store/demo-store'
+import { useLogActivity } from '../services/activity.service'
+import { useCustomers } from '../services/customers.service'
+import { useUpdateCustomer } from '../services/customers.service'
+import { useProfiles } from '../services/profiles.service'
 
 type StageFilter = 'all' | 'due' | 'urgent' | 'overdue' | 'scheduled'
 
@@ -32,12 +34,12 @@ function DaysBadge({ days }: { days: number | undefined }) {
 }
 
 export function RenewalsRoute() {
-  const store = useDemoStore()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const [contactingCustomerId, setContactingCustomerId] = useState<string | null>(null)
   const [contactedAt, setContactedAt] = useState(() => formatDateTimeLocal(new Date()))
   const [callNotes, setCallNotes] = useState('')
+  const [page, _setPage] = useState(0)
 
   const stage = (params.get('stage') ?? 'all') as StageFilter
   const search = params.get('q') ?? ''
@@ -50,27 +52,38 @@ export function RenewalsRoute() {
     setParams((p) => { const n = new URLSearchParams(p); value ? n.set('q', value) : n.delete('q'); n.delete('page'); return n })
   }
 
+  // Fetch all customers with renewal filtering (RLS handles visibility)
+  const { data: result } = useCustomers({ search: debouncedSearch || undefined, pageSize: 500 })
+  const { data: profiles } = useProfiles()
+  const updateCustomer = useUpdateCustomer()
+  const logActivity = useLogActivity()
+
   const profilesById = useMemo(
-    () => Object.fromEntries(store.profiles.map((p) => [p.id, p.full_name])),
-    [store.profiles],
+    () => Object.fromEntries((profiles ?? []).map((p) => [p.id, p.full_name])),
+    [profiles],
   )
 
-  const customers = getVisibleCustomers(store.customers, store.currentUser.id, store.currentUser.role)
+  const allCustomers = result?.data ?? []
 
   const renewalQueue = useMemo(() => {
     const q = debouncedSearch.toLowerCase()
-    return customers
+    return allCustomers
       .filter((customer) => {
-        const currentStage = getRenewalStage(customer)
+        const currentStage = getRenewalStage(customer as any)
         const inStage = ['due', 'urgent', 'overdue', 'scheduled'].includes(currentStage) && (stage === 'all' || currentStage === stage)
         const matchesSearch = !q || customer.name.toLowerCase().includes(q) || customer.company?.toLowerCase().includes(q)
         return inStage && matchesSearch
       })
       .sort((a, b) => (a.renewal_date ?? '').localeCompare(b.renewal_date ?? ''))
-  }, [customers, stage, debouncedSearch])
+  }, [allCustomers, stage, debouncedSearch])
 
-  const pagination = usePagination(renewalQueue, 25)
-  const contactingCustomer = contactingCustomerId ? customers.find((customer) => customer.id === contactingCustomerId) : undefined
+  const PAGE_SIZE = 25
+  const total = renewalQueue.length
+  const totalPages = Math.ceil(total / PAGE_SIZE)
+  const pageItems = renewalQueue.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  void _setPage
+
+  const contactingCustomer = contactingCustomerId ? allCustomers.find((c) => c.id === contactingCustomerId) : undefined
 
   function openContactDialog(customerId: string) {
     setContactingCustomerId(customerId)
@@ -86,7 +99,8 @@ export function RenewalsRoute() {
   function submitContactLog(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!contactingCustomerId) return
-    store.touchCustomer(contactingCustomerId, { contacted_at: contactedAt, notes: callNotes })
+    updateCustomer.mutate({ id: contactingCustomerId, last_contact_at: new Date(contactedAt).toISOString() })
+    logActivity.mutate({ entityType: 'customer', entityId: contactingCustomerId, action: 'contacted', metadata: { label: `Llamada registrada: ${callNotes}` } })
     closeContactDialog()
   }
 
@@ -128,18 +142,18 @@ export function RenewalsRoute() {
       ) : (
         <DataTable
           headers={['Cliente', 'Estado', 'Renovacion', 'Dias', 'Comercial', 'Acciones']}
-          pagination={{ page: pagination.page, pageSize: pagination.pageSize, total: pagination.total, totalPages: pagination.totalPages, onPageChange: pagination.setPage, onPageSizeChange: pagination.setPageSize }}
+          pagination={{ page, pageSize: PAGE_SIZE, total, totalPages, onPageChange: _setPage, onPageSizeChange: () => { } }}
         >
-          {pagination.items.map((customer) => {
-            const days = getDaysToRenewal(customer)
+          {pageItems.map((customer) => {
+            const days = getDaysToRenewal(customer as any)
             return (
               <Tr key={customer.id} hover className="cursor-pointer" onClick={() => navigate(`/customers/${customer.id}`)}>
                 <Td>
                   <p className="font-medium text-foreground">{customer.name}</p>
-                  <p className="text-xs text-muted-foreground">{customer.products_services.join(', ') || 'Sin servicios'}</p>
+                  <p className="text-xs text-muted-foreground">{(customer.products_services as string[]).join(', ') || 'Sin servicios'}</p>
                 </Td>
-                <Td><StatusBadge value={customerStatusLabels[customer.status]} /></Td>
-                <Td variant="muted">{formatDate(customer.renewal_date)}</Td>
+                <Td><StatusBadge value={customerStatusLabels[customer.status as keyof typeof customerStatusLabels] ?? customer.status} /></Td>
+                <Td variant="muted">{formatDate(customer.renewal_date ?? undefined)}</Td>
                 <Td><DaysBadge days={days} /></Td>
                 <Td variant="muted">{profilesById[customer.assigned_to ?? ''] ?? '-'}</Td>
                 <Td>
@@ -150,7 +164,7 @@ export function RenewalsRoute() {
                     </Button>
                     {customer.status !== 'renewed' && (
                       <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
-                        onClick={(e) => { e.stopPropagation(); store.renewCustomer(customer.id) }}>
+                        onClick={(e) => { e.stopPropagation(); updateCustomer.mutate({ id: customer.id, status: 'renewed' }) }}>
                         <RefreshCw className="h-3 w-3" />Renovado
                       </Button>
                     )}

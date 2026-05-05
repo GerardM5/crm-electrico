@@ -8,25 +8,34 @@ import { Button } from '../components/ui/button'
 import { DataTable, Td, Tr, TruncatePath } from '../components/ui/table'
 import { customerStatusLabels } from '../config/constants'
 import { CustomerFormDialog } from '../features/customers/CustomerFormDialog'
-import { getDaysToRenewal, getRenewalAlertDate, getVisibleCustomers } from '../lib/customer-workflow'
+import { getDaysToRenewal, getRenewalAlertDate } from '../lib/customer-workflow'
 import { formatDate, relativeTime } from '../lib/formatters'
 import { isPdfDocument } from '../lib/storage'
-import { useDemoStore } from '../store/demo-store'
+import { useActivityLogs } from '../services/activity.service'
+import { useContracts } from '../services/contracts.service'
+import { useCustomer } from '../services/customers.service'
+import { useDocuments } from '../services/documents.service'
+import { useProfiles } from '../services/profiles.service'
 
 export function CustomerDetailRoute() {
   const { id } = useParams()
-  const store = useDemoStore()
-  const visibleCustomers = getVisibleCustomers(store.customers, store.currentUser.id, store.currentUser.role)
-  const customer = visibleCustomers.find((item) => item.id === id)
 
-  const documents = useMemo(
-    () => store.documents.filter((item) => item.customer_id === customer?.id),
-    [customer?.id, store.documents],
+  const { data: customer, isLoading } = useCustomer(id)
+  const { data: documents = [] } = useDocuments(id)
+  const { data: contracts = [] } = useContracts(id)
+  const { data: profiles = [] } = useProfiles()
+
+  const owner = useMemo(
+    () => profiles.find((p) => p.id === customer?.assigned_to),
+    [profiles, customer?.assigned_to],
   )
-  const contract = useMemo(() => store.contracts.find((item) => item.customer_id === customer?.id), [customer?.id, store.contracts])
-  const owner = store.profiles.find((profile) => profile.id === customer?.assigned_to)
-  const daysToRenewal = customer ? getDaysToRenewal(customer) : undefined
-  const alertDate = customer ? getRenewalAlertDate(customer) : undefined
+  const contract = contracts[0]
+  const daysToRenewal = customer ? getDaysToRenewal(customer as any) : undefined
+  const alertDate = customer ? getRenewalAlertDate(customer as any) : undefined
+
+  if (isLoading) {
+    return <p className="text-sm text-muted-foreground">Cargando...</p>
+  }
 
   if (!customer) {
     return (
@@ -62,16 +71,16 @@ export function CustomerDetailRoute() {
             )}
           </span>
         }
-        action={<CustomerFormDialog customer={customer} />}
+        action={<CustomerFormDialog customer={customer as any} />}
       />
 
       {/* KPI strip — flat, no individual card boxes */}
       <div className="mb-8 flex flex-wrap gap-x-8 gap-y-4 border-b border-border pb-6">
         <Stat label="Estado">
-          <StatusBadge value={customerStatusLabels[customer.status]} />
+          <StatusBadge value={customerStatusLabels[customer.status as keyof typeof customerStatusLabels] ?? customer.status} />
         </Stat>
-        <Stat label="Contrato firmado">{formatDate(customer.contract_signed_at)}</Stat>
-        <Stat label="Renovación">{formatDate(customer.renewal_date)}</Stat>
+        <Stat label="Contrato firmado">{formatDate(customer.contract_signed_at ?? undefined)}</Stat>
+        <Stat label="Renovación">{formatDate(customer.renewal_date ?? undefined)}</Stat>
         <Stat label="Aviso automático">{alertDate ? formatDate(alertDate.toISOString()) : '—'}</Stat>
         {typeof daysToRenewal === 'number' && (
           <Stat label="Días para renovar">{daysToRenewal} días</Stat>
@@ -95,7 +104,7 @@ export function CustomerDetailRoute() {
           <h3 className="mb-3 text-sm font-semibold text-foreground">Contrato y documentación</h3>
           <dl className="overflow-hidden rounded-lg border border-border bg-card divide-y divide-border">
             <DetailRow label="Número de contrato" value={contract?.contract_number ?? '—'} />
-            <DetailRow label="Vigencia" value={`${formatDate(contract?.starts_at)} – ${formatDate(contract?.ends_at)}`} />
+            <DetailRow label="Vigencia" value={`${formatDate(contract?.starts_at ?? undefined)} – ${formatDate(contract?.ends_at ?? undefined)}`} />
             <DetailRow label="Importe" value={contract ? `${contract.amount_eur.toLocaleString('es-ES')} EUR` : '—'} />
             <DetailRow label="Documentos" value={String(documents.length)} />
           </dl>
@@ -113,8 +122,8 @@ export function CustomerDetailRoute() {
               <Td variant="muted">{formatDate(document.created_at)}</Td>
               <Td className="max-w-48"><TruncatePath path={document.file_path} /></Td>
               <Td>
-                {isPdfDocument(document.file_name, document.mime_type) ? (
-                  <PdfViewerDialog source={document} title={document.file_name} description={`Archivo asociado a ${customer.name}`} />
+                {isPdfDocument(document.file_name, document.mime_type ?? undefined) ? (
+                  <PdfViewerDialog source={{ bucket: document.bucket, file_path: document.file_path, file_name: document.file_name, mime_type: document.mime_type ?? undefined }} title={document.file_name} description={`Archivo asociado a ${customer.name}`} />
                 ) : (
                   <span className="text-xs text-muted-foreground">No PDF</span>
                 )}
@@ -160,15 +169,7 @@ const actionIcons: Record<string, ReactNode> = {
 }
 
 function ActivityLog({ customerId }: { customerId: string }) {
-  const store = useDemoStore()
-  const logs = useMemo(
-    () =>
-      store.activityLogs
-        .filter((log) => log.entity_id === customerId || log.metadata?.customer_id === customerId)
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 20),
-    [customerId, store.activityLogs],
-  )
+  const { data: logs = [] } = useActivityLogs('customer', customerId)
 
   return (
     <section className="mt-8">
@@ -183,7 +184,7 @@ function ActivityLog({ customerId }: { customerId: string }) {
                 {actionIcons[log.action] ?? <Clock className="h-3.5 w-3.5" />}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-foreground">{String(log.metadata?.label ?? log.action)}</p>
+                <p className="truncate text-sm text-foreground">{String((log.metadata as any)?.label ?? log.action)}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">{relativeTime(log.created_at)}</p>
               </div>
             </div>

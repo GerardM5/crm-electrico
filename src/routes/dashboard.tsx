@@ -4,9 +4,10 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { Button } from '../components/ui/button'
-import { getDaysToRenewal, getRenewalStage, getVisibleCustomers } from '../lib/customer-workflow'
+import { useRecentActivity } from '../services/activity.service'
+import { useCustomers } from '../services/customers.service'
+import { getDaysToRenewal, getRenewalStage } from '../lib/customer-workflow'
 import { relativeTime } from '../lib/formatters'
-import { useDemoStore } from '../store/demo-store'
 
 const entityIcons: Record<string, ReactNode> = {
   customer: <Users className="h-3.5 w-3.5" />,
@@ -25,31 +26,29 @@ const renewalStageStyle: Record<string, { label: string; className: string }> = 
 }
 
 export function DashboardRoute() {
-  const store = useDemoStore()
+  const { data: customersResult, isLoading: customersLoading } = useCustomers({ pageSize: 500 })
+  const { data: recentActivity } = useRecentActivity(8)
 
-  const visibleCustomers = useMemo(
-    () => getVisibleCustomers(store.customers, store.currentUser.id, store.currentUser.role),
-    [store.customers, store.currentUser.id, store.currentUser.role],
-  )
+  const customers = customersResult?.data ?? []
 
   const kpis = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10)
-    const thisMonth = today.slice(0, 7) // 'YYYY-MM'
-    const activeCount = visibleCustomers.filter((c) => c.status === 'active' || c.status === 'renewed').length
-    const urgentCount = visibleCustomers.filter((c) => ['due', 'urgent', 'overdue'].includes(getRenewalStage(c))).length
-    const thisMonthCount = visibleCustomers.filter((c) => c.renewal_date?.startsWith(thisMonth)).length
-    const contactedTodayCount = visibleCustomers.filter((c) => c.last_contact_at?.startsWith(today)).length
+    const thisMonth = today.slice(0, 7)
+    const activeCount = customers.filter((c) => c.status === 'active' || c.status === 'renewed').length
+    const urgentCount = customers.filter((c) => ['due', 'urgent', 'overdue'].includes(getRenewalStage(c as any))).length
+    const thisMonthCount = customers.filter((c) => c.renewal_date?.startsWith(thisMonth)).length
+    const contactedTodayCount = customers.filter((c) => c.last_contact_at?.startsWith(today)).length
     return { activeCount, urgentCount, thisMonthCount, contactedTodayCount }
-  }, [visibleCustomers])
+  }, [customers])
 
   const urgentRenewals = useMemo(
     () =>
-      visibleCustomers
-        .map((c) => ({ customer: c, stage: getRenewalStage(c), days: getDaysToRenewal(c) }))
+      customers
+        .map((c) => ({ customer: c, stage: getRenewalStage(c as any), days: getDaysToRenewal(c as any) }))
         .filter(({ stage }) => ['overdue', 'urgent', 'due'].includes(stage))
         .sort((a, b) => (a.days ?? 999) - (b.days ?? 999))
         .slice(0, 6),
-    [visibleCustomers],
+    [customers],
   )
 
   return (
@@ -110,17 +109,20 @@ export function DashboardRoute() {
           <div>
             <h2 className="mb-3 text-sm font-semibold text-foreground">Actividad reciente</h2>
             <div className="overflow-hidden rounded-lg border border-border bg-card divide-y divide-border">
-              {store.activityLogs.slice(0, 8).map((log) => (
+              {(recentActivity ?? []).map((log) => (
                 <div key={log.id} className="flex items-start gap-3 px-4 py-3">
                   <div className="mt-0.5 shrink-0 text-muted-foreground">
                     {entityIcons[log.entity_type] ?? <Clock className="h-3.5 w-3.5" />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm text-foreground">{String(log.metadata.label ?? log.action)}</p>
+                    <p className="truncate text-sm text-foreground">{String((log.metadata as any)?.label ?? log.action)}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">{relativeTime(log.created_at)}</p>
                   </div>
                 </div>
               ))}
+              {!recentActivity?.length && !customersLoading && (
+                <p className="px-4 py-6 text-sm text-muted-foreground text-center">Sin actividad reciente.</p>
+              )}
             </div>
           </div>
         </div>

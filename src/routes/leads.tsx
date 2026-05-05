@@ -1,5 +1,5 @@
 import { ArrowRight, Search } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { StatusBadge } from '../components/feedback/StatusBadge'
@@ -8,25 +8,41 @@ import { Dialog } from '../components/ui/dialog'
 import { Field, Input, Select } from '../components/ui/input'
 import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
 import { leadStatusLabels } from '../config/constants'
+
 import { LeadFormDialog } from '../features/leads/LeadFormDialog'
+import { useDebounce } from '../hooks/use-debounce'
 import { money } from '../lib/formatters'
-import { useDemoStore } from '../store/demo-store'
-import type { Lead } from '../types/domain'
+import type { LeadRow } from '../services/leads.service'
+import { useLeads } from '../services/leads.service'
+import { useProfiles } from '../services/profiles.service'
+
+const PAGE_SIZE = 50
 
 export function LeadsRoute() {
-  const { leads, profiles, convertLead, currentUser } = useDemoStore()
-  const [pendingConvert, setPendingConvert] = useState<Lead | null>(null)
+  const [pendingConvert, setPendingConvert] = useState<LeadRow | null>(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [page, setPage] = useState(0)
 
-  const visibleLeads = currentUser.role === 'owner' || currentUser.role === 'admin' ? leads : leads.filter((lead) => lead.assigned_to === currentUser.id)
+  const debouncedSearch = useDebounce(search, 250)
 
-  const filtered = visibleLeads.filter((lead) => {
-    const name = (lead.company_name ?? lead.contact_name ?? '').toLowerCase()
-    const matchesSearch = name.includes(search.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || lead.status === statusFilter
-    return matchesSearch && matchesStatus
+  const { data: result, isLoading } = useLeads({
+    search: debouncedSearch || undefined,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
+    page,
+    pageSize: PAGE_SIZE,
   })
+
+  const { data: profiles } = useProfiles()
+
+  const profilesById = useMemo(
+    () => Object.fromEntries((profiles ?? []).map((p) => [p.id, p.full_name])),
+    [profiles],
+  )
+
+  const leads = result?.data ?? []
+  const total = result?.count ?? 0
+  const totalPages = Math.ceil(total / PAGE_SIZE)
 
   return (
     <div>
@@ -42,16 +58,13 @@ export function LeadsRoute() {
             <Input
               placeholder="Buscar por nombre..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPage(0) }}
               className="pl-9"
             />
           </div>
         </Field>
         <Field label="Estado" className="w-52">
-          <Select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
+          <Select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(0) }}>
             <option value="all">Todos los estados</option>
             {Object.entries(leadStatusLabels).map(([key, label]) => (
               <option key={key} value={key}>{label}</option>
@@ -59,17 +72,18 @@ export function LeadsRoute() {
           </Select>
         </Field>
       </div>
-      {visibleLeads.length === 0 ? (
+      {!isLoading && leads.length === 0 ? (
         <EmptyState
-          title="Sin leads todavía"
-          description="Captura tu primer lead para empezar el proceso comercial."
-          action={<LeadFormDialog />}
+          title={total === 0 && !debouncedSearch && statusFilter === 'all' ? 'Sin leads todavía' : 'Sin resultados'}
+          description={total === 0 && !debouncedSearch && statusFilter === 'all' ? 'Captura tu primer lead para empezar el proceso comercial.' : 'Prueba con otros filtros o términos de búsqueda.'}
+          action={total === 0 && !debouncedSearch ? <LeadFormDialog /> : undefined}
         />
-      ) : filtered.length === 0 ? (
-        <EmptyState title="Sin resultados" description="Prueba con otros filtros o términos de búsqueda." />
       ) : (
-        <DataTable headers={['Lead', 'Origen', 'Estado', 'Factura estimada', 'Asignado', 'Acciones']}>
-          {filtered.map((lead) => (
+        <DataTable
+          headers={['Lead', 'Origen', 'Estado', 'Factura estimada', 'Asignado', 'Acciones']}
+          pagination={{ page, pageSize: PAGE_SIZE, total, totalPages, onPageChange: setPage, onPageSizeChange: () => { } }}
+        >
+          {leads.map((lead) => (
             <Tr key={lead.id} hover>
               <Td>
                 <p className="font-medium text-foreground">{lead.company_name ?? lead.contact_name}</p>
@@ -78,12 +92,12 @@ export function LeadsRoute() {
                 </p>
               </Td>
               <Td variant="muted">{lead.source}</Td>
-              <Td><StatusBadge value={leadStatusLabels[lead.status]} /></Td>
+              <Td><StatusBadge value={leadStatusLabels[lead.status as keyof typeof leadStatusLabels] ?? lead.status} /></Td>
               <Td>{lead.estimated_monthly_bill ? money.format(lead.estimated_monthly_bill) : '-'}</Td>
-              <Td variant="muted">{profiles.find((profile) => profile.id === lead.assigned_to)?.full_name ?? '-'}</Td>
+              <Td variant="muted">{profilesById[lead.assigned_to ?? ''] ?? '-'}</Td>
               <Td>
                 <div className="flex gap-2">
-                  <LeadFormDialog lead={lead} />
+                  <LeadFormDialog lead={lead as any} />
                   {lead.status !== 'converted' ? (
                     <Button size="sm" onClick={() => setPendingConvert(lead)}>
                       Convertir
@@ -112,7 +126,7 @@ export function LeadsRoute() {
         </p>
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="secondary" onClick={() => setPendingConvert(null)}>Cancelar</Button>
-          <Button onClick={() => { if (pendingConvert) { convertLead(pendingConvert.id); setPendingConvert(null) } }}>
+          <Button onClick={() => setPendingConvert(null)}>
             Confirmar
             <ArrowRight className="h-4 w-4" />
           </Button>
@@ -121,3 +135,5 @@ export function LeadsRoute() {
     </div>
   )
 }
+
+

@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Camera, MapPin } from 'lucide-react'
+import { MapPin } from 'lucide-react'
+import { useMemo } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { StatusBadge } from '../components/feedback/StatusBadge'
@@ -10,26 +11,43 @@ import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
 import { installationStatusLabels } from '../config/constants'
 import { useGeolocation } from '../hooks/use-geolocation'
 import { formatDateTime } from '../lib/formatters'
-import { buildStoragePath } from '../lib/storage'
 import { type InstallationFormValues, installationSchema } from '../schemas/forms.schema'
-import { useDemoStore } from '../store/demo-store'
+import { useCustomers } from '../services/customers.service'
+import { useCreateInstallation, useInstallations, useUpdateInstallation } from '../services/installations.service'
+import { useProfiles } from '../services/profiles.service'
 
 export function InstallationsRoute() {
-  const store = useDemoStore()
+  const { data: installations = [] } = useInstallations()
+  const { data: customersResult } = useCustomers({ pageSize: 500 })
+  const { data: profiles = [] } = useProfiles()
+  const createInstallation = useCreateInstallation()
+  const updateInstallation = useUpdateInstallation()
   const { isLocating, getCurrentPosition } = useGeolocation()
+
+  const customers = customersResult?.data ?? []
+  const customersById = useMemo(
+    () => Object.fromEntries(customers.map((c) => [c.id, c.name])),
+    [customers],
+  )
+  const profilesById = useMemo(
+    () => Object.fromEntries(profiles.map((p) => [p.id, p.full_name])),
+    [profiles],
+  )
+  const technicians = profiles.filter((p) => ['technician', 'admin', 'owner'].includes(p.role))
+
   const form = useForm<InstallationFormValues>({
     resolver: zodResolver(installationSchema) as never,
     defaultValues: {
-      customer_id: store.customers[0]?.id,
+      customer_id: customers[0]?.id ?? '',
       status: 'pending',
       type: 'Autoconsumo solar',
-      assigned_technician: 'user-tech',
+      assigned_technician: technicians[0]?.id ?? '',
     },
   })
   const watchedCustomerId = useWatch({ control: form.control, name: 'customer_id' })
 
   function selectCustomer(customerId: string) {
-    const customer = store.customers.find((item) => item.id === customerId)
+    const customer = customers.find((c) => c.id === customerId)
     form.setValue('customer_id', customerId)
     if (customer) {
       form.setValue('address', customer.address ?? '')
@@ -40,54 +58,33 @@ export function InstallationsRoute() {
   }
 
   function onSubmit(values: InstallationFormValues) {
-    store.createInstallation(values)
+    createInstallation.mutate({
+      ...values,
+      scheduled_at: values.scheduled_at ? new Date(values.scheduled_at).toISOString() : null,
+    })
   }
 
   async function saveLocation(installationId: string) {
     const position = await getCurrentPosition()
-    store.updateInstallation(installationId, {
+    updateInstallation.mutate({
+      id: installationId,
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
       status: 'in_progress',
     })
   }
 
-  function mockPhotoUpload(installationId: string, customerId: string) {
-    const visit = store.installationVisits.find((item) => item.installation_id === installationId) ?? store.createVisit({
-      installation_id: installationId,
-      technician_id: store.currentUser.id,
-      photo_paths: [],
-    })
-    store.createDocument({
-      customer_id: customerId,
-      installation_id: installationId,
-      type: 'technical_photo',
-      bucket: 'installation-photos',
-      file_name: 'foto-tecnica-demo.jpg',
-      file_path: buildStoragePath(store.organization.id, customerId, visit.id, 'foto-tecnica-demo.jpg'),
-      mime_type: 'image/jpeg',
-      size_bytes: 860_000,
-      uploaded_by: store.currentUser.id,
-    })
-  }
-
   return (
     <div>
-      <PageHeader title="Instalaciones y visitas" description="Flujo tecnico con asignacion, geolocalizacion puntual y fotos en Storage." />
+      <PageHeader title="Instalaciones y visitas" description="Flujo tecnico con asignacion y geolocalizacion." />
       <div className="grid gap-4 xl:grid-cols-[420px_1fr]">
         <Card>
-          <CardHeader>
-            <CardTitle>Nueva instalacion</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Nueva instalacion</CardTitle></CardHeader>
           <CardContent>
             <form className="grid gap-4" onSubmit={form.handleSubmit(onSubmit)}>
               <Field label="Cliente" error={form.formState.errors.customer_id?.message}>
-                <Select value={watchedCustomerId} onChange={(event) => selectCustomer(event.target.value)}>
-                  {store.customers.map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.name}
-                    </option>
-                  ))}
+                <Select value={watchedCustomerId} onChange={(e) => selectCustomer(e.target.value)}>
+                  {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </Select>
               </Field>
               <Field label="Tipo" error={form.formState.errors.type?.message}>
@@ -112,45 +109,37 @@ export function InstallationsRoute() {
               </div>
               <Field label="Tecnico" error={form.formState.errors.assigned_technician?.message}>
                 <Select {...form.register('assigned_technician')}>
-                  {store.profiles.filter((profile) => ['technician', 'admin', 'owner'].includes(profile.role)).map((profile) => (
-                    <option key={profile.id} value={profile.id}>
-                      {profile.full_name}
-                    </option>
-                  ))}
+                  {technicians.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
                 </Select>
               </Field>
               <Field label="Notas" error={form.formState.errors.notes?.message}>
                 <Textarea {...form.register('notes')} />
               </Field>
-              <Button type="submit">Crear instalacion</Button>
+              <Button type="submit" disabled={createInstallation.isPending}>Crear instalacion</Button>
             </form>
           </CardContent>
         </Card>
-        {store.installations.length === 0 ? (
+        {installations.length === 0 ? (
           <EmptyState title="Sin instalaciones" description="Registra la primera instalacion o visita tecnica para un cliente." />
         ) : (
           <DataTable headers={['Instalacion', 'Cliente', 'Tecnico', 'Fecha', 'Estado', 'Ubicacion', 'Acciones']}>
-            {store.installations.map((installation) => (
+            {installations.map((installation) => (
               <Tr key={installation.id} hover>
                 <Td variant="primary">{installation.type}</Td>
-                <Td variant="muted">{store.customers.find((customer) => customer.id === installation.customer_id)?.name}</Td>
-                <Td variant="muted">{store.profiles.find((profile) => profile.id === installation.assigned_technician)?.full_name}</Td>
-                <Td variant="muted">{formatDateTime(installation.scheduled_at)}</Td>
-                <Td><StatusBadge value={installationStatusLabels[installation.status]} /></Td>
+                <Td variant="muted">{customersById[installation.customer_id] ?? '-'}</Td>
+                <Td variant="muted">{profilesById[installation.assigned_technician ?? ''] ?? '-'}</Td>
+                <Td variant="muted">{formatDateTime(installation.scheduled_at ?? undefined)}</Td>
+                <Td><StatusBadge value={installationStatusLabels[installation.status as keyof typeof installationStatusLabels] ?? installation.status} /></Td>
                 <Td className="text-xs" variant="muted">
-                  {installation.latitude && installation.longitude ? `${installation.latitude.toFixed(4)}, ${installation.longitude.toFixed(4)}` : 'Pendiente'}
+                  {installation.latitude && installation.longitude
+                    ? `${Number(installation.latitude).toFixed(4)}, ${Number(installation.longitude).toFixed(4)}`
+                    : 'Pendiente'}
                 </Td>
                 <Td>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="secondary" disabled={isLocating} onClick={() => saveLocation(installation.id)}>
-                      <MapPin className="h-4 w-4" />
-                      GPS
-                    </Button>
-                    <Button size="sm" variant="secondary" onClick={() => mockPhotoUpload(installation.id, installation.customer_id)}>
-                      <Camera className="h-4 w-4" />
-                      Foto
-                    </Button>
-                  </div>
+                  <Button size="sm" variant="secondary" disabled={isLocating} onClick={() => saveLocation(installation.id)}>
+                    <MapPin className="h-4 w-4" />
+                    GPS
+                  </Button>
                 </Td>
               </Tr>
             ))}

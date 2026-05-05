@@ -12,7 +12,10 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { navItems } from '../../config/nav'
-import { useDemoStore } from '../../store/demo-store'
+import { useDocuments } from '../../services/documents.service'
+import { useCustomers } from '../../services/customers.service'
+import { useLeads } from '../../services/leads.service'
+import { useTasks } from '../../services/tasks.service'
 import { DialogContent, DialogOverlay, DialogPortal, DialogRoot } from '../ui/dialog'
 
 type ResultItem = {
@@ -49,7 +52,13 @@ const categoryIconMap: Record<string, React.ElementType> = {
 }
 
 export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const { customers, leads, tasks, documents } = useDemoStore()
+  const { data: customersData } = useCustomers({ pageSize: 200 })
+  const { data: leadsData } = useLeads({ pageSize: 100 })
+  const { data: tasksData } = useTasks()
+  const { data: documents = [] } = useDocuments()
+  const customers = customersData?.data ?? []
+  const leads = leadsData?.data ?? []
+  const tasks = tasksData ?? []
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
@@ -82,7 +91,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
         c.city?.toLowerCase().includes(q),
       )
       .slice(0, 6)
-      .map((c) => ({ id: `customer-${c.id}`, category: 'Clientes', categoryIcon: Building2, label: c.name, sublabel: c.company ?? c.email ?? c.city, href: `/customers/${c.id}`, icon: Building2 }))
+      .map((c) => ({ id: `customer-${c.id}`, category: 'Clientes', categoryIcon: Building2, label: c.name, sublabel: c.company ?? c.email ?? c.city ?? undefined, href: `/customers/${c.id}`, icon: Building2 }))
 
     const ls: ResultItem[] = leads
       .filter((l) => l.contact_name.toLowerCase().includes(q) || l.company_name?.toLowerCase().includes(q) || l.email?.toLowerCase().includes(q))

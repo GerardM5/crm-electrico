@@ -1,4 +1,4 @@
-import type { AppRole } from '../types/domain'
+import type { AppRole } from '../types/database.types'
 
 const writeRoles: AppRole[] = ['owner', 'admin', 'sales']
 const techRoles: AppRole[] = ['owner', 'admin', 'technician']

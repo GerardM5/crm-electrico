@@ -6,25 +6,31 @@ import { Button } from '../../components/ui/button'
 import { Dialog } from '../../components/ui/dialog'
 import { Field, Input, Select } from '../../components/ui/input'
 import { dealSchema, type DealFormValues } from '../../schemas/forms.schema'
-import { useDemoStore } from '../../store/demo-store'
+import { useCustomers } from '../../services/customers.service'
+import { useCreateDeal, usePipelineStages } from '../../services/deals.service'
+import { useLeads } from '../../services/leads.service'
+import { useProfiles } from '../../services/profiles.service'
 
 export function DealFormDialog() {
   const [open, setOpen] = useState(false)
-  const { createDeal, customers, leads, pipelineStages, profiles } = useDemoStore()
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<DealFormValues>({
+  const { data: customersData } = useCustomers({ pageSize: 200 })
+  const { data: leadsData } = useLeads({ pageSize: 100 })
+  const { data: pipelineStages = [] } = usePipelineStages()
+  const { data: profiles = [] } = useProfiles()
+  const createDeal = useCreateDeal()
+  const customers = customersData?.data ?? []
+  const leads = leadsData?.data ?? []
+
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<DealFormValues>({
     resolver: zodResolver(dealSchema) as never,
-    defaultValues: { stage_id: pipelineStages[0]?.id, probability: 25, value_eur: 0, assigned_to: 'user-sales' },
+    defaultValues: { stage_id: pipelineStages[0]?.id, probability: 25, value_eur: 0 },
   })
 
   function onSubmit(values: DealFormValues) {
-    createDeal({ ...values, status: 'open' })
-    reset()
-    setOpen(false)
+    createDeal.mutate(
+      { ...values, status: 'open' },
+      { onSuccess: () => { reset(); setOpen(false) } },
+    )
   }
 
   return (

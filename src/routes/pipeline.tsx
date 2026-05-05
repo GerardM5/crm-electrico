@@ -4,14 +4,20 @@ import { PageHeader } from '../components/data-table/Toolbar'
 import { Card } from '../components/ui/card'
 import { DealFormDialog } from '../features/deals/DealFormDialog'
 import { money } from '../lib/formatters'
-import { useDemoStore } from '../store/demo-store'
+import { useCustomers } from '../services/customers.service'
+import { useDeals, useMoveDeals, usePipelineStages } from '../services/deals.service'
 
 export function PipelineRoute() {
-  const { pipelineStages, deals, customers, moveDeal } = useDemoStore()
+  const { data: stages = [] } = usePipelineStages()
+  const { data: deals = [] } = useDeals()
+  const { data: customersResult } = useCustomers({ pageSize: 500 })
+  const moveDeal = useMoveDeals()
+
+  const customers = customersResult?.data ?? []
 
   function onDragEnd(event: DragEndEvent) {
     if (event.over?.id && event.active.id) {
-      moveDeal(String(event.active.id), String(event.over.id))
+      moveDeal.mutate({ dealId: String(event.active.id), stageId: String(event.over.id) })
     }
   }
 
@@ -20,7 +26,7 @@ export function PipelineRoute() {
       <PageHeader title="Pipeline Kanban" description="Arrastra oportunidades entre fases o usa los botones de fase en cada tarjeta." action={<DealFormDialog />} />
       <DndContext onDragEnd={onDragEnd}>
         <div className="grid min-w-0 grid-cols-1 gap-4 pb-2 md:grid-cols-2 xl:flex xl:items-start xl:overflow-x-auto xl:pb-4">
-          {pipelineStages.map((stage) => {
+          {stages.map((stage) => {
             const stageDeals = deals.filter((deal) => deal.stage_id === stage.id)
             return (
               <PipelineColumn key={stage.id} id={stage.id}>
@@ -29,13 +35,13 @@ export function PipelineRoute() {
                     <h3 className="font-semibold text-foreground">{stage.name}</h3>
                     <p className="text-xs text-muted-foreground">{stageDeals.length} oportunidades</p>
                   </div>
-                  <span className="h-3 w-3 rounded-full" style={{ background: stage.color }} />
+                  <span className="h-3 w-3 rounded-full" style={{ background: stage.color ?? undefined }} />
                 </div>
                 <div className="grid gap-3">
                   {stageDeals.map((deal) => (
                     <DealCard key={deal.id} id={deal.id}>
                       <p className="font-medium text-foreground">{deal.title}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{customers.find((customer) => customer.id === deal.customer_id)?.name}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{customers.find((c) => c.id === deal.customer_id)?.name}</p>
                       <div className="mt-3 flex items-center justify-between">
                         <span className="text-sm font-semibold text-foreground">{money.format(deal.value_eur)}</span>
                         <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">

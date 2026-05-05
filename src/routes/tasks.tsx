@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CheckCircle2 } from 'lucide-react'
+import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../components/data-table/Toolbar'
@@ -8,28 +9,45 @@ import { Button } from '../components/ui/button'
 import { Field, Input, Select, Textarea } from '../components/ui/input'
 import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
 import { priorityLabels, taskStatusLabels } from '../config/constants'
+import { useAuth } from '../features/auth/AuthContext'
 import { formatDateTime } from '../lib/formatters'
 import { type TaskFormValues, taskSchema } from '../schemas/forms.schema'
-import { useDemoStore } from '../store/demo-store'
-
-const defaultDueAt = '2026-04-28T09:00'
+import { useCustomers } from '../services/customers.service'
+import { useProfiles } from '../services/profiles.service'
+import { useCreateTask, useTasks, useUpdateTask } from '../services/tasks.service'
 
 export function TasksRoute() {
-  const store = useDemoStore()
-  const visibleTasks = store.currentUser.role === 'owner' || store.currentUser.role === 'admin' ? store.tasks : store.tasks.filter((task) => task.assigned_to === store.currentUser.id)
+  const { profile: currentUser } = useAuth()
+  const { data: tasks = [] } = useTasks()
+  const { data: customersResult } = useCustomers({ pageSize: 500 })
+  const { data: profiles = [] } = useProfiles()
+  const createTask = useCreateTask()
+  const updateTask = useUpdateTask()
+
+  const customers = customersResult?.data ?? []
+
+  const profilesById = useMemo(
+    () => Object.fromEntries(profiles.map((p) => [p.id, p.full_name])),
+    [profiles],
+  )
+  const customersById = useMemo(
+    () => Object.fromEntries(customers.map((c) => [c.id, c.name])),
+    [customers],
+  )
+
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema) as never,
     defaultValues: {
       title: '',
       priority: 'medium',
       status: 'pending',
-      assigned_to: 'user-sales',
-      due_at: defaultDueAt,
+      assigned_to: currentUser?.id ?? '',
+      due_at: new Date(Date.now() + 86400000).toISOString().slice(0, 16),
     },
   })
 
   function onSubmit(values: TaskFormValues) {
-    store.createTask(values)
+    createTask.mutate({ ...values, due_at: new Date(values.due_at).toISOString() })
     form.reset({ ...form.getValues(), title: '', description: '' })
   }
 
@@ -48,11 +66,7 @@ export function TasksRoute() {
             <Field label="Cliente" error={form.formState.errors.customer_id?.message}>
               <Select {...form.register('customer_id')}>
                 <option value="">Sin cliente</option>
-                {store.customers.map((customer) => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.name}
-                  </option>
-                ))}
+                {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Select>
             </Field>
             <div className="grid grid-cols-2 gap-3">
@@ -70,20 +84,16 @@ export function TasksRoute() {
             </div>
             <Field label="Asignado a" error={form.formState.errors.assigned_to?.message}>
               <Select {...form.register('assigned_to')}>
-                {store.profiles.map((profile) => (
-                  <option key={profile.id} value={profile.id}>
-                    {profile.full_name}
-                  </option>
-                ))}
+                {profiles.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
               </Select>
             </Field>
             <Field label="Descripcion" error={form.formState.errors.description?.message}>
               <Textarea {...form.register('description')} />
             </Field>
-            <Button type="submit">Crear tarea</Button>
+            <Button type="submit" disabled={createTask.isPending}>Crear tarea</Button>
           </form>
         </section>
-        {visibleTasks.length === 0 ? (
+        {tasks.length === 0 ? (
           <EmptyState
             icon={<CheckCircle2 />}
             title="Sin tareas"
@@ -91,36 +101,27 @@ export function TasksRoute() {
           />
         ) : (
           <DataTable headers={['Tarea', 'Cliente', 'Prioridad', 'Estado', 'Vence', 'Asignado', 'Acciones']}>
-            {visibleTasks.map((task) => (
+            {tasks.map((task) => (
               <Tr key={task.id} hover>
                 <Td variant="primary">{task.title}</Td>
                 <Td>
-                  {(() => {
-                    const customer = store.customers.find((c) => c.id === task.customer_id)
-                    return customer ? (
-                      <Link
-                        to={`/customers/${customer.id}`}
-                        className="text-sm text-muted-foreground hover:text-foreground hover:underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {customer.name}
-                      </Link>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">-</span>
-                    )
-                  })()}
+                  {task.customer_id && customersById[task.customer_id] ? (
+                    <Link to={`/customers/${task.customer_id}`} className="text-sm text-muted-foreground hover:text-foreground hover:underline" onClick={(e) => e.stopPropagation()}>
+                      {customersById[task.customer_id]}
+                    </Link>
+                  ) : <span className="text-sm text-muted-foreground">-</span>}
                 </Td>
-                <Td><StatusBadge value={priorityLabels[task.priority]} /></Td>
-                <Td><StatusBadge value={taskStatusLabels[task.status]} /></Td>
+                <Td><StatusBadge value={priorityLabels[task.priority as keyof typeof priorityLabels] ?? task.priority} /></Td>
+                <Td><StatusBadge value={taskStatusLabels[task.status as keyof typeof taskStatusLabels] ?? task.status} /></Td>
                 <Td variant="muted">{formatDateTime(task.due_at)}</Td>
-                <Td variant="muted">{store.profiles.find((profile) => profile.id === task.assigned_to)?.full_name}</Td>
+                <Td variant="muted">{profilesById[task.assigned_to ?? ''] ?? '-'}</Td>
                 <Td>
-                  {task.status !== 'done' ? (
-                    <Button size="sm" variant="secondary" onClick={() => store.completeTask(task.id)}>
+                  {task.status !== 'done' && (
+                    <Button size="sm" variant="secondary" onClick={() => updateTask.mutate({ id: task.id, status: 'done' })}>
                       <CheckCircle2 className="h-4 w-4" />
                       Completar
                     </Button>
-                  ) : null}
+                  )}
                 </Td>
               </Tr>
             ))}

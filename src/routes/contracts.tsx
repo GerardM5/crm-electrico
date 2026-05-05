@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { PdfViewerDialog } from '../components/documents/PdfViewerDialog'
@@ -9,32 +10,39 @@ import { Field, Input, Select } from '../components/ui/input'
 import { DataTable, EmptyState, Td, Tr, TruncatePath } from '../components/ui/table'
 import { contractStatusLabels } from '../config/constants'
 import { money } from '../lib/formatters'
-import { buildStoragePath } from '../lib/storage'
 import { type ContractFormValues, contractSchema } from '../schemas/forms.schema'
-import { useDemoStore } from '../store/demo-store'
+import { useContracts, useCreateContract } from '../services/contracts.service'
+import { useCustomers } from '../services/customers.service'
 
 export function ContractsRoute() {
-  const store = useDemoStore()
+  const { data: contracts = [] } = useContracts()
+  const { data: customersResult } = useCustomers({ pageSize: 500 })
+  const createContract = useCreateContract()
+
+  const customers = customersResult?.data ?? []
+  const customersById = useMemo(
+    () => Object.fromEntries(customers.map((c) => [c.id, c.name])),
+    [customers],
+  )
+
   const form = useForm<ContractFormValues>({
     resolver: zodResolver(contractSchema) as never,
     defaultValues: {
-      customer_id: store.customers[0]?.id,
+      customer_id: customers[0]?.id ?? '',
       status: 'draft',
-      contract_number: `EG-2026-${String(store.contracts.length + 1).padStart(4, '0')}`,
+      contract_number: `EG-${new Date().getFullYear()}-${String(contracts.length + 1).padStart(4, '0')}`,
       amount_eur: 0,
     },
   })
 
   function onSubmit(values: ContractFormValues) {
-    store.createContract({
-      ...values,
-      file_path: values.file_path || buildStoragePath(store.organization.id, values.customer_id, crypto.randomUUID(), 'contrato.pdf'),
-    })
+    createContract.mutate(values)
+    form.reset({ ...form.getValues(), amount_eur: 0 })
   }
 
   return (
     <div>
-      <PageHeader title="Contratos" description="Registro de contratos y estado de firma mockeado para demo." />
+      <PageHeader title="Contratos" description="Registro y seguimiento de contratos vinculados a clientes." />
       <div className="grid gap-4 xl:grid-cols-[420px_1fr]">
         <Card>
           <CardHeader>
@@ -44,11 +52,7 @@ export function ContractsRoute() {
             <form className="grid gap-4" onSubmit={form.handleSubmit(onSubmit)}>
               <Field label="Cliente" error={form.formState.errors.customer_id?.message}>
                 <Select {...form.register('customer_id')}>
-                  {store.customers.map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.name}
-                    </option>
-                  ))}
+                  {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </Select>
               </Field>
               <Field label="Numero" error={form.formState.errors.contract_number?.message}>
@@ -65,26 +69,26 @@ export function ContractsRoute() {
               <Field label="Importe EUR" error={form.formState.errors.amount_eur?.message}>
                 <Input type="number" step="0.01" {...form.register('amount_eur')} />
               </Field>
-              <Button type="submit">Crear contrato</Button>
+              <Button type="submit" disabled={createContract.isPending}>Crear contrato</Button>
             </form>
           </CardContent>
         </Card>
-        {store.contracts.length === 0 ? (
+        {contracts.length === 0 ? (
           <EmptyState title="Sin contratos" description="Genera un contrato y vinculalo a un cliente para empezar." />
         ) : (
           <DataTable headers={['Contrato', 'Cliente', 'Importe', 'Estado', 'Archivo', 'Vista']}>
-            {store.contracts.map((contract) => (
+            {contracts.map((contract) => (
               <Tr key={contract.id} hover>
                 <Td variant="primary">{contract.contract_number}</Td>
-                <Td variant="muted">{store.customers.find((customer) => customer.id === contract.customer_id)?.name}</Td>
+                <Td variant="muted">{customersById[contract.customer_id] ?? '-'}</Td>
                 <Td>{money.format(contract.amount_eur)}</Td>
-                <Td><StatusBadge value={contractStatusLabels[contract.status]} /></Td>
+                <Td><StatusBadge value={contractStatusLabels[contract.status as keyof typeof contractStatusLabels] ?? contract.status} /></Td>
                 <Td className="max-w-48"><TruncatePath path={contract.file_path ?? ''} /></Td>
                 <Td>
                   <PdfViewerDialog
                     source={{ bucket: 'contracts', file_path: contract.file_path ?? '', file_name: `${contract.contract_number}.pdf`, mime_type: 'application/pdf' }}
                     title={contract.contract_number}
-                    description={`Contrato de ${store.customers.find((customer) => customer.id === contract.customer_id)?.name ?? '-'}`}
+                    description={`Contrato de ${customersById[contract.customer_id] ?? '-'}`}
                   />
                 </Td>
               </Tr>

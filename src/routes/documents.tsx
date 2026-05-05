@@ -1,62 +1,69 @@
 import { Search, Upload } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { PdfViewerDialog } from '../components/documents/PdfViewerDialog'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Field, Input, Select } from '../components/ui/input'
 import { DataTable, EmptyState, Td, Tr, TruncatePath } from '../components/ui/table'
+import { useAuth } from '../features/auth/AuthContext'
 import { useDebounce } from '../hooks/use-debounce'
 import { usePagination } from '../hooks/use-pagination'
-import { getVisibleCustomers } from '../lib/customer-workflow'
 import { formatDate } from '../lib/formatters'
 import { isPdfDocument } from '../lib/storage'
-import { useDemoStore } from '../store/demo-store'
-import type { DocumentType } from '../types/domain'
+import { useCustomers } from '../services/customers.service'
+import { useDocuments, useUploadDocument } from '../services/documents.service'
+import type { DocumentRow } from '../services/documents.service'
+import type { DocumentType } from '../types/database.types'
 
 export function DocumentsRoute() {
-  const store = useDemoStore()
-  const customers = getVisibleCustomers(store.customers, store.currentUser.id, store.currentUser.role)
-  const [customerId, setCustomerId] = useState(customers[0]?.id ?? '')
-  const [fileName, setFileName] = useState('documento.pdf')
+  const { profile: currentUser } = useAuth()
+  const { data: customersResult } = useCustomers({ pageSize: 500 })
+  const { data: documents = [] } = useDocuments()
+  const uploadDocument = useUploadDocument()
+
+  const customers = customersResult?.data ?? []
+  const [customerId, setCustomerId] = useState('')
   const [type, setType] = useState<DocumentType>('other')
   const [search, setSearch] = useState('')
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const debouncedSearch = useDebounce(search, 250)
+
+  const effectiveCustomerId = customerId || customers[0]?.id || ''
 
   const customerById = useMemo(
     () => Object.fromEntries(customers.map((c) => [c.id, c.name])),
     [customers],
   )
 
-  const allDocuments = useMemo(
-    () => store.documents.filter((d) => customers.some((c) => c.id === d.customer_id)),
-    [store.documents, customers],
-  )
-
   const filteredDocuments = useMemo(() => {
     const q = debouncedSearch.toLowerCase()
-    if (!q) return allDocuments
-    return allDocuments.filter(
+    if (!q) return documents
+    return documents.filter(
       (d) =>
         d.file_name.toLowerCase().includes(q) ||
         (customerById[d.customer_id ?? ''] ?? '').toLowerCase().includes(q),
     )
-  }, [allDocuments, debouncedSearch, customerById])
+  }, [documents, debouncedSearch, customerById])
 
   const pagination = usePagination(filteredDocuments, 25)
 
-  function createDocument() {
-    if (!customerId) return
-    store.createDocument({
-      customer_id: customerId,
-      type,
-      bucket: 'customer-documents',
-      file_name: fileName,
-      file_path: `${store.organization.id}/${customerId}/manual/${crypto.randomUUID()}-${fileName}`,
-      mime_type: fileName.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg',
-      size_bytes: 512_000,
-      uploaded_by: store.currentUser.id,
-    })
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setSelectedFile(e.target.files?.[0] ?? null)
+  }
+
+  function handleUpload() {
+    if (!selectedFile || !effectiveCustomerId || !currentUser) return
+    uploadDocument.mutate(
+      { file: selectedFile, customerId: effectiveCustomerId, type, uploadedBy: currentUser.id },
+      {
+        onSuccess: () => {
+          setSelectedFile(null)
+          if (fileInputRef.current) fileInputRef.current.value = ''
+        },
+      },
+    )
   }
 
   return (
@@ -65,11 +72,11 @@ export function DocumentsRoute() {
       <div className="grid gap-4 xl:grid-cols-[420px_1fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Registrar documento</CardTitle>
+            <CardTitle>Subir documento</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4">
             <Field label="Cliente">
-              <Select value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
+              <Select value={effectiveCustomerId} onChange={(e) => setCustomerId(e.target.value)}>
                 {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Select>
             </Field>
@@ -82,11 +89,11 @@ export function DocumentsRoute() {
               </Select>
             </Field>
             <Field label="Archivo">
-              <Input type="file" onChange={(e) => setFileName(e.target.files?.[0]?.name ?? 'documento.pdf')} />
+              <Input ref={fileInputRef} type="file" onChange={handleFileChange} />
             </Field>
-            <Button onClick={createDocument}>
+            <Button onClick={handleUpload} disabled={!selectedFile || uploadDocument.isPending}>
               <Upload className="h-4 w-4" />
-              Guardar referencia
+              {uploadDocument.isPending ? 'Subiendo…' : 'Subir archivo'}
             </Button>
           </CardContent>
         </Card>
@@ -102,13 +109,13 @@ export function DocumentsRoute() {
           </div>
 
           {filteredDocuments.length === 0 ? (
-            <EmptyState title="Sin documentos" description="Registra un archivo (PDF, DNI, contrato) para un cliente y aparecera aqui." />
+            <EmptyState title="Sin documentos" description="Sube un archivo (PDF, DNI, contrato) para un cliente y aparecera aqui." />
           ) : (
             <DataTable
               headers={['Archivo', 'Cliente', 'Tipo', 'Fecha', 'Ruta', 'Vista']}
               pagination={{ page: pagination.page, pageSize: pagination.pageSize, total: pagination.total, totalPages: pagination.totalPages, onPageChange: pagination.setPage, onPageSizeChange: pagination.setPageSize }}
             >
-              {pagination.items.map((document) => (
+              {pagination.items.map((document: DocumentRow) => (
                 <Tr key={document.id} hover>
                   <Td variant="primary">{document.file_name}</Td>
                   <Td variant="muted">{customerById[document.customer_id ?? ''] ?? '-'}</Td>
@@ -116,9 +123,9 @@ export function DocumentsRoute() {
                   <Td variant="muted">{formatDate(document.created_at)}</Td>
                   <Td className="max-w-48"><TruncatePath path={document.file_path} /></Td>
                   <Td>
-                    {isPdfDocument(document.file_name, document.mime_type) ? (
+                    {isPdfDocument(document.file_name, document.mime_type ?? undefined) ? (
                       <PdfViewerDialog
-                        source={document}
+                        source={{ bucket: document.bucket, file_path: document.file_path, file_name: document.file_name, mime_type: document.mime_type ?? undefined }}
                         title={document.file_name}
                         description={`Documento asociado a ${customerById[document.customer_id ?? ''] ?? '-'}`}
                       />

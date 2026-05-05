@@ -6,6 +6,8 @@ import { AppShell } from '../components/layout/AppShell'
 import { ProtectedRoute } from '../features/auth/ProtectedRoute'
 
 const LoginRoute = lazy(() => import('../routes/login').then((m) => ({ default: m.LoginRoute })))
+const ForgotPasswordRoute = lazy(() => import('../routes/forgot-password').then((m) => ({ default: m.ForgotPasswordRoute })))
+const SetPasswordRoute = lazy(() => import('../routes/set-password').then((m) => ({ default: m.SetPasswordRoute })))
 const DashboardRoute = lazy(() => import('../routes/dashboard').then((m) => ({ default: m.DashboardRoute })))
 const CustomersRoute = lazy(() => import('../routes/customers').then((m) => ({ default: m.CustomersRoute })))
 const CustomerDetailRoute = lazy(() => import('../routes/customer-detail').then((m) => ({ default: m.CustomerDetailRoute })))
@@ -24,6 +26,22 @@ export function App() {
         element={
           <Suspense fallback={<PageSkeleton kpis={0} tableRows={0} />}>
             <LoginRoute />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <Suspense fallback={<PageSkeleton kpis={0} tableRows={0} />}>
+            <ForgotPasswordRoute />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/set-password"
+        element={
+          <Suspense fallback={<PageSkeleton kpis={0} tableRows={0} />}>
+            <SetPasswordRoute />
           </Suspense>
         }
       />

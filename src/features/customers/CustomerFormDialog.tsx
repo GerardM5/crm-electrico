@@ -7,21 +7,26 @@ import { Button } from '../../components/ui/button'
 import { Dialog } from '../../components/ui/dialog'
 import { Field, Input, Select, Textarea } from '../../components/ui/input'
 import { type CustomerFormValues, customerSchema } from '../../schemas/customer.schema'
-import { useDemoStore } from '../../store/demo-store'
-import type { Customer } from '../../types/domain'
+import { useAuth } from '../../features/auth/AuthContext'
+import { type CustomerRow, useCreateCustomer, useUpdateCustomer } from '../../services/customers.service'
+import { useProfiles } from '../../services/profiles.service'
+import type { CustomerStatus } from '../../types/database.types'
 
 type FullFormValues = CustomerFormValues & {
-  status: Customer['status']
+  status: CustomerStatus
   contract_signed_at: string
   renewal_date: string
   assigned_to: string
   products_services: string
 }
 
-export function CustomerFormDialog({ customer }: { customer?: Customer }) {
+export function CustomerFormDialog({ customer }: { customer?: CustomerRow }) {
   const isEditing = Boolean(customer)
   const [open, setOpen] = useState(false)
-  const { createCustomer, updateCustomer, profiles, currentUser } = useDemoStore()
+  const { profile: currentUser } = useAuth()
+  const { data: profiles = [] } = useProfiles()
+  const createCustomer = useCreateCustomer()
+  const updateCustomer = useUpdateCustomer()
   const today = useMemo(() => new Date().toISOString().slice(0, 10), [])
   const defaultRenewal = useMemo(() => addMonths(new Date(), 12).toISOString().slice(0, 10), [])
 
@@ -29,62 +34,75 @@ export function CustomerFormDialog({ customer }: { customer?: Customer }) {
     resolver: zodResolver(customerSchema),
     defaultValues: customer
       ? {
-          name: customer.name,
-          type: customer.type,
-          legal_name: customer.legal_name ?? '',
-          tax_id: customer.dni ?? '',
-          contact_name: customer.contact_name ?? '',
-          email: customer.email ?? '',
-          phone: customer.phone ?? '',
-          city: customer.city ?? '',
-          notes: customer.notes ?? '',
-          status: customer.status,
-          contract_signed_at: customer.contract_signed_at?.slice(0, 10) ?? today,
-          renewal_date: customer.renewal_date?.slice(0, 10) ?? defaultRenewal,
-          assigned_to: customer.assigned_to ?? currentUser.id,
-          products_services: customer.products_services.join(', '),
-        }
+        name: customer.name,
+        type: customer.type,
+        legal_name: customer.legal_name ?? '',
+        tax_id: customer.dni ?? '',
+        contact_name: customer.contact_name ?? '',
+        email: customer.email ?? '',
+        phone: customer.phone ?? '',
+        city: customer.city ?? '',
+        notes: customer.notes ?? '',
+        status: customer.status,
+        contract_signed_at: customer.contract_signed_at?.slice(0, 10) ?? today,
+        renewal_date: customer.renewal_date?.slice(0, 10) ?? defaultRenewal,
+        assigned_to: customer.assigned_to ?? currentUser.id,
+        products_services: customer.products_services.join(', '),
+      }
       : {
-          type: 'residential',
-          status: 'active',
-          contract_signed_at: today,
-          renewal_date: defaultRenewal,
-          assigned_to: currentUser.id,
-          products_services: '',
-          email: '',
-          phone: '',
-        },
+        type: 'residential',
+        status: 'active',
+        contract_signed_at: today,
+        renewal_date: defaultRenewal,
+        assigned_to: currentUser.id,
+        products_services: '',
+        email: '',
+        phone: '',
+      },
   })
 
   function onSubmit(values: FullFormValues) {
-    const patch = {
-      type: (values.legal_name ? 'business' : 'residential') as Customer['type'],
-      name: values.name,
-      company: values.legal_name || undefined,
-      legal_name: values.legal_name || undefined,
-      dni: values.tax_id || undefined,
-      status: values.status,
-      contact_name: values.contact_name || values.name,
-      email: values.email || undefined,
-      phone: values.phone || undefined,
-      city: values.city || undefined,
-      contract_signed_at: values.contract_signed_at,
-      renewal_date: values.renewal_date,
-      renewal_alert_months: 10,
-      assigned_to: values.assigned_to,
-      products_services: (values.products_services ?? '')
-        .split(',')
-        .map((item: string) => item.trim())
-        .filter(Boolean),
-      notes: values.notes || undefined,
-    }
+    const products = (values.products_services ?? '').split(',').map((s: string) => s.trim()).filter(Boolean)
     if (isEditing && customer) {
-      updateCustomer(customer.id, patch)
+      updateCustomer.mutate({
+        id: customer.id,
+        type: values.legal_name ? 'business' : 'residential',
+        name: values.name,
+        company: values.legal_name || null,
+        legal_name: values.legal_name || null,
+        dni: values.tax_id || null,
+        status: values.status,
+        contact_name: values.contact_name || values.name,
+        email: values.email || null,
+        phone: values.phone || null,
+        city: values.city || null,
+        contract_signed_at: values.contract_signed_at,
+        renewal_date: values.renewal_date,
+        renewal_alert_months: 10,
+        assigned_to: values.assigned_to || null,
+        products_services: products,
+        notes: values.notes || null,
+      }, { onSuccess: () => { reset(); setOpen(false) } })
     } else {
-      createCustomer(patch)
+      createCustomer.mutate({
+        type: values.legal_name ? 'business' : 'residential',
+        name: values.name,
+        company: values.legal_name || null,
+        legal_name: values.legal_name || null,
+        dni: values.tax_id || null,
+        status: values.status,
+        contact_name: values.contact_name || values.name,
+        email: values.email || null,
+        phone: values.phone || null,
+        city: values.city || null,
+        contract_signed_at: values.contract_signed_at,
+        renewal_date: values.renewal_date,
+        renewal_alert_months: 10,
+        assigned_to: values.assigned_to || null,
+        products_services: products,
+        notes: values.notes || null,
+      }, { onSuccess: () => { reset(); setOpen(false) } })
     }
-    reset()
-    setOpen(false)
   }
 
   return (

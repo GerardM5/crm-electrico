@@ -2,8 +2,11 @@ import { Menu, Search, Settings } from 'lucide-react'
 import { Suspense, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { appBrand, navItems } from '../../config/nav'
+import { useAuth } from '../../features/auth/AuthContext'
 import { cn } from '../../lib/utils'
-import { useDemoStore } from '../../store/demo-store'
+import { useLeads } from '../../services/leads.service'
+import { useOrganization } from '../../services/organization.service'
+import { useTasks } from '../../services/tasks.service'
 import { ErrorBoundary } from '../feedback/ErrorBoundary'
 import { PageSkeleton } from '../feedback/Skeleton'
 import { Button } from '../ui/button'
@@ -17,7 +20,8 @@ type NavBadges = Record<string, number>
 
 function SidebarContent({ onNavigate, badges }: { onNavigate?: () => void; badges?: NavBadges }) {
   const BrandIcon = appBrand.icon
-  const { currentUser, organization, logout } = useDemoStore()
+  const { profile, signOut } = useAuth()
+  const { data: organization } = useOrganization()
 
   return (
     <div className="flex h-full flex-col bg-sidebar border-r border-sidebar-border/60">
@@ -89,11 +93,11 @@ function SidebarContent({ onNavigate, badges }: { onNavigate?: () => void; badge
       <Separator className="mx-4 w-auto bg-sidebar-border/50" />
       <div className="m-3 flex items-center gap-2">
         <UserMenu
-          fullName={currentUser.full_name}
-          email={currentUser.email}
-          role={currentUser.role}
-          organizationName={organization.name}
-          onLogout={logout}
+          fullName={profile?.full_name ?? ''}
+          email={profile?.email ?? ''}
+          role={profile?.role ?? 'viewer'}
+          organizationName={organization?.name ?? ''}
+          onLogout={signOut}
         />
       </div>
     </div>
@@ -101,7 +105,8 @@ function SidebarContent({ onNavigate, badges }: { onNavigate?: () => void; badge
 }
 
 export function AppShell() {
-  const { leads, tasks } = useDemoStore()
+  const { data: leadsData } = useLeads({ status: 'new', pageSize: 200 })
+  const { data: tasksData } = useTasks()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const location = useLocation()
@@ -119,8 +124,8 @@ export function AppShell() {
   }, [])
 
   const navBadges: NavBadges = {
-    '/leads': leads.filter((l) => l.status === 'new').length,
-    '/tasks': tasks.filter((t) => t.status !== 'done' && t.status !== 'cancelled').length,
+    '/leads': leadsData?.count ?? 0,
+    '/tasks': (tasksData ?? []).filter((t) => t.status !== 'done' && t.status !== 'cancelled').length,
   }
 
   return (

@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Printer } from 'lucide-react'
+import { useMemo } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { StatusBadge } from '../components/feedback/StatusBadge'
@@ -10,37 +11,51 @@ import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
 import { proposalStatusLabels } from '../config/constants'
 import { money } from '../lib/formatters'
 import { type ProposalFormValues, proposalSchema } from '../schemas/forms.schema'
-import { useDemoStore } from '../store/demo-store'
+import { useCustomers } from '../services/customers.service'
+import { useCreateProposal, useProposals, useUpdateProposal } from '../services/proposals.service'
+import { useSimulations } from '../services/simulations.service'
 
-const defaultValidUntil = '2026-05-12'
+const defaultValidUntil = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
 
 export function ProposalsRoute() {
-  const store = useDemoStore()
+  const { data: proposals = [] } = useProposals()
+  const { data: customersResult } = useCustomers({ pageSize: 500 })
+  const { data: simulations = [] } = useSimulations()
+  const createProposal = useCreateProposal()
+  const updateProposal = useUpdateProposal()
+
+  const customers = customersResult?.data ?? []
+  const customersById = useMemo(
+    () => Object.fromEntries(customers.map((c) => [c.id, c.name])),
+    [customers],
+  )
+
   const form = useForm<ProposalFormValues>({
     resolver: zodResolver(proposalSchema) as never,
     defaultValues: {
-      customer_id: store.customers[0]?.id,
-      simulation_id: store.simulations[0]?.id,
+      customer_id: customers[0]?.id ?? '',
+      simulation_id: simulations[0]?.id ?? '',
       title: 'Propuesta de ahorro energetico',
       services: 'Optimizacion de potencia\nCambio de tarifa\nSeguimiento trimestral',
       estimated_price_eur: 1200,
       valid_until: defaultValidUntil,
     },
   })
+
   const watchedSimulationId = useWatch({ control: form.control, name: 'simulation_id' })
   const watchedCustomerId = useWatch({ control: form.control, name: 'customer_id' })
   const watchedTitle = useWatch({ control: form.control, name: 'title' })
   const watchedServices = useWatch({ control: form.control, name: 'services' })
   const watchedPrice = useWatch({ control: form.control, name: 'estimated_price_eur' })
-  const selectedSimulation = store.simulations.find((item) => item.id === watchedSimulationId)
-  const selectedCustomer = store.customers.find((item) => item.id === watchedCustomerId)
+  const selectedSimulation = simulations.find((s) => s.id === watchedSimulationId)
+  const selectedCustomer = customers.find((c) => c.id === watchedCustomerId)
 
   function onSubmit(values: ProposalFormValues) {
-    store.createProposal({
+    createProposal.mutate({
       ...values,
       status: 'draft',
-      services: values.services.split('\n').map((item) => item.trim()).filter(Boolean),
-      html_snapshot: document.querySelector('.print-page')?.innerHTML,
+      services: (values.services as unknown as string).split('\n').map((s: string) => s.trim()).filter(Boolean),
+      html_snapshot: document.querySelector('.print-page')?.innerHTML ?? null,
     })
   }
 
@@ -48,7 +63,7 @@ export function ProposalsRoute() {
     <div>
       <PageHeader
         title="Propuestas comerciales"
-        description="Generacion HTML imprimible, con estados draft/sent/accepted/rejected."
+        description="Generacion HTML imprimible con estados draft/sent/accepted/rejected."
         action={
           <Button variant="secondary" onClick={() => window.print()}>
             <Printer className="h-4 w-4" />
@@ -58,25 +73,20 @@ export function ProposalsRoute() {
       />
       <div className="grid gap-4 xl:grid-cols-[420px_1fr]">
         <Card className="no-print">
-          <CardHeader>
-            <CardTitle>Nueva propuesta</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Nueva propuesta</CardTitle></CardHeader>
           <CardContent>
             <form className="grid gap-4" onSubmit={form.handleSubmit(onSubmit)}>
               <Field label="Cliente" error={form.formState.errors.customer_id?.message}>
                 <Select {...form.register('customer_id')}>
-                  {store.customers.map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.name}
-                    </option>
-                  ))}
+                  {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </Select>
               </Field>
               <Field label="Simulacion" error={form.formState.errors.simulation_id?.message}>
                 <Select {...form.register('simulation_id')}>
-                  {store.simulations.map((simulation) => (
-                    <option key={simulation.id} value={simulation.id}>
-                      {store.customers.find((customer) => customer.id === simulation.customer_id)?.name} · {money.format(simulation.annual_saving_eur)}
+                  <option value="">Sin simulacion</option>
+                  {simulations.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {customersById[s.customer_id] ?? '-'} · {money.format(s.annual_saving_eur)}
                     </option>
                   ))}
                 </Select>
@@ -93,7 +103,7 @@ export function ProposalsRoute() {
               <Field label="Valida hasta" error={form.formState.errors.valid_until?.message}>
                 <Input type="date" {...form.register('valid_until')} />
               </Field>
-              <Button type="submit">Crear propuesta</Button>
+              <Button type="submit" disabled={createProposal.isPending}>Crear propuesta</Button>
             </form>
           </CardContent>
         </Card>
@@ -106,11 +116,6 @@ export function ProposalsRoute() {
                   <h2 className="mt-2 text-3xl font-semibold text-foreground">{watchedTitle}</h2>
                   <p className="mt-2 text-muted-foreground">Cliente: {selectedCustomer?.name ?? 'Selecciona cliente'}</p>
                 </div>
-                <div className="text-right text-sm text-muted-foreground">
-                  <p className="font-semibold text-foreground">{store.organization.name}</p>
-                  <p>{store.organization.tax_id}</p>
-                  <p>{store.organization.city}</p>
-                </div>
               </div>
               <div className="my-6 grid gap-4 md:grid-cols-3">
                 <ProposalMetric label="Coste actual" value={selectedSimulation ? money.format(selectedSimulation.current_monthly_cost_eur) : '-'} />
@@ -119,7 +124,7 @@ export function ProposalsRoute() {
               </div>
               <h3 className="font-semibold text-foreground">Servicios recomendados</h3>
               <ul className="mt-3 grid gap-2 text-sm text-foreground">
-                {watchedServices?.split('\n').filter(Boolean).map((service) => <li key={service}>- {service}</li>)}
+                {(watchedServices as unknown as string)?.split('\n').filter(Boolean).map((service) => <li key={service}>- {service}</li>)}
               </ul>
               <div className="mt-6 rounded-md bg-primary/10 p-4">
                 <p className="text-sm text-primary">Precio estimado</p>
@@ -127,19 +132,23 @@ export function ProposalsRoute() {
               </div>
             </CardContent>
           </Card>
-          {store.proposals.length === 0 ? (
+          {proposals.length === 0 ? (
             <EmptyState title="Sin propuestas" description="Crea una propuesta comercial para un cliente y aparecera aqui." />
           ) : (
             <DataTable headers={['Propuesta', 'Cliente', 'Importe', 'Validez', 'Estado', 'Acciones']} className="no-print">
-              {store.proposals.map((proposal) => (
+              {proposals.map((proposal) => (
                 <Tr key={proposal.id} hover>
                   <Td variant="primary">{proposal.title}</Td>
-                  <Td variant="muted">{store.customers.find((customer) => customer.id === proposal.customer_id)?.name}</Td>
+                  <Td variant="muted">{customersById[proposal.customer_id] ?? '-'}</Td>
                   <Td>{money.format(proposal.estimated_price_eur)}</Td>
                   <Td variant="muted">{proposal.valid_until}</Td>
-                  <Td><StatusBadge value={proposalStatusLabels[proposal.status]} /></Td>
+                  <Td><StatusBadge value={proposalStatusLabels[proposal.status as keyof typeof proposalStatusLabels] ?? proposal.status} /></Td>
                   <Td>
-                    <select className="min-h-10 rounded-md border border-border bg-background px-2" value={proposal.status} onChange={(event) => store.updateProposalStatus(proposal.id, event.target.value as typeof proposal.status)}>
+                    <select
+                      className="min-h-10 rounded-md border border-border bg-background px-2"
+                      value={proposal.status}
+                      onChange={(e) => updateProposal.mutate({ id: proposal.id, status: e.target.value as typeof proposal.status })}
+                    >
                       <option value="draft">Borrador</option>
                       <option value="sent">Enviada</option>
                       <option value="accepted">Aceptada</option>

@@ -1,57 +1,89 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Upload } from 'lucide-react'
+import { useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { PdfViewerDialog } from '../components/documents/PdfViewerDialog'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Field, Input, Select } from '../components/ui/input'
-import { DataTable, Td, Tr } from '../components/ui/table'
+import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
+import { useAuth } from '../features/auth/AuthContext'
 import { formatDate, money } from '../lib/formatters'
-import { buildStoragePath } from '../lib/storage'
 import { type InvoiceFormValues, invoiceSchema } from '../schemas/forms.schema'
-import { useDemoStore } from '../store/demo-store'
+import { useCustomers } from '../services/customers.service'
+import { useCreateInvoice, useInvoices } from '../services/invoices.service'
 
 export function InvoicesRoute() {
-  const store = useDemoStore()
+  const { profile: currentUser } = useAuth()
+  const { data: customersResult } = useCustomers({ pageSize: 500 })
+  const { data: invoices = [] } = useInvoices()
+  const createInvoice = useCreateInvoice()
+
+  const customers = customersResult?.data ?? []
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const customersById = useMemo(
+    () => Object.fromEntries(customers.map((c) => [c.id, c.name])),
+    [customers],
+  )
+
   const form = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceSchema) as never,
-    defaultValues: { customer_id: store.customers[0]?.id, file_name: 'factura-demo.pdf', total_amount_eur: 0 },
+    defaultValues: { customer_id: customers[0]?.id ?? '', file_name: '', total_amount_eur: 0 },
   })
 
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null
+    setSelectedFile(file)
+    if (file) form.setValue('file_name', file.name)
+  }
+
   function onSubmit(values: InvoiceFormValues) {
-    const profile = store.energyProfiles.find((item) => item.customer_id === values.customer_id)
-    const id = crypto.randomUUID()
-    store.createInvoice({
-      ...values,
-      energy_profile_id: profile?.id,
-      file_path: buildStoragePath(store.organization.id, values.customer_id, id, values.file_name),
-      uploaded_by: store.currentUser.id,
-    })
-    form.reset({ customer_id: values.customer_id, file_name: 'factura-demo.pdf', total_amount_eur: 0 })
+    if (!selectedFile || !currentUser) return
+    createInvoice.mutate(
+      {
+        file: selectedFile,
+        dto: {
+          customer_id: values.customer_id,
+          total_amount_eur: values.total_amount_eur,
+          consumption_kwh: values.consumption_kwh ?? null,
+          contracted_power_kw: values.contracted_power_kw ?? null,
+          tariff_type: values.tariff_type ?? null,
+          provider: values.provider ?? null,
+          uploaded_by: currentUser.id,
+        },
+      },
+      {
+        onSuccess: () => {
+          form.reset({ customer_id: values.customer_id, file_name: '', total_amount_eur: 0 })
+          setSelectedFile(null)
+          if (fileInputRef.current) fileInputRef.current.value = ''
+        },
+      },
+    )
   }
 
   return (
     <div>
-      <PageHeader title="Facturas PDF" description="Subida real preparada para Supabase Storage; en demo se registra el path y datos manuales de factura." />
+      <PageHeader title="Facturas PDF" description="Sube facturas PDF a Supabase Storage y registra los datos de consumo." />
       <div className="grid gap-4 xl:grid-cols-[420px_1fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Registrar factura</CardTitle>
+            <CardTitle>Subir factura</CardTitle>
           </CardHeader>
           <CardContent>
             <form className="grid gap-4" onSubmit={form.handleSubmit(onSubmit)}>
               <Field label="Cliente" error={form.formState.errors.customer_id?.message}>
                 <Select {...form.register('customer_id')}>
-                  {store.customers.map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.name}
-                    </option>
+                  {customers.map((customer) => (
+                    <option key={customer.id} value={customer.id}>{customer.name}</option>
                   ))}
                 </Select>
               </Field>
               <Field label="Archivo PDF" error={form.formState.errors.file_name?.message}>
-                <Input type="file" accept="application/pdf" onChange={(event) => form.setValue('file_name', event.target.files?.[0]?.name ?? 'factura-demo.pdf')} />
+                <Input ref={fileInputRef} type="file" accept="application/pdf" onChange={handleFileChange} />
               </Field>
               <Field label="Importe total EUR" error={form.formState.errors.total_amount_eur?.message}>
                 <Input type="number" step="0.01" {...form.register('total_amount_eur')} />
@@ -74,32 +106,36 @@ export function InvoicesRoute() {
               <Field label="Comercializadora" error={form.formState.errors.provider?.message}>
                 <Input {...form.register('provider')} />
               </Field>
-              <Button type="submit">
+              <Button type="submit" disabled={!selectedFile || createInvoice.isPending}>
                 <Upload className="h-4 w-4" />
-                Registrar factura
+                {createInvoice.isPending ? 'Subiendo…' : 'Subir factura'}
               </Button>
             </form>
           </CardContent>
         </Card>
-        <DataTable headers={['Factura', 'Cliente', 'Periodo', 'Importe', 'kWh', 'Proveedor', 'Vista']}>
-          {store.invoices.map((invoice) => (
-            <Tr key={invoice.id} hover>
-              <Td variant="primary">{invoice.file_name}</Td>
-              <Td variant="muted">{store.customers.find((customer) => customer.id === invoice.customer_id)?.name}</Td>
-              <Td variant="muted">{formatDate(invoice.period_start)}</Td>
-              <Td>{money.format(invoice.total_amount_eur)}</Td>
-              <Td variant="muted">{invoice.consumption_kwh?.toLocaleString('es-ES') ?? '-'}</Td>
-              <Td variant="muted">{invoice.provider ?? '-'}</Td>
-              <Td>
-                <PdfViewerDialog
-                  source={{ bucket: 'invoices', file_path: invoice.file_path, file_name: invoice.file_name, mime_type: 'application/pdf' }}
-                  title={invoice.file_name}
-                  description={`Factura de ${store.customers.find((customer) => customer.id === invoice.customer_id)?.name ?? '-'}`}
-                />
-              </Td>
-            </Tr>
-          ))}
-        </DataTable>
+        {invoices.length === 0 ? (
+          <EmptyState title="Sin facturas" description="Sube la primera factura PDF de un cliente." />
+        ) : (
+          <DataTable headers={['Factura', 'Cliente', 'Periodo', 'Importe', 'kWh', 'Proveedor', 'Vista']}>
+            {invoices.map((invoice) => (
+              <Tr key={invoice.id} hover>
+                <Td variant="primary">{invoice.file_name}</Td>
+                <Td variant="muted">{customersById[invoice.customer_id] ?? '-'}</Td>
+                <Td variant="muted">{formatDate(invoice.period_start ?? undefined)}</Td>
+                <Td>{money.format(invoice.total_amount_eur)}</Td>
+                <Td variant="muted">{invoice.consumption_kwh?.toLocaleString('es-ES') ?? '-'}</Td>
+                <Td variant="muted">{invoice.provider ?? '-'}</Td>
+                <Td>
+                  <PdfViewerDialog
+                    source={{ bucket: 'documents', file_path: invoice.file_path, file_name: invoice.file_name, mime_type: 'application/pdf' }}
+                    title={invoice.file_name}
+                    description={`Factura de ${customersById[invoice.customer_id] ?? '-'}`}
+                  />
+                </Td>
+              </Tr>
+            ))}
+          </DataTable>
+        )}
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Building2, Download, Monitor, Moon, Plus, RotateCcw, Sun, Trash2, Users } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Building2, CheckCircle2, Download, Monitor, Moon, Plus, Sun, Trash2, Users } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
@@ -12,12 +12,15 @@ import { Dialog } from '../components/ui/dialog'
 import { Field, Input, Select } from '../components/ui/input'
 import { DataTable, Td, Tr } from '../components/ui/table'
 import { Tabs } from '../components/ui/tabs'
+import { useAuth } from '../features/auth/AuthContext'
 import { useTheme } from '../hooks/use-theme'
-import { formatDateTime } from '../lib/formatters'
+
 import type { ThemePreference } from '../lib/theme'
 import { cn } from '../lib/utils'
-import { useDemoStore } from '../store/demo-store'
-import type { AppRole } from '../types/domain'
+import { useCustomers } from '../services/customers.service'
+import { useOrganization, useUpdateOrganization } from '../services/organization.service'
+import { useInviteProfile, useProfiles, useUpdateProfile } from '../services/profiles.service'
+import type { AppRole } from '../types/database.types'
 
 // ─── Appearance Tab ──────────────────────────────────────────────────────────
 
@@ -70,24 +73,43 @@ function AppearanceTab() {
 // ─── Organization Tab ─────────────────────────────────────────────────────────
 
 function OrganizationTab() {
-  const store = useDemoStore()
-  const { organization } = store
+  const { data: organization } = useOrganization()
+  const updateOrganization = useUpdateOrganization()
+  const initialized = useRef(false)
 
   const [org, setOrg] = useState({
-    name: organization.name,
-    legal_name: organization.legal_name ?? '',
-    tax_id: organization.tax_id ?? '',
-    email: organization.email ?? '',
-    phone: organization.phone ?? '',
-    address: organization.address ?? '',
-    city: organization.city ?? '',
-    province: organization.province ?? '',
-    postal_code: organization.postal_code ?? '',
+    name: '',
+    legal_name: '',
+    tax_id: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    province: '',
+    postal_code: '',
   })
+
+  useEffect(() => {
+    if (organization && !initialized.current) {
+      initialized.current = true
+      setOrg({
+        name: organization.name ?? '',
+        legal_name: organization.legal_name ?? '',
+        tax_id: organization.tax_id ?? '',
+        email: organization.email ?? '',
+        phone: organization.phone ?? '',
+        address: organization.address ?? '',
+        city: organization.city ?? '',
+        province: organization.province ?? '',
+        postal_code: organization.postal_code ?? '',
+      })
+    }
+  }, [organization])
 
   function handleSubmit(e: { preventDefault(): void }) {
     e.preventDefault()
-    store.updateOrganization(org)
+    if (!organization?.id) return
+    updateOrganization.mutate({ id: organization.id, ...org })
   }
 
   return (
@@ -148,7 +170,8 @@ type MemberFormValues = z.infer<typeof memberSchema>
 
 function MemberFormDialog() {
   const [open, setOpen] = useState(false)
-  const { createProfile } = useDemoStore()
+  const [inviteSent, setInviteSent] = useState<string | null>(null)
+  const inviteProfile = useInviteProfile()
 
   const { register, handleSubmit, reset, watch, setValue, formState: { errors, isSubmitting } } = useForm<MemberFormValues>({
     resolver: zodResolver(memberSchema),
@@ -157,23 +180,41 @@ function MemberFormDialog() {
 
   const selectedRole = watch('role')
 
-  function onSubmit(values: MemberFormValues) {
-    createProfile(values)
-    reset()
-    setOpen(false)
+  async function onSubmit(values: MemberFormValues) {
+    inviteProfile.mutate(
+      { full_name: values.full_name, email: values.email, role: values.role, phone: values.phone ?? null, id: crypto.randomUUID() },
+      {
+        onSuccess: () => {
+          setInviteSent(values.email)
+          reset()
+        },
+      },
+    )
   }
+
+  function handleClose(next: boolean) {
+    setOpen(next)
+    if (!next) {
+      reset()
+      setInviteSent(null)
+    }
+  }
+
+  const buttonLabel = 'Invitar miembro'
+  const dialogTitle = 'Invitar miembro'
+  const dialogDescription = 'Se enviará un email de invitación. El miembro elige su contraseña al aceptarla.'
 
   return (
     <Dialog
       open={open}
-      onOpenChange={(next) => { setOpen(next); if (!next) reset() }}
-      title="Añadir miembro"
-      description="El nuevo miembro tendrá acceso según el rol asignado."
+      onOpenChange={handleClose}
+      title={dialogTitle}
+      description={dialogDescription}
       size="md"
       trigger={
         <Button size="sm">
           <Plus className="h-3.5 w-3.5" />
-          Añadir miembro
+          {buttonLabel}
         </Button>
       }
     >
@@ -246,9 +287,22 @@ function MemberFormDialog() {
           </div>
           {errors.role && <span className="text-xs font-medium text-destructive">{errors.role.message}</span>}
         </fieldset>
+        {inviteProfile.isError && (
+          <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            Error al enviar la invitación. Inténtalo de nuevo.
+          </p>
+        )}
+        {inviteSent && (
+          <div className="flex items-center gap-2 rounded-md bg-primary/10 px-3 py-2 text-sm text-primary">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            Invitación enviada a <strong>{inviteSent}</strong>
+          </div>
+        )}
         <div className="flex justify-end gap-2 pt-2">
-          <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button type="submit" disabled={isSubmitting}>Añadir</Button>
+          <Button type="button" variant="ghost" onClick={() => handleClose(false)}>Cancelar</Button>
+          <Button type="submit" disabled={isSubmitting || inviteProfile.isPending}>
+            {inviteProfile.isPending ? 'Enviando…' : 'Enviar invitación'}
+          </Button>
         </div>
       </form>
     </Dialog>
@@ -270,14 +324,14 @@ const ROLE_OPTIONS: Array<{ value: AssignableRole; label: string; description: s
 ]
 
 function TeamTab() {
-  const { profiles, customers, currentUser, updateProfileRole, deleteProfile } = useDemoStore()
-  const canEditRoles = currentUser.role === 'owner' || currentUser.role === 'admin'
+  const { profile: currentUser } = useAuth()
+  const { data: profiles = [] } = useProfiles()
+  const { data: customersResult } = useCustomers({ pageSize: 500 })
+  const updateProfile = useUpdateProfile()
+  const canEditRoles = currentUser?.role === 'owner' || currentUser?.role === 'admin'
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
-  function handleDelete(id: string) {
-    deleteProfile(id)
-    setConfirmDeleteId(null)
-  }
+  const customers = customersResult?.data ?? []
 
   return (
     <Card>
@@ -297,7 +351,7 @@ function TeamTab() {
           {profiles.map((profile) => {
             const assigned = customers.filter((c) => c.assigned_to === profile.id).length
             const fullAccess = profile.role === 'owner' || profile.role === 'admin'
-            const isMe = profile.id === currentUser.id
+            const isMe = profile.id === currentUser?.id
             return (
               <Tr key={profile.id} hover>
                 <Td>
@@ -320,11 +374,12 @@ function TeamTab() {
                 <Td>
                   {canEditRoles ? (
                     <div className="grid gap-2 sm:min-w-60">
-                      <Select value={profile.role} onChange={(e) => updateProfileRole(profile.id, e.target.value as AppRole)}>
+                      <Select
+                        value={profile.role}
+                        onChange={(e) => updateProfile.mutate({ id: profile.id, role: e.target.value as AppRole })}
+                      >
                         {ROLE_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
+                          <option key={option.value} value={option.value}>{option.label}</option>
                         ))}
                       </Select>
                       <p className="text-xs text-muted-foreground">
@@ -337,23 +392,11 @@ function TeamTab() {
                 </Td>
                 <Td>
                   {canEditRoles && !isMe && (
-
                     confirmDeleteId === profile.id ? (
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground">¿Eliminar?</span>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={(e) => { e.stopPropagation(); handleDelete(profile.id) }}
-                        >
-                          Sí
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null) }}
-                        >
-                          No
+                        <Button size="sm" variant="destructive" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null) }}>
+                          Cancelar
                         </Button>
                       </div>
                     ) : (
@@ -367,7 +410,6 @@ function TeamTab() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     )
-
                   )}
                 </Td>
               </Tr>
@@ -385,7 +427,34 @@ function TeamTab() {
 // ─── Data Tab ─────────────────────────────────────────────────────────────────
 
 function DataTab() {
-  const store = useDemoStore()
+  const { data: customersData } = useCustomers({ pageSize: 5000 })
+  const customers = customersData?.data ?? []
+
+  function exportCsv() {
+    const headers = ['Nombre', 'DNI', 'Estado', 'Fecha renovacion', 'Asignado a', 'Email', 'Teléfono', 'Ciudad']
+    const rows = customers.map((c) => [
+      c.name, c.dni ?? '', c.status, c.renewal_date ?? '', c.assigned_to ?? '', c.email ?? '', c.phone ?? '', c.city ?? '',
+    ])
+    const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `clientes-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function exportJson() {
+    const payload = { exported_at: new Date().toISOString(), customers }
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `backup-crm-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="grid gap-4">
@@ -399,57 +468,20 @@ function DataTab() {
             <div className="rounded-lg border border-border bg-muted/30 p-4">
               <p className="mb-1 text-sm font-medium text-foreground">Clientes CSV</p>
               <p className="mb-3 text-xs text-muted-foreground">Exporta nombre, DNI, estado, renovación y comercial asignado.</p>
-              <Button size="sm" variant="secondary" onClick={store.exportCustomersCsv}>
+              <Button size="sm" variant="secondary" onClick={exportCsv}>
                 <Download className="h-3.5 w-3.5" />
                 Descargar CSV
               </Button>
             </div>
             <div className="rounded-lg border border-border bg-muted/30 p-4">
               <p className="mb-1 text-sm font-medium text-foreground">Backup JSON</p>
-              <p className="mb-3 text-xs text-muted-foreground">Exporta clientes, contratos y documentos en formato JSON.</p>
-              <Button size="sm" variant="secondary" onClick={store.exportBackupJson}>
+              <p className="mb-3 text-xs text-muted-foreground">Exporta todos los clientes en formato JSON.</p>
+              <Button size="sm" variant="secondary" onClick={exportJson}>
                 <Download className="h-3.5 w-3.5" />
                 Descargar JSON
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Puntos de restauración</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Cada cambio genera un snapshot en <code className="rounded bg-muted px-1 font-mono text-[11px]">localStorage</code>. Se conservan los últimos 8.
-          </p>
-        </CardHeader>
-        <CardContent>
-          {store.backupSnapshots.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">Sin backups todavía.</p>
-          ) : (
-            <DataTable headers={['Fecha', 'Motivo', 'Clientes']}>
-              {store.backupSnapshots.map((backup) => (
-                <Tr key={backup.id} hover>
-                  <Td variant="muted" className="text-sm">{formatDateTime(backup.created_at)}</Td>
-                  <Td variant="primary" className="text-sm">{backup.label}</Td>
-                  <Td variant="muted" className="text-sm">{backup.customers}</Td>
-                </Tr>
-              ))}
-            </DataTable>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className="border-destructive/30">
-        <CardHeader>
-          <CardTitle className="text-destructive">Zona de peligro</CardTitle>
-          <p className="text-sm text-muted-foreground">Restaura todos los datos de la demo a su estado inicial. Esta acción no se puede deshacer.</p>
-        </CardHeader>
-        <CardContent>
-          <Button variant="destructive" size="sm" onClick={store.resetDemo}>
-            <RotateCcw className="h-3.5 w-3.5" />
-            Restaurar demo
-          </Button>
         </CardContent>
       </Card>
     </div>
@@ -464,8 +496,8 @@ type SettingsTab = (typeof VALID_TABS)[number]
 export function SettingsRoute() {
   const { tab: rawTab } = useParams<{ tab: string }>()
   const navigate = useNavigate()
-  const { currentUser } = useDemoStore()
-  const canManageTeam = currentUser.role === 'owner' || currentUser.role === 'admin'
+  const { profile: currentUser } = useAuth()
+  const canManageTeam = currentUser?.role === 'owner' || currentUser?.role === 'admin'
 
   const tab: SettingsTab =
     rawTab && (VALID_TABS as readonly string[]).includes(rawTab) && (rawTab !== 'team' || canManageTeam)

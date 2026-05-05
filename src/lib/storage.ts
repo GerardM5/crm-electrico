@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from './supabase'
+import { supabase } from './supabase'
 
 export const storageBuckets = {
   invoices: {
@@ -40,10 +40,6 @@ export function isPdfDocument(fileName?: string, mimeType?: string) {
 export function getStoragePublicUrl(bucket: string, filePath: string) {
   if (/^https?:\/\//i.test(filePath)) {
     return filePath
-  }
-
-  if (!isSupabaseConfigured || !supabase) {
-    return null
   }
 
   return supabase.storage.from(bucket).getPublicUrl(filePath).data.publicUrl

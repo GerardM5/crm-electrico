@@ -88,7 +88,6 @@ export function UserMenu({
           </div>
           <div className="min-w-0">
             <p className="font-medium">Cerrar sesión</p>
-            <p className="text-xs opacity-80">Salir de la demo</p>
           </div>
         </DropdownMenuItem>
       </DropdownMenuContent>
