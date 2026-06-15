@@ -1,6 +1,7 @@
 import { Menu, Search, Settings } from 'lucide-react'
 import { Suspense, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import logo from '../../assets/media/logo.png'
 import { appBrand, navItems } from '../../config/nav'
 import { useAuth } from '../../features/auth/AuthContext'
 import { cn } from '../../lib/utils'
@@ -19,7 +20,6 @@ import { UserMenu } from './UserMenu'
 type NavBadges = Record<string, number>
 
 function SidebarContent({ onNavigate, badges }: { onNavigate?: () => void; badges?: NavBadges }) {
-  const BrandIcon = appBrand.icon
   const { profile, signOut } = useAuth()
   const { data: organization } = useOrganization()
 
@@ -27,8 +27,8 @@ function SidebarContent({ onNavigate, badges }: { onNavigate?: () => void; badge
     <div className="flex h-full flex-col bg-sidebar border-r border-sidebar-border/60">
       {/* Brand */}
       <div className="flex h-16 shrink-0 items-center gap-3 px-5">
-        <div className="relative grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/20">
-          <BrandIcon className="h-4 w-4" />
+        <div className="relative grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-primary shadow-md shadow-primary/20 overflow-hidden">
+          <img src={logo} alt={appBrand.name} className="h-6 w-6 object-contain" />
           <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-sidebar" />
         </div>
         <div className="min-w-0">

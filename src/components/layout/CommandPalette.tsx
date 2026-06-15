@@ -7,13 +7,13 @@ import {
   Home,
   Search,
   SquareCheck,
-  Zap,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import logo from '../../assets/media/logo.png'
 import { navItems } from '../../config/nav'
-import { useDocuments } from '../../services/documents.service'
 import { useCustomers } from '../../services/customers.service'
+import { useDocuments } from '../../services/documents.service'
 import { useLeads } from '../../services/leads.service'
 import { useTasks } from '../../services/tasks.service'
 import { DialogContent, DialogOverlay, DialogPortal, DialogRoot } from '../ui/dialog'
@@ -170,7 +170,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
           <div ref={listRef} className="max-h-[60vh] overflow-y-auto overscroll-contain p-2">
             {flat.length === 0 ? (
               <div className="flex flex-col items-center gap-2 py-10 text-sm text-muted-foreground">
-                <Zap className="h-7 w-7 text-muted-foreground/40" />
+                <img src={logo} alt="" className="h-7 w-7 object-contain opacity-30" />
                 Sin resultados para «{query}»
               </div>
             ) : (
