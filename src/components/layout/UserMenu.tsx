@@ -1,8 +1,8 @@
-import { ChevronDown, LogOut, Settings } from 'lucide-react'
+import { ChevronDown, Eye, LogOut, Settings, Shield, ShoppingBag, Users, Wrench } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { initials } from '../../lib/utils'
+import { cn, initials } from '../../lib/utils'
+import type { AppRole } from '../../types/database.types'
 import { Avatar, AvatarFallback } from '../ui/avatar'
-import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import {
   DropdownMenu,
@@ -11,6 +11,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
+
+const ROLE_CONFIG: Record<AppRole, {
+  label: string
+  description: string
+  icon: React.ElementType
+  className: string
+}> = {
+  owner: { label: 'Propietario', description: 'Acceso total', icon: Shield, className: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400' },
+  admin: { label: 'Administrador', description: 'Gestión de equipo', icon: Users, className: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400' },
+  sales: { label: 'Comercial', description: 'Su cartera asignada', icon: ShoppingBag, className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
+  technician: { label: 'Técnico', description: 'Instalaciones y tareas', icon: Wrench, className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
+  viewer: { label: 'Observador', description: 'Solo lectura', icon: Eye, className: 'bg-muted text-muted-foreground' },
+}
 
 export function UserMenu({
   fullName,
@@ -26,6 +39,9 @@ export function UserMenu({
   onLogout: () => void
 }) {
   const navigate = useNavigate()
+  const roleKey = role as AppRole
+  const config = ROLE_CONFIG[roleKey] ?? ROLE_CONFIG.viewer
+  const RoleIcon = config.icon
 
   return (
     <DropdownMenu>
@@ -46,15 +62,21 @@ export function UserMenu({
         sideOffset={10}
         className="min-w-72 rounded-xl p-2 shadow-xl"
       >
-        <div className="rounded-lg border border-border bg-muted/40 px-3 py-3">
-          <div className="flex items-start justify-between gap-3">
+        <div className="rounded-lg border border-border bg-muted/40 px-3 py-3 space-y-2.5">
+          <div className="flex items-center gap-3">
+            <Avatar size="default">
+              <AvatarFallback>{initials(fullName)}</AvatarFallback>
+            </Avatar>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-foreground">{fullName}</p>
               <p className="truncate text-xs text-muted-foreground">{email}</p>
             </div>
-            <Badge variant="emerald" className="shrink-0 capitalize">
-              {role}
-            </Badge>
+          </div>
+          <div className={cn('flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium w-fit', config.className)}>
+            <RoleIcon className="size-3 shrink-0" />
+            <span>{config.label}</span>
+            <span className="opacity-60">·</span>
+            <span className="font-normal opacity-75">{config.description}</span>
           </div>
         </div>
 
