@@ -46,10 +46,10 @@ export function RenewalsRoute() {
   const debouncedSearch = useDebounce(search, 250)
 
   function setStage(value: StageFilter) {
-    setParams((p) => { const n = new URLSearchParams(p); value === 'all' ? n.delete('stage') : n.set('stage', value); n.delete('page'); return n })
+    setParams((p) => { const n = new URLSearchParams(p); if (value === 'all') n.delete('stage'); else n.set('stage', value); n.delete('page'); return n })
   }
   function setSearch(value: string) {
-    setParams((p) => { const n = new URLSearchParams(p); value ? n.set('q', value) : n.delete('q'); n.delete('page'); return n })
+    setParams((p) => { const n = new URLSearchParams(p); if (value) n.set('q', value); else n.delete('q'); n.delete('page'); return n })
   }
 
   // Fetch all customers with renewal filtering (RLS handles visibility)
@@ -69,7 +69,7 @@ export function RenewalsRoute() {
     const q = debouncedSearch.toLowerCase()
     return allCustomers
       .filter((customer) => {
-        const currentStage = getRenewalStage(customer as any)
+        const currentStage = getRenewalStage(customer)
         const inStage = ['due', 'urgent', 'overdue', 'scheduled'].includes(currentStage) && (stage === 'all' || currentStage === stage)
         const matchesSearch = !q || customer.name.toLowerCase().includes(q) || customer.company?.toLowerCase().includes(q)
         return inStage && matchesSearch
@@ -145,7 +145,7 @@ export function RenewalsRoute() {
           pagination={{ page, pageSize: PAGE_SIZE, total, totalPages, onPageChange: _setPage, onPageSizeChange: () => { } }}
         >
           {pageItems.map((customer) => {
-            const days = getDaysToRenewal(customer as any)
+            const days = getDaysToRenewal(customer)
             return (
               <Tr key={customer.id} hover className="cursor-pointer" onClick={() => navigate(`/customers/${customer.id}`)}>
                 <Td>

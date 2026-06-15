@@ -30,8 +30,8 @@ export function CustomerDetailRoute() {
     [profiles, customer?.assigned_to],
   )
   const contract = contracts[0]
-  const daysToRenewal = customer ? getDaysToRenewal(customer as any) : undefined
-  const alertDate = customer ? getRenewalAlertDate(customer as any) : undefined
+  const daysToRenewal = customer ? getDaysToRenewal(customer) : undefined
+  const alertDate = customer ? getRenewalAlertDate(customer) : undefined
 
   if (isLoading) {
     return <p className="text-sm text-muted-foreground">Cargando...</p>
@@ -71,7 +71,7 @@ export function CustomerDetailRoute() {
             )}
           </span>
         }
-        action={<CustomerFormDialog customer={customer as any} />}
+        action={<CustomerFormDialog customer={customer} />}
       />
 
       {/* KPI strip — flat, no individual card boxes */}
@@ -184,7 +184,7 @@ function ActivityLog({ customerId }: { customerId: string }) {
                 {actionIcons[log.action] ?? <Clock className="h-3.5 w-3.5" />}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-foreground">{String((log.metadata as any)?.label ?? log.action)}</p>
+                <p className="truncate text-sm text-foreground">{String((log.metadata as { label?: string } | null)?.label ?? log.action)}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">{relativeTime(log.created_at)}</p>
               </div>
             </div>

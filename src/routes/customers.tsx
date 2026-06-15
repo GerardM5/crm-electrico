@@ -6,8 +6,8 @@ import { StatusBadge } from '../components/feedback/StatusBadge'
 import { Field, Input, Select } from '../components/ui/input'
 import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
 import { customerStatusLabels } from '../config/constants'
-import { CustomerFormDialog } from '../features/customers/CustomerFormDialog'
 import { useAuth } from '../features/auth/AuthContext'
+import { CustomerFormDialog } from '../features/customers/CustomerFormDialog'
 import { useDebounce } from '../hooks/use-debounce'
 import { formatDate } from '../lib/formatters'
 import { useCustomers } from '../services/customers.service'
@@ -25,10 +25,10 @@ export function CustomersRoute() {
   const owner = params.get('owner') ?? 'all'
   const page = Number(params.get('page') ?? '0')
 
-  function setSearch(v: string) { setParams((p) => { const n = new URLSearchParams(p); v ? n.set('q', v) : n.delete('q'); n.delete('page'); return n }, { replace: true }) }
-  function setStatus(v: string) { setParams((p) => { const n = new URLSearchParams(p); v !== 'all' ? n.set('status', v) : n.delete('status'); n.delete('page'); return n }, { replace: true }) }
-  function setOwner(v: string) { setParams((p) => { const n = new URLSearchParams(p); v !== 'all' ? n.set('owner', v) : n.delete('owner'); n.delete('page'); return n }, { replace: true }) }
-  function setPage(p: number) { setParams((prev) => { const n = new URLSearchParams(prev); p > 0 ? n.set('page', String(p)) : n.delete('page'); return n }, { replace: true }) }
+  function setSearch(v: string) { setParams((p) => { const n = new URLSearchParams(p); if (v) n.set('q', v); else n.delete('q'); n.delete('page'); return n }, { replace: true }) }
+  function setStatus(v: string) { setParams((p) => { const n = new URLSearchParams(p); if (v !== 'all') n.set('status', v); else n.delete('status'); n.delete('page'); return n }, { replace: true }) }
+  function setOwner(v: string) { setParams((p) => { const n = new URLSearchParams(p); if (v !== 'all') n.set('owner', v); else n.delete('owner'); n.delete('page'); return n }, { replace: true }) }
+  function setPage(p: number) { setParams((prev) => { const n = new URLSearchParams(prev); if (p > 0) n.set('page', String(p)); else n.delete('page'); return n }, { replace: true }) }
 
   const debouncedSearch = useDebounce(search, 250)
 

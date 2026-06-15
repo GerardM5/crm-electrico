@@ -4,10 +4,10 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { Button } from '../components/ui/button'
-import { useRecentActivity } from '../services/activity.service'
-import { useCustomers } from '../services/customers.service'
 import { getDaysToRenewal, getRenewalStage } from '../lib/customer-workflow'
 import { relativeTime } from '../lib/formatters'
+import { useRecentActivity } from '../services/activity.service'
+import { useCustomers } from '../services/customers.service'
 
 const entityIcons: Record<string, ReactNode> = {
   customer: <Users className="h-3.5 w-3.5" />,
@@ -35,7 +35,7 @@ export function DashboardRoute() {
     const today = new Date().toISOString().slice(0, 10)
     const thisMonth = today.slice(0, 7)
     const activeCount = customers.filter((c) => c.status === 'active' || c.status === 'renewed').length
-    const urgentCount = customers.filter((c) => ['due', 'urgent', 'overdue'].includes(getRenewalStage(c as any))).length
+    const urgentCount = customers.filter((c) => ['due', 'urgent', 'overdue'].includes(getRenewalStage(c))).length
     const thisMonthCount = customers.filter((c) => c.renewal_date?.startsWith(thisMonth)).length
     const contactedTodayCount = customers.filter((c) => c.last_contact_at?.startsWith(today)).length
     return { activeCount, urgentCount, thisMonthCount, contactedTodayCount }
@@ -44,7 +44,7 @@ export function DashboardRoute() {
   const urgentRenewals = useMemo(
     () =>
       customers
-        .map((c) => ({ customer: c, stage: getRenewalStage(c as any), days: getDaysToRenewal(c as any) }))
+        .map((c) => ({ customer: c, stage: getRenewalStage(c), days: getDaysToRenewal(c) }))
         .filter(({ stage }) => ['overdue', 'urgent', 'due'].includes(stage))
         .sort((a, b) => (a.days ?? 999) - (b.days ?? 999))
         .slice(0, 6),
@@ -115,7 +115,7 @@ export function DashboardRoute() {
                     {entityIcons[log.entity_type] ?? <Clock className="h-3.5 w-3.5" />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm text-foreground">{String((log.metadata as any)?.label ?? log.action)}</p>
+                    <p className="truncate text-sm text-foreground">{String((log.metadata as { label?: string } | null)?.label ?? log.action)}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">{relativeTime(log.created_at)}</p>
                   </div>
                 </div>

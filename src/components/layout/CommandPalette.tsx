@@ -66,12 +66,18 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
   const listRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (open) {
+    if (!open) return
+    const timeout = setTimeout(() => inputRef.current?.focus(), 50)
+    return () => clearTimeout(timeout)
+  }, [open])
+
+  const handleOpenChange = useCallback((next: boolean) => {
+    if (!next) {
       setQuery('')
       setActiveIndex(0)
-      setTimeout(() => inputRef.current?.focus(), 50)
     }
-  }, [open])
+    onOpenChange(next)
+  }, [onOpenChange])
 
   const results = useMemo<ResultItem[]>(() => {
     const q = query.trim().toLowerCase()
@@ -125,12 +131,8 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
 
   const select = useCallback((item: ResultItem) => {
     navigate(item.href)
-    onOpenChange(false)
-  }, [navigate, onOpenChange])
-
-  useEffect(() => {
-    setActiveIndex(0)
-  }, [query])
+    handleOpenChange(false)
+  }, [navigate, handleOpenChange])
 
   useEffect(() => {
     const el = listRef.current?.querySelector<HTMLElement>(`[data-index="${activeIndex}"]`)
@@ -141,11 +143,11 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
     if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIndex((i) => Math.min(i + 1, flat.length - 1)) }
     if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIndex((i) => Math.max(i - 1, 0)) }
     if (e.key === 'Enter' && flat[activeIndex]) select(flat[activeIndex])
-    if (e.key === 'Escape') onOpenChange(false)
+    if (e.key === 'Escape') handleOpenChange(false)
   }
 
   return (
-    <DialogRoot open={open} onOpenChange={onOpenChange}>
+    <DialogRoot open={open} onOpenChange={handleOpenChange}>
       <DialogPortal>
         <DialogOverlay className="animate-fade-in fixed inset-0 z-40 bg-foreground/50 backdrop-blur-sm" />
         <DialogContent
@@ -159,7 +161,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
             <input
               ref={inputRef}
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => { setQuery(e.target.value); setActiveIndex(0) }}
               placeholder="Buscar clientes, leads, tareas, páginas…"
               className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
             />
