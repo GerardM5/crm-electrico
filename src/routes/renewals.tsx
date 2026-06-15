@@ -1,20 +1,19 @@
 import { Phone, RefreshCw, Search } from 'lucide-react'
-import { type FormEvent, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { StatusBadge } from '../components/feedback/StatusBadge'
 import { Button } from '../components/ui/button'
-import { Dialog } from '../components/ui/dialog'
-import { Field, Input, Select, Textarea } from '../components/ui/input'
+import { Field, Input, Select } from '../components/ui/input'
 import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
 import { customerStatusLabels } from '../config/constants'
+import { ContactLogDialog } from '../features/customers/ContactLogDialog'
+import { useCustomerActions } from '../hooks/use-customer-actions'
 import { useDebounce } from '../hooks/use-debounce'
 import { getDaysToRenewal, getRenewalStage } from '../lib/customer-workflow'
 import { formatDate } from '../lib/formatters'
 import { cn } from '../lib/utils'
-import { useLogActivity } from '../services/activity.service'
 import { useCustomers } from '../services/customers.service'
-import { useUpdateCustomer } from '../services/customers.service'
 import { useProfiles } from '../services/profiles.service'
 
 type StageFilter = 'all' | 'due' | 'urgent' | 'overdue' | 'scheduled'
@@ -36,9 +35,6 @@ function DaysBadge({ days }: { days: number | undefined }) {
 export function RenewalsRoute() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
-  const [contactingCustomerId, setContactingCustomerId] = useState<string | null>(null)
-  const [contactedAt, setContactedAt] = useState(() => formatDateTimeLocal(new Date()))
-  const [callNotes, setCallNotes] = useState('')
   const [page, _setPage] = useState(0)
 
   const stage = (params.get('stage') ?? 'all') as StageFilter
@@ -55,8 +51,7 @@ export function RenewalsRoute() {
   // Fetch all customers with renewal filtering (RLS handles visibility)
   const { data: result } = useCustomers({ search: debouncedSearch || undefined, pageSize: 500 })
   const { data: profiles } = useProfiles()
-  const updateCustomer = useUpdateCustomer()
-  const logActivity = useLogActivity()
+  const { renewCustomer } = useCustomerActions()
 
   const profilesById = useMemo(
     () => Object.fromEntries((profiles ?? []).map((p) => [p.id, p.full_name])),
