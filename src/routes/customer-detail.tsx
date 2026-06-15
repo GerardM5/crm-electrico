@@ -192,7 +192,7 @@ export function CustomerDetailRoute() {
             }
           />
         </div>
-        <DataTable headers={['Archivo', 'Tipo', 'Fecha', 'Ruta', 'Vista', 'Acciones']}>
+        <DataTable headers={['Archivo', 'Tipo', 'Fecha', 'Ruta', { label: 'Acciones', align: 'right' }]}>
           {documents.map((document) => (
             <Tr key={document.id} hover>
               <Td variant="primary">{document.file_name}</Td>
@@ -200,25 +200,25 @@ export function CustomerDetailRoute() {
               <Td variant="muted">{formatDate(document.created_at)}</Td>
               <Td className="max-w-48"><TruncatePath path={document.file_path} /></Td>
               <Td>
-                {isPdfDocument(document.file_name, document.mime_type ?? undefined) ? (
-                  <PdfViewerDialog source={{ bucket: document.bucket, file_path: document.file_path, file_name: document.file_name, mime_type: document.mime_type ?? undefined }} title={document.file_name} description={`Archivo asociado a ${customer.name}`} />
-                ) : (
-                  <span className="text-xs text-muted-foreground">No PDF</span>
-                )}
-              </Td>
-              <Td>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                  disabled={deleteDocument.isPending}
-                  onClick={() => deleteDocument.mutate(
-                    { id: document.id, bucket: document.bucket, file_path: document.file_path },
-                    { onSuccess: () => toast.success('Documento eliminado') }
+                <div className="flex items-center justify-end gap-1">
+                  {isPdfDocument(document.file_name, document.mime_type ?? undefined) ? (
+                    <PdfViewerDialog source={{ bucket: document.bucket, file_path: document.file_path, file_name: document.file_name, mime_type: document.mime_type ?? undefined }} title={document.file_name} description={`Archivo asociado a ${customer.name}`} />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">No PDF</span>
                   )}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                    disabled={deleteDocument.isPending}
+                    onClick={() => deleteDocument.mutate(
+                      { id: document.id, bucket: document.bucket, file_path: document.file_path },
+                      { onSuccess: () => toast.success('Documento eliminado') }
+                    )}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </Td>
             </Tr>
           ))}

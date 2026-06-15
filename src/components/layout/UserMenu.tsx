@@ -20,7 +20,7 @@ const ROLE_CONFIG: Record<AppRole, {
 }> = {
   owner: { label: 'Propietario', description: 'Acceso total', icon: Shield, className: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400' },
   admin: { label: 'Administrador', description: 'Gestión de equipo', icon: Users, className: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400' },
-  sales: { label: 'Comercial', description: 'Su cartera asignada', icon: ShoppingBag, className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
+  sales: { label: 'Comercial', description: 'Clientes propios', icon: ShoppingBag, className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
   technician: { label: 'Técnico', description: 'Instalaciones y tareas', icon: Wrench, className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
   viewer: { label: 'Observador', description: 'Solo lectura', icon: Eye, className: 'bg-muted text-muted-foreground' },
 }
