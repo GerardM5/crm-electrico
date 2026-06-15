@@ -155,45 +155,6 @@ export function RenewalsRoute() {
           })}
         </DataTable>
       )}
-
-      <Dialog
-        open={Boolean(contactingCustomerId)}
-        onOpenChange={(open) => {
-          if (!open) closeContactDialog()
-        }}
-        title={contactingCustomer ? `Registrar llamada con ${contactingCustomer.name}` : 'Registrar llamada'}
-        description="Guarda fecha, hora y notas de la llamada en la actividad del cliente."
-      >
-        <form className="grid gap-4" onSubmit={submitContactLog}>
-          <Field label="Fecha y hora">
-            <Input type="datetime-local" value={contactedAt} onChange={(event) => setContactedAt(event.target.value)} required />
-          </Field>
-          <Field label="Notas de la llamada">
-            <Textarea
-              value={callNotes}
-              onChange={(event) => setCallNotes(event.target.value)}
-              placeholder="Resumen de la conversación, siguiente paso, objeciones, etc."
-            />
-          </Field>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={closeContactDialog}>
-              Cancelar
-            </Button>
-            <Button type="submit">
-              Guardar actividad
-            </Button>
-          </div>
-        </form>
-      </Dialog>
     </div>
   )
-}
-
-function formatDateTimeLocal(value: Date) {
-  const year = value.getFullYear()
-  const month = String(value.getMonth() + 1).padStart(2, '0')
-  const day = String(value.getDate()).padStart(2, '0')
-  const hours = String(value.getHours()).padStart(2, '0')
-  const minutes = String(value.getMinutes()).padStart(2, '0')
-  return `${year}-${month}-${day}T${hours}:${minutes}`
 }

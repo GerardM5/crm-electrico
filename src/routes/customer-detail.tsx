@@ -1,13 +1,16 @@
-import { Clock, FileText, Phone, RefreshCw, UserCheck } from 'lucide-react'
+import { Clock, FileText, Phone, RefreshCw, Upload, UserCheck } from 'lucide-react'
 import { type ReactNode, useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { PageHeader } from '../components/data-table/Toolbar'
+import { DocumentUploadDialog } from '../components/documents/DocumentUploadDialog'
 import { PdfViewerDialog } from '../components/documents/PdfViewerDialog'
 import { StatusBadge } from '../components/feedback/StatusBadge'
 import { Button } from '../components/ui/button'
 import { DataTable, Td, Tr, TruncatePath } from '../components/ui/table'
 import { customerStatusLabels } from '../config/constants'
+import { ContactLogDialog } from '../features/customers/ContactLogDialog'
 import { CustomerFormDialog } from '../features/customers/CustomerFormDialog'
+import { useCustomerActions } from '../hooks/use-customer-actions'
 import { getDaysToRenewal, getRenewalAlertDate } from '../lib/customer-workflow'
 import { formatDate, relativeTime } from '../lib/formatters'
 import { isPdfDocument } from '../lib/storage'
@@ -24,6 +27,7 @@ export function CustomerDetailRoute() {
   const { data: documents = [] } = useDocuments(id)
   const { data: contracts = [] } = useContracts(id)
   const { data: profiles = [] } = useProfiles()
+  const { renewCustomer, isPending } = useCustomerActions()
 
   const owner = useMemo(
     () => profiles.find((p) => p.id === customer?.assigned_to),
@@ -71,7 +75,34 @@ export function CustomerDetailRoute() {
             )}
           </span>
         }
-        action={<CustomerFormDialog customer={customer} />}
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <ContactLogDialog
+              customerId={customer.id}
+              customerName={customer.name}
+              trigger={
+                <Button size="sm" variant="outline">
+                  <Phone className="h-4 w-4" />Registrar contacto
+                </Button>
+              }
+            />
+            {customer.status !== 'renewed' && (
+              <Button size="sm" variant="outline" disabled={isPending} onClick={() => renewCustomer(customer)}>
+                <RefreshCw className="h-4 w-4" />Renovar
+              </Button>
+            )}
+            <DocumentUploadDialog
+              customerId={customer.id}
+              customerName={customer.name}
+              trigger={
+                <Button size="sm" variant="outline">
+                  <Upload className="h-4 w-4" />Subir documento
+                </Button>
+              }
+            />
+            <CustomerFormDialog customer={customer} />
+          </div>
+        }
       />
 
       {/* KPI strip — flat, no individual card boxes */}

@@ -1,5 +1,6 @@
 import { Search, Upload } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
+import { toast } from 'sonner'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { PdfViewerDialog } from '../components/documents/PdfViewerDialog'
 import { Button } from '../components/ui/button'
@@ -9,6 +10,7 @@ import { DataTable, EmptyState, Td, Tr, TruncatePath } from '../components/ui/ta
 import { useAuth } from '../features/auth/AuthContext'
 import { useDebounce } from '../hooks/use-debounce'
 import { usePagination } from '../hooks/use-pagination'
+import { useToastError } from '../hooks/use-toast-error'
 import { formatDate } from '../lib/formatters'
 import { isPdfDocument } from '../lib/storage'
 import { useCustomers } from '../services/customers.service'
@@ -21,6 +23,7 @@ export function DocumentsRoute() {
   const { data: customersResult } = useCustomers({ pageSize: 500 })
   const { data: documents = [] } = useDocuments()
   const uploadDocument = useUploadDocument()
+  const onError = useToastError()
 
   const customers = customersResult?.data ?? []
   const [customerId, setCustomerId] = useState('')
@@ -29,8 +32,6 @@ export function DocumentsRoute() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const debouncedSearch = useDebounce(search, 250)
-
-  const effectiveCustomerId = customerId || customers[0]?.id || ''
 
   const customerById = useMemo(
     () => Object.fromEntries(customers.map((c) => [c.id, c.name])),
@@ -54,14 +55,16 @@ export function DocumentsRoute() {
   }
 
   function handleUpload() {
-    if (!selectedFile || !effectiveCustomerId || !currentUser) return
+    if (!selectedFile || !customerId || !currentUser) return
     uploadDocument.mutate(
-      { file: selectedFile, customerId: effectiveCustomerId, type, uploadedBy: currentUser.id },
+      { file: selectedFile, customerId, type, uploadedBy: currentUser.id },
       {
         onSuccess: () => {
+          toast.success('Documento subido')
           setSelectedFile(null)
           if (fileInputRef.current) fileInputRef.current.value = ''
         },
+        onError,
       },
     )
   }
@@ -76,7 +79,8 @@ export function DocumentsRoute() {
           </CardHeader>
           <CardContent className="grid gap-4">
             <Field label="Cliente">
-              <Select value={effectiveCustomerId} onChange={(e) => setCustomerId(e.target.value)}>
+              <Select value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
+                <option value="" disabled>— Selecciona cliente —</option>
                 {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Select>
             </Field>
@@ -91,7 +95,7 @@ export function DocumentsRoute() {
             <Field label="Archivo">
               <Input ref={fileInputRef} type="file" onChange={handleFileChange} />
             </Field>
-            <Button onClick={handleUpload} disabled={!selectedFile || uploadDocument.isPending}>
+            <Button onClick={handleUpload} disabled={!selectedFile || !customerId || uploadDocument.isPending}>
               <Upload className="h-4 w-4" />
               {uploadDocument.isPending ? 'Subiendo…' : 'Subir archivo'}
             </Button>
