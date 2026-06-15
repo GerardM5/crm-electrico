@@ -6,7 +6,8 @@ import {
 } from "date-fns";
 import type { AppRole, Tables } from "../types/database.types";
 
-type Customer = Tables<'customers'>
+type Customer = Tables<"customers">;
+type Contract = Tables<"contracts">;
 
 export function canViewAllCustomers(role: AppRole) {
 	return role === "owner" || role === "admin";
@@ -55,4 +56,26 @@ export function getDaysToRenewal(customer: Customer, today = new Date()) {
 		startOfDay(new Date(customer.renewal_date)),
 		startOfDay(today),
 	);
+}
+
+// ─── Contract-based renewal helpers ─────────────────────────────────────────
+
+export function getDaysToContractEnd(contract: Contract, today = new Date()) {
+	if (!contract.ends_at) return undefined;
+	return differenceInCalendarDays(
+		startOfDay(new Date(contract.ends_at)),
+		startOfDay(today),
+	);
+}
+
+/** Returns the urgency stage for an active contract based on its ends_at. */
+export function getContractRenewalStage(
+	contract: Contract,
+	today = new Date(),
+): "overdue" | "urgent" | "due" | "unscheduled" {
+	const days = getDaysToContractEnd(contract, today);
+	if (days === undefined) return "unscheduled";
+	if (days < 0) return "overdue";
+	if (days <= 30) return "urgent";
+	return "due";
 }

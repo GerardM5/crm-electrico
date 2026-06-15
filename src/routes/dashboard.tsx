@@ -2,9 +2,7 @@ import { Activity, CalendarClock, CheckCircle2, FileSignature, FileText, Refresh
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../components/data-table/Toolbar'
-import { StatusBadge } from '../components/feedback/StatusBadge'
 import { Button } from '../components/ui/button'
-import { contractStatusLabels } from '../config/constants'
 import { getDaysToRenewal, getRenewalStage } from '../lib/customer-workflow'
 import { useContracts } from '../services/contracts.service'
 import { useCustomers } from '../services/customers.service'
@@ -23,12 +21,9 @@ export function DashboardRoute() {
   const customers = customersResult?.data ?? []
 
   const contractStats = useMemo(() => {
-    const byStatus: Record<string, number> = {}
-    for (const key of Object.keys(contractStatusLabels)) byStatus[key] = 0
-    for (const c of contracts) byStatus[c.status] = (byStatus[c.status] ?? 0) + 1
-    const active = byStatus.active ?? 0
-    const pendingSignature = byStatus.pending_signature ?? 0
-    return { total: contracts.length, active, pendingSignature, byStatus }
+    const active = contracts.filter((c) => c.status === 'active').length
+    const pendingSignature = contracts.filter((c) => c.status === 'pending_signature').length
+    return { total: contracts.length, active, pendingSignature }
   }, [contracts])
 
   const kpis = useMemo(() => {
@@ -76,21 +71,6 @@ export function DashboardRoute() {
         <Kpi title="Contratos totales" value={contractStats.total} icon={<FileText />} />
         <Kpi title="Contratos activos" value={contractStats.active} icon={<CheckCircle2 />} />
         <Kpi title="Pendientes de firma" value={contractStats.pendingSignature} icon={<FileSignature />} />
-      </section>
-
-      {/* Contract state breakdown */}
-      <section>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Contratos por estado</h2>
-        <div className="flex flex-wrap gap-x-8 gap-y-4 rounded-lg border border-border bg-card px-5 py-4">
-          {Object.entries(contractStatusLabels).map(([value, label]) => (
-            <div key={value} className="flex items-center gap-2">
-              <StatusBadge value={label} />
-              <span className="text-sm font-semibold tabular-nums text-foreground">
-                {contractStats.byStatus[value] ?? 0}
-              </span>
-            </div>
-          ))}
-        </div>
       </section>
 
       {/* Main content */}

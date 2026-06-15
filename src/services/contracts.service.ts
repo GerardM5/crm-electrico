@@ -10,6 +10,15 @@ export type ContractWithCustomer = ContractRow & {
 	customer: { id: string; name: string; company: string | null } | null;
 };
 
+export type ContractWithCustomerInfo = ContractRow & {
+	customer: {
+		id: string;
+		name: string;
+		company: string | null;
+		assigned_to: string | null;
+	} | null;
+};
+
 export interface ContractsListParams {
 	search?: string;
 	status?: ContractStatus;
@@ -98,6 +107,32 @@ export function useUpdateContract() {
 		},
 		onSuccess: () =>
 			qc.invalidateQueries({ queryKey: ["contracts"], exact: false }),
+	});
+}
+
+/**
+ * Fetches active contracts whose ends_at falls within the next `alertDays` days
+ * (or is already overdue). Ordered by ends_at ASC so the most urgent appear first.
+ */
+export function useContractsDueForRenewal(alertDays = 60) {
+	return useQuery<ContractWithCustomerInfo[]>({
+		queryKey: ["contracts", "renewal", alertDays],
+		queryFn: async () => {
+			const alertDate = new Date();
+			alertDate.setDate(alertDate.getDate() + alertDays);
+			const alertDateStr = alertDate.toISOString().slice(0, 10);
+
+			const { data, error } = await supabase
+				.from("contracts")
+				.select("*, customer:customers(id, name, company, assigned_to)")
+				.eq("status", "active")
+				.not("ends_at", "is", null)
+				.lte("ends_at", alertDateStr)
+				.order("ends_at", { ascending: true });
+
+			if (error) throw error;
+			return (data ?? []) as ContractWithCustomerInfo[];
+		},
 	});
 }
 

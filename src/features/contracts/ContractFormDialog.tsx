@@ -1,15 +1,32 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, Pencil, Plus } from 'lucide-react'
-import { useState } from 'react'
+import { Euro, Loader2, Pencil, Plus, Zap } from 'lucide-react'
+import { type ReactNode, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Button } from '../../components/ui/button'
 import { Dialog } from '../../components/ui/dialog'
-import { Field, Input, Select, Textarea } from '../../components/ui/input'
+import { Field, Input, InputGroup, Select, Textarea } from '../../components/ui/input'
 import { contractStatusLabels } from '../../config/constants'
 import { useToastError } from '../../hooks/use-toast-error'
 import { type ContractFormValues, contractSchema } from '../../schemas/forms.schema'
 import { type ContractRow, useCreateContract, useUpdateContract } from '../../services/contracts.service'
+
+function SectionHeader({ title, description }: { title: string; description?: string }) {
+  return (
+    <div className="col-span-full border-t pt-4 first:border-t-0 first:pt-0">
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</p>
+      {description && <p className="mt-0.5 text-xs text-muted-foreground/70">{description}</p>}
+    </div>
+  )
+}
+
+function MoneyInput({ children }: { children: ReactNode }) {
+  return <InputGroup leading={<Euro />}>{children}</InputGroup>
+}
+
+function EnergyInput({ children }: { children: ReactNode }) {
+  return <InputGroup leading={<Zap />}>{children}</InputGroup>
+}
 
 const numOrNull = (v: number | undefined) => (v === undefined || Number.isNaN(v) ? null : v)
 

@@ -90,27 +90,44 @@ export function ContractsRoute() {
               key={contract.id}
               hover
               className="cursor-pointer"
-              onClick={() => contract.customer_id && navigate(`/customers/${contract.customer_id}`)}
+              onClick={() => setEditingContract(contract)}
             >
-              <Td>
-                <p className="font-medium text-foreground">{contract.customer?.name ?? '-'}</p>
-                <p className="text-xs text-muted-foreground">{contract.customer?.company ?? ''}</p>
+              <Td
+                onClick={(e) => {
+                  if (!contract.customer_id) return
+                  e.stopPropagation()
+                  navigate(`/customers/${contract.customer_id}`)
+                }}
+                className="group max-w-48"
+              >
+                <p className="truncate font-medium text-foreground group-hover:underline">{contract.customer?.name ?? '-'}</p>
+                <p className="truncate text-xs text-muted-foreground">{contract.customer?.company ?? ''}</p>
               </Td>
-              <Td variant="muted">{contract.contract_number ?? '-'}</Td>
-              <Td>
+              <Td variant="muted" className="whitespace-nowrap">{contract.contract_number ?? '-'}</Td>
+              <Td className="whitespace-nowrap">
                 <StatusBadge value={contractStatusLabels[contract.status as keyof typeof contractStatusLabels] ?? contract.status} />
               </Td>
-              <Td>
-                <p className="text-sm text-foreground">{contract.product ?? '-'}</p>
-                <p className="text-xs text-muted-foreground">{contract.provider ?? ''}</p>
+              <Td className="max-w-48">
+                <p className="truncate text-sm text-foreground">{contract.product ?? '-'}</p>
+                <p className="truncate text-xs text-muted-foreground">{contract.provider ?? ''}</p>
               </Td>
-              <Td variant="muted" className="font-mono text-xs">{contract.cups ?? '-'}</Td>
-              <Td variant="muted">{formatDate(contract.starts_at ?? undefined)}</Td>
-              <Td variant="muted">{formatDate(contract.ends_at ?? undefined)}</Td>
-              <Td variant="muted">{money.format(contract.amount_eur)}</Td>
+              <Td variant="muted" className="whitespace-nowrap font-mono text-xs">{contract.cups ?? '-'}</Td>
+              <Td variant="muted" className="whitespace-nowrap">{formatDate(contract.starts_at ?? undefined)}</Td>
+              <Td variant="muted" className="whitespace-nowrap">{formatDate(contract.ends_at ?? undefined)}</Td>
+              <Td variant="muted" className="whitespace-nowrap">{money.format(contract.amount_eur)}</Td>
             </Tr>
           ))}
         </DataTable>
+      )}
+
+      {editingContract && (
+        <ContractFormDialog
+          key={editingContract.id}
+          customerId={editingContract.customer_id ?? ''}
+          contract={editingContract}
+          open
+          onOpenChange={(next) => { if (!next) setEditingContract(null) }}
+        />
       )}
     </div>
   )

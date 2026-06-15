@@ -14,7 +14,7 @@ import { useToastError } from '../hooks/use-toast-error'
 import { formatDate } from '../lib/formatters'
 import { isPdfDocument } from '../lib/storage'
 import { useCustomers } from '../services/customers.service'
-import { useDocuments, useUploadDocument } from '../services/documents.service'
+import { type UploadStep, useDocuments, useUploadDocument } from '../services/documents.service'
 import type { DocumentRow } from '../services/documents.service'
 import type { DocumentType } from '../types/database.types'
 
@@ -30,6 +30,7 @@ export function DocumentsRoute() {
   const [type, setType] = useState<DocumentType>('other')
   const [search, setSearch] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [uploadStep, setUploadStep] = useState<UploadStep | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const debouncedSearch = useDebounce(search, 250)
 

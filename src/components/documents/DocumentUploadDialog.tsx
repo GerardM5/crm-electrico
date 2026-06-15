@@ -3,11 +3,16 @@ import { type ReactNode, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useAuth } from '../../features/auth/AuthContext'
 import { useToastError } from '../../hooks/use-toast-error'
-import { useUploadDocument } from '../../services/documents.service'
+import { type UploadStep, useUploadDocument } from '../../services/documents.service'
 import type { DocumentType } from '../../types/database.types'
 import { Button } from '../ui/button'
 import { Dialog } from '../ui/dialog'
 import { Field, Input, Select } from '../ui/input'
+
+const uploadStepLabel: Record<UploadStep, string> = {
+  uploading: 'Subiendo archivo…',
+  saving: 'Guardando registro…',
+}
 
 export function DocumentUploadDialog({
   customerId,
@@ -24,21 +29,30 @@ export function DocumentUploadDialog({
   const [open, setOpen] = useState(false)
   const [type, setType] = useState<DocumentType>('other')
   const [file, setFile] = useState<File | null>(null)
+  const [uploadStep, setUploadStep] = useState<UploadStep | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   function reset() {
     setFile(null)
     setType('other')
+    setUploadStep(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   function handleUpload() {
     if (!file || !currentUser) return
     uploadDocument.mutate(
-      { file, organizationId: currentUser.organization_id, customerId, type, uploadedBy: currentUser.id },
+      {
+        file,
+        organizationId: currentUser.organization_id,
+        customerId,
+        type,
+        uploadedBy: currentUser.id,
+        onProgress: setUploadStep,
+      },
       {
         onSuccess: () => {
-          toast.success('Documento subido')
+          toast.success('Documento subido correctamente')
           reset()
           setOpen(false)
         },
@@ -76,7 +90,11 @@ export function DocumentUploadDialog({
           </Button>
           <Button onClick={handleUpload} disabled={!file || uploadDocument.isPending}>
             <Upload className="h-4 w-4" />
-            {uploadDocument.isPending ? 'Subiendo…' : 'Subir archivo'}
+            {uploadDocument.isPending && uploadStep
+              ? uploadStepLabel[uploadStep]
+              : uploadDocument.isPending
+                ? 'Preparando…'
+                : 'Subir archivo'}
           </Button>
         </div>
       </div>
