@@ -17,6 +17,12 @@ export const positiveNumber = z.coerce
 	.number()
 	.min(0, "Debe ser mayor o igual que 0");
 
+// Optional number: empty string / null become undefined instead of 0
+export const optionalNumber = z.preprocess(
+	(v) => (v === "" || v === null ? undefined : v),
+	z.coerce.number().min(0, "Debe ser mayor o igual que 0").optional(),
+);
+
 export const contactRefinement = {
 	message: "Introduce al menos teléfono o email",
 	path: ["phone"],

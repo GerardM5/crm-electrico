@@ -1,20 +1,37 @@
+import type { ComponentProps } from 'react'
 import { Badge } from '../ui/badge'
 
-export function StatusBadge({ value }: { value: string }) {
-  const variant =
-    value.includes('Ganado') ||
-      value.includes('Acept') ||
-      value.includes('Firm') ||
-      value.includes('Complet') ||
-      value.includes('Convert')
-      ? 'emerald'
-      : value.includes('Perd') || value.includes('Rechaz') || value.includes('Cancel')
-        ? 'destructive'
-        : value.includes('Urgente') || value.includes('Alta') || value.includes('Envi') || value.includes('Renovacion')
-          ? 'amber'
-          : value.includes('curso') || value.includes('Program')
-            ? 'sky'
-            : 'outline'
+type BadgeVariant = ComponentProps<typeof Badge>['variant']
 
-  return <Badge variant={variant}>{value}</Badge>
+function inferVariant(value: string): BadgeVariant {
+  // "Pendiente de firma" debe ir antes que la comprobación de "Firm".
+  if (value.includes('Pendiente') || value.includes('Pend')) return 'amber'
+  if (
+    value.includes('Ganado') ||
+    value.includes('Acept') ||
+    value.includes('Firm') ||
+    value.includes('Complet') ||
+    value.includes('Convert') ||
+    value.includes('Activo') ||
+    value.includes('Resuelt') ||
+    value.includes('Renovado')
+  )
+    return 'emerald'
+  if (value.includes('Perd') || value.includes('Rechaz') || value.includes('Cancel'))
+    return 'destructive'
+  if (
+    value.includes('Urgente') ||
+    value.includes('Alta') ||
+    value.includes('Envi') ||
+    value.includes('Renovacion') ||
+    value.includes('Abierta')
+  )
+    return 'amber'
+  if (value.includes('curso') || value.includes('Program') || value.includes('tramita'))
+    return 'sky'
+  return 'outline'
+}
+
+export function StatusBadge({ value, variant }: { value: string; variant?: BadgeVariant }) {
+  return <Badge variant={variant ?? inferVariant(value)}>{value}</Badge>
 }

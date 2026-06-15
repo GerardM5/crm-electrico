@@ -16,6 +16,7 @@ import { Tabs } from '../components/ui/tabs'
 import { useAuth } from '../features/auth/AuthContext'
 import { useTheme } from '../hooks/use-theme'
 
+import { appBrand } from '~/config/nav'
 import type { ThemePreference } from '../lib/theme'
 import { cn } from '../lib/utils'
 import { useCustomers } from '../services/customers.service'
@@ -548,10 +549,10 @@ export function SettingsRoute() {
         action={
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Building2 className="h-3.5 w-3.5" />
-            <span>CRM Eléctrico</span>
+            <span>{appBrand.name}</span>
             <span className="text-border">·</span>
             <Users className="h-3.5 w-3.5" />
-            <span>Demo</span>
+            <span>{currentUser?.full_name}</span>
           </div>
         }
       />

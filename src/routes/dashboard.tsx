@@ -1,13 +1,17 @@
-import { Activity, CalendarClock, CheckCircle2, Clock, FileText, Phone, TrendingDown, TrendingUp, Users, Wrench } from 'lucide-react'
+import { Activity, AlertTriangle, CalendarClock, CheckCircle2, Clock, FileSignature, FileText, RefreshCcw, TrendingDown, TrendingUp, Users, Wrench } from 'lucide-react'
 import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../components/data-table/Toolbar'
+import { StatusBadge } from '../components/feedback/StatusBadge'
 import { Button } from '../components/ui/button'
+import { contractStatusLabels } from '../config/constants'
 import { getDaysToRenewal, getRenewalStage } from '../lib/customer-workflow'
 import { relativeTime } from '../lib/formatters'
 import { useRecentActivity } from '../services/activity.service'
+import { useContracts } from '../services/contracts.service'
 import { useCustomers } from '../services/customers.service'
+import { useIncidents } from '../services/incidents.service'
 
 const entityIcons: Record<string, ReactNode> = {
   customer: <Users className="h-3.5 w-3.5" />,
@@ -28,8 +32,24 @@ const renewalStageStyle: Record<string, { label: string; className: string }> = 
 export function DashboardRoute() {
   const { data: customersResult, isLoading: customersLoading } = useCustomers({ pageSize: 500 })
   const { data: recentActivity } = useRecentActivity(8)
+  const { data: contracts = [] } = useContracts()
+  const { data: incidents = [] } = useIncidents()
 
   const customers = customersResult?.data ?? []
+
+  const contractStats = useMemo(() => {
+    const byStatus: Record<string, number> = {}
+    for (const key of Object.keys(contractStatusLabels)) byStatus[key] = 0
+    for (const c of contracts) byStatus[c.status] = (byStatus[c.status] ?? 0) + 1
+    const active = byStatus.active ?? 0
+    const pendingSignature = byStatus.pending_signature ?? 0
+    return { total: contracts.length, active, pendingSignature, byStatus }
+  }, [contracts])
+
+  const openIncidents = useMemo(
+    () => incidents.filter((i) => i.status === 'open' || i.status === 'in_progress').length,
+    [incidents],
+  )
 
   const kpis = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10)
@@ -37,8 +57,8 @@ export function DashboardRoute() {
     const activeCount = customers.filter((c) => c.status === 'active' || c.status === 'renewed').length
     const urgentCount = customers.filter((c) => ['due', 'urgent', 'overdue'].includes(getRenewalStage(c))).length
     const thisMonthCount = customers.filter((c) => c.renewal_date?.startsWith(thisMonth)).length
-    const contactedTodayCount = customers.filter((c) => c.last_contact_at?.startsWith(today)).length
-    return { activeCount, urgentCount, thisMonthCount, contactedTodayCount }
+    const renewedThisMonthCount = customers.filter((c) => c.status === 'renewed' && c.renewal_date?.startsWith(thisMonth)).length
+    return { activeCount, urgentCount, thisMonthCount, renewedThisMonthCount }
   }, [customers])
 
   const urgentRenewals = useMemo(
@@ -68,7 +88,30 @@ export function DashboardRoute() {
         <Kpi title="Clientes activos" value={kpis.activeCount} icon={<Activity />} />
         <Kpi title="Renovaciones urgentes" value={kpis.urgentCount} icon={<CalendarClock />} />
         <Kpi title="Renovaciones este mes" value={kpis.thisMonthCount} icon={<Users />} />
-        <Kpi title="Contactados hoy" value={kpis.contactedTodayCount} icon={<Phone />} />
+        <Kpi title="Renovados este mes" value={kpis.renewedThisMonthCount} icon={<RefreshCcw />} />
+      </section>
+
+      {/* Contract & incident KPIs */}
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border xl:grid-cols-4">
+        <Kpi title="Contratos totales" value={contractStats.total} icon={<FileText />} />
+        <Kpi title="Contratos activos" value={contractStats.active} icon={<CheckCircle2 />} />
+        <Kpi title="Pendientes de firma" value={contractStats.pendingSignature} icon={<FileSignature />} />
+        <Kpi title="Incidencias abiertas" value={openIncidents} icon={<AlertTriangle />} />
+      </section>
+
+      {/* Contract state breakdown */}
+      <section>
+        <h2 className="mb-3 text-sm font-semibold text-foreground">Contratos por estado</h2>
+        <div className="flex flex-wrap gap-x-8 gap-y-4 rounded-lg border border-border bg-card px-5 py-4">
+          {Object.entries(contractStatusLabels).map(([value, label]) => (
+            <div key={value} className="flex items-center gap-2">
+              <StatusBadge value={label} />
+              <span className="text-sm font-semibold tabular-nums text-foreground">
+                {contractStats.byStatus[value] ?? 0}
+              </span>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* Main content */}

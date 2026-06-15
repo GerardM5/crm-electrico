@@ -6,8 +6,9 @@ import { useForm } from 'react-hook-form'
 import { Button } from '../../components/ui/button'
 import { Dialog } from '../../components/ui/dialog'
 import { Field, Input, Select, Textarea } from '../../components/ui/input'
-import { type CustomerFormValues, customerSchema } from '../../schemas/customer.schema'
+import { customerTypeLabels } from '../../config/constants'
 import { useAuth } from '../../features/auth/AuthContext'
+import { type CustomerFormValues, customerSchema } from '../../schemas/customer.schema'
 import { type CustomerRow, useCreateCustomer, useUpdateCustomer } from '../../services/customers.service'
 import { useProfiles } from '../../services/profiles.service'
 import type { CustomerStatus } from '../../types/database.types'
@@ -66,7 +67,7 @@ export function CustomerFormDialog({ customer }: { customer?: CustomerRow }) {
     if (isEditing && customer) {
       updateCustomer.mutate({
         id: customer.id,
-        type: values.legal_name ? 'business' : 'residential',
+        type: values.type,
         name: values.name,
         company: values.legal_name || null,
         legal_name: values.legal_name || null,
@@ -85,7 +86,7 @@ export function CustomerFormDialog({ customer }: { customer?: CustomerRow }) {
       }, { onSuccess: () => { reset(); setOpen(false) } })
     } else {
       createCustomer.mutate({
-        type: values.legal_name ? 'business' : 'residential',
+        type: values.type,
         name: values.name,
         company: values.legal_name || null,
         legal_name: values.legal_name || null,
@@ -128,6 +129,13 @@ export function CustomerFormDialog({ customer }: { customer?: CustomerRow }) {
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Nombre" error={errors.name?.message}>
             <Input {...register('name')} />
+          </Field>
+          <Field label="Tipo de cliente" error={(errors as Record<string, { message?: string }>).type?.message}>
+            <Select {...register('type')}>
+              {Object.entries(customerTypeLabels).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </Select>
           </Field>
           <Field label="Empresa" error={errors.legal_name?.message}>
             <Input {...register('legal_name')} />
