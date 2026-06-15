@@ -1,5 +1,5 @@
-import { Phone, RefreshCw, Search } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { RefreshCw, Search } from 'lucide-react'
+import { useMemo } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { StatusBadge } from '../components/feedback/StatusBadge'
@@ -7,9 +7,9 @@ import { Button } from '../components/ui/button'
 import { Field, Input, Select } from '../components/ui/input'
 import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
 import { customerStatusLabels } from '../config/constants'
-import { ContactLogDialog } from '../features/customers/ContactLogDialog'
 import { useCustomerActions } from '../hooks/use-customer-actions'
 import { useDebounce } from '../hooks/use-debounce'
+import { usePagination } from '../hooks/use-pagination'
 import { getDaysToRenewal, getRenewalStage } from '../lib/customer-workflow'
 import { formatDate } from '../lib/formatters'
 import { cn } from '../lib/utils'
@@ -35,7 +35,6 @@ function DaysBadge({ days }: { days: number | undefined }) {
 export function RenewalsRoute() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
-  const [page, _setPage] = useState(0)
 
   const stage = (params.get('stage') ?? 'all') as StageFilter
   const search = params.get('q') ?? ''
@@ -72,11 +71,7 @@ export function RenewalsRoute() {
       .sort((a, b) => (a.renewal_date ?? '').localeCompare(b.renewal_date ?? ''))
   }, [allCustomers, stage, debouncedSearch])
 
-  const PAGE_SIZE = 25
-  const total = renewalQueue.length
-  const totalPages = Math.ceil(total / PAGE_SIZE)
-  const pageItems = renewalQueue.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
-  void _setPage
+  const pagination = usePagination(renewalQueue, 25)
 
   return (
     <div>
@@ -116,9 +111,9 @@ export function RenewalsRoute() {
       ) : (
         <DataTable
           headers={['Cliente', 'Estado', 'Renovacion', 'Dias', 'Comercial', 'Acciones']}
-          pagination={{ page, pageSize: PAGE_SIZE, total, totalPages, onPageChange: _setPage, onPageSizeChange: () => { } }}
+          pagination={{ page: pagination.page, pageSize: pagination.pageSize, total: pagination.total, totalPages: pagination.totalPages, onPageChange: pagination.setPage, onPageSizeChange: pagination.setPageSize }}
         >
-          {pageItems.map((customer) => {
+          {pagination.items.map((customer) => {
             const days = getDaysToRenewal(customer)
             return (
               <Tr key={customer.id} hover className="cursor-pointer" onClick={() => navigate(`/customers/${customer.id}`)}>
@@ -132,15 +127,6 @@ export function RenewalsRoute() {
                 <Td variant="muted">{profilesById[customer.assigned_to ?? ''] ?? '-'}</Td>
                 <Td>
                   <div className="flex gap-1">
-                    <ContactLogDialog
-                      customerId={customer.id}
-                      customerName={customer.name}
-                      trigger={
-                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => e.stopPropagation()}>
-                          <Phone className="h-3 w-3" />Contactar
-                        </Button>
-                      }
-                    />
                     {customer.status !== 'renewed' && (
                       <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
                         onClick={(e) => { e.stopPropagation(); renewCustomer(customer) }}>

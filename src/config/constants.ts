@@ -51,13 +51,6 @@ export const installationStatusLabels = {
 	cancelled: "Cancelada",
 };
 
-export const taskStatusLabels = {
-	pending: "Pendiente",
-	in_progress: "En curso",
-	done: "Hecha",
-	cancelled: "Cancelada",
-};
-
 export const priorityLabels = {
 	low: "Baja",
 	medium: "Media",

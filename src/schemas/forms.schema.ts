@@ -34,21 +34,6 @@ export const dealSchema = z.object({
 	assigned_to: z.string().optional(),
 });
 
-export const taskSchema = z.object({
-	title: z.string().min(1, "Este campo es obligatorio"),
-	description: z.string().optional(),
-	priority: z.enum(["low", "medium", "high", "urgent"]),
-	status: z
-		.enum(["pending", "in_progress", "done", "cancelled"])
-		.default("pending"),
-	due_at: z.string().min(1, "Este campo es obligatorio"),
-	assigned_to: z.string().min(1, "Este campo es obligatorio"),
-	customer_id: z.string().optional(),
-	lead_id: z.string().optional(),
-	deal_id: z.string().optional(),
-	installation_id: z.string().optional(),
-});
-
 export const contractSchema = z.object({
 	customer_id: z.string().min(1, "Este campo es obligatorio"),
 	deal_id: z.string().optional(),
@@ -113,7 +98,6 @@ export const installationSchema = z.object({
 export type InvoiceFormValues = z.infer<typeof invoiceSchema>;
 export type ProposalFormValues = z.infer<typeof proposalSchema>;
 export type DealFormValues = z.infer<typeof dealSchema>;
-export type TaskFormValues = z.infer<typeof taskSchema>;
 export type ContractFormValues = z.infer<typeof contractSchema>;
 export type IncidentFormValues = z.infer<typeof incidentSchema>;
 export type InstallationFormValues = z.infer<typeof installationSchema>;

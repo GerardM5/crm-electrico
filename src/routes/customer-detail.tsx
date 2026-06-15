@@ -9,7 +9,6 @@ import { Button } from '../components/ui/button'
 import { DataTable, EmptyState, Td, Tr, TruncatePath } from '../components/ui/table'
 import { contractStatusLabels, customerStatusLabels, incidentStatusLabels, priorityLabels } from '../config/constants'
 import { ContractFormDialog } from '../features/contracts/ContractFormDialog'
-import { ContactLogDialog } from '../features/customers/ContactLogDialog'
 import { CustomerFormDialog } from '../features/customers/CustomerFormDialog'
 import { IncidentFormDialog } from '../features/incidents/IncidentFormDialog'
 import { useCustomerActions } from '../hooks/use-customer-actions'
@@ -87,15 +86,6 @@ export function CustomerDetailRoute() {
         }
         action={
           <div className="flex flex-wrap items-center gap-2">
-            <ContactLogDialog
-              customerId={customer.id}
-              customerName={customer.name}
-              trigger={
-                <Button size="sm" variant="outline">
-                  <Phone className="h-4 w-4" />Registrar contacto
-                </Button>
-              }
-            />
             {customer.status !== 'renewed' && (
               <Button size="sm" variant="outline" disabled={isPending} onClick={() => renewCustomer(customer)}>
                 <RefreshCw className="h-4 w-4" />Renovar

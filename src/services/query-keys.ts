@@ -16,7 +16,6 @@ export const queryKeys = {
 	proposals: (filters?: unknown) => ["proposals", filters] as const,
 	pipelineStages: ["pipeline-stages"] as const,
 	deals: (filters?: unknown) => ["deals", filters] as const,
-	tasks: (filters?: unknown) => ["tasks", filters] as const,
 	documents: (filters?: unknown) => ["documents", filters] as const,
 	contracts: (filters?: unknown) => ["contracts", filters] as const,
 	incidents: (filters?: unknown) => ["incidents", filters] as const,

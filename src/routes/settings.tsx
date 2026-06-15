@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Building2, CheckCircle2, Download, Monitor, Moon, Plus, Sun, Trash2, Users } from 'lucide-react'
+import { Building2, CheckCircle2, Download, Monitor, Moon, Plus, Sun, Trash2, Upload, Users } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -17,9 +17,10 @@ import { useAuth } from '../features/auth/AuthContext'
 import { useTheme } from '../hooks/use-theme'
 
 import { appBrand } from '~/config/nav'
+import { customerStatusLabels } from '../config/constants'
 import type { ThemePreference } from '../lib/theme'
 import { cn } from '../lib/utils'
-import { useCustomers } from '../services/customers.service'
+import { useCreateCustomer, useCustomers } from '../services/customers.service'
 import { useOrganization, useUpdateOrganization } from '../services/organization.service'
 import { useDeleteProfile, useInviteProfile, useProfiles, useUpdateProfile } from '../services/profiles.service'
 import type { AppRole } from '../types/database.types'
@@ -449,9 +450,54 @@ function TeamTab() {
 
 // ─── Data Tab ─────────────────────────────────────────────────────────────────
 
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = []
+  let row: string[] = []
+  let field = ''
+  let inQuotes = false
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i]
+    if (inQuotes) {
+      if (char === '"') {
+        if (text[i + 1] === '"') {
+          field += '"'
+          i++
+        } else {
+          inQuotes = false
+        }
+      } else {
+        field += char
+      }
+    } else if (char === '"') {
+      inQuotes = true
+    } else if (char === ',') {
+      row.push(field)
+      field = ''
+    } else if (char === '\n' || char === '\r') {
+      if (char === '\r' && text[i + 1] === '\n') i++
+      row.push(field)
+      rows.push(row)
+      row = []
+      field = ''
+    } else {
+      field += char
+    }
+  }
+  if (field !== '' || row.length > 0) {
+    row.push(field)
+    rows.push(row)
+  }
+  return rows.filter((r) => r.some((cell) => cell.trim() !== ''))
+}
+
+const VALID_CUSTOMER_STATUSES = Object.keys(customerStatusLabels)
+
 function DataTab() {
   const { data: customersData } = useCustomers({ pageSize: 5000 })
   const customers = customersData?.data ?? []
+  const createCustomer = useCreateCustomer()
+  const importInputRef = useRef<HTMLInputElement>(null)
+  const [importing, setImporting] = useState(false)
 
   function exportCsv() {
     const headers = ['Nombre', 'DNI', 'Estado', 'Fecha renovacion', 'Asignado a', 'Email', 'Teléfono', 'Ciudad']
@@ -479,6 +525,64 @@ function DataTab() {
     URL.revokeObjectURL(url)
   }
 
+  async function importCsv(file: File) {
+    setImporting(true)
+    try {
+      const rows = parseCsv(await file.text())
+      if (rows.length < 2) {
+        toast.error('El archivo CSV no contiene filas de datos.')
+        return
+      }
+      const headers = rows[0].map((h) => h.trim().toLowerCase())
+      const idx = (name: string) => headers.findIndex((h) => h === name)
+      const nameIdx = idx('nombre')
+      if (nameIdx === -1) {
+        toast.error('El CSV debe incluir una columna "Nombre".')
+        return
+      }
+      const dniIdx = idx('dni')
+      const statusIdx = idx('estado')
+      const renewalIdx = idx('fecha renovacion')
+      const emailIdx = idx('email')
+      const phoneIdx = idx('teléfono') !== -1 ? idx('teléfono') : idx('telefono')
+      const cityIdx = idx('ciudad')
+
+      let created = 0
+      let skipped = 0
+      for (const row of rows.slice(1)) {
+        const name = row[nameIdx]?.trim()
+        if (!name) {
+          skipped++
+          continue
+        }
+        const rawStatus = statusIdx !== -1 ? row[statusIdx]?.trim() : ''
+        const status = VALID_CUSTOMER_STATUSES.includes(rawStatus) ? rawStatus : 'active'
+        try {
+          await createCustomer.mutateAsync({
+            type: 'residential',
+            name,
+            dni: dniIdx !== -1 ? row[dniIdx]?.trim() || null : null,
+            status: status as never,
+            contact_name: name,
+            email: emailIdx !== -1 ? row[emailIdx]?.trim() || null : null,
+            phone: phoneIdx !== -1 ? row[phoneIdx]?.trim() || null : null,
+            city: cityIdx !== -1 ? row[cityIdx]?.trim() || null : null,
+            renewal_date: renewalIdx !== -1 ? row[renewalIdx]?.trim() || null : null,
+          })
+          created++
+        } catch {
+          skipped++
+        }
+      }
+      toast.success(`Importación completada: ${created} creados, ${skipped} omitidos.`)
+    } catch {
+      toast.error('No se pudo leer el archivo CSV.')
+    } finally {
+      setImporting(false)
+      if (importInputRef.current) importInputRef.current.value = ''
+    }
+  }
+
   return (
     <div className="grid gap-4">
       <Card>
@@ -504,6 +608,37 @@ function DataTab() {
                 Descargar JSON
               </Button>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Importar clientes</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Sube un CSV con las columnas Nombre, DNI, Estado, Fecha renovacion, Email, Teléfono y Ciudad. Solo el nombre es obligatorio.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-lg border border-border bg-muted/30 p-4">
+            <p className="mb-1 text-sm font-medium text-foreground">Clientes CSV</p>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Compatible con el archivo generado por «Descargar CSV». Cada fila crea un nuevo cliente.
+            </p>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) importCsv(file)
+              }}
+            />
+            <Button size="sm" variant="secondary" disabled={importing} onClick={() => importInputRef.current?.click()}>
+              <Upload className="h-3.5 w-3.5" />
+              {importing ? 'Importando...' : 'Importar CSV'}
+            </Button>
           </div>
         </CardContent>
       </Card>
