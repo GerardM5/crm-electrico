@@ -3,6 +3,7 @@ import { Building2, CheckCircle2, Download, Monitor, Moon, Plus, Sun, Trash2, Us
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
+import { toast } from 'sonner'
 import { z } from 'zod'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { Avatar, AvatarFallback } from '../components/ui/avatar'
@@ -109,7 +110,14 @@ function OrganizationTab() {
   function handleSubmit(e: { preventDefault(): void }) {
     e.preventDefault()
     if (!organization?.id) return
-    updateOrganization.mutate({ id: organization.id, ...org })
+    updateOrganization.mutate(
+      { id: organization.id, ...org },
+      {
+        onSuccess: () => toast.success('Datos de la empresa guardados'),
+        onError: (error) =>
+          toast.error(error instanceof Error ? error.message : 'No se pudieron guardar los cambios'),
+      },
+    )
   }
 
   return (
@@ -150,7 +158,9 @@ function OrganizationTab() {
             </Field>
           </div>
           <div>
-            <Button type="submit" className="w-fit">Guardar cambios</Button>
+            <Button type="submit" className="w-fit" disabled={updateOrganization.isPending}>
+              {updateOrganization.isPending ? 'Guardando...' : 'Guardar cambios'}
+            </Button>
           </div>
         </form>
       </CardContent>
