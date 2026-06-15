@@ -15,7 +15,7 @@ interface LeadsFilter {
 
 export function useLeads(filter: LeadsFilter = {}) {
   const { search, status, assignedTo, page = 0, pageSize = 25 } = filter
-  return useQuery<{ data: LeadRow[]; total: number }>({
+  return useQuery<{ data: LeadRow[]; count: number }>({
     queryKey: queryKeys.leads(filter),
     queryFn: async () => {
       let q = supabase.from('leads').select('*', { count: 'exact' }).is('deleted_at', null)
@@ -25,7 +25,7 @@ export function useLeads(filter: LeadsFilter = {}) {
       q = q.order('created_at', { ascending: false }).range(page * pageSize, (page + 1) * pageSize - 1)
       const { data, error, count } = await q
       if (error) throw error
-      return { data: data as LeadRow[], total: count ?? 0 }
+      return { data: data as LeadRow[], count: count ?? 0 }
     },
   })
 }
@@ -46,7 +46,7 @@ export function useCreateLead() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (payload: InsertDto<'leads'>) => {
-      const { data, error } = await supabase.from('leads').insert(payload).select().single()
+      const { data, error } = await supabase.from('leads').insert(payload as never).select().single()
       if (error) throw error
       return data as LeadRow
     },
@@ -58,7 +58,7 @@ export function useUpdateLead() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, ...payload }: UpdateDto<'leads'> & { id: string }) => {
-      const { data, error } = await supabase.from('leads').update(payload).eq('id', id).select().single()
+      const { data, error } = await supabase.from('leads').update(payload as never).eq('id', id).select().single()
       if (error) throw error
       return data as LeadRow
     },
@@ -73,7 +73,7 @@ export function useConvertLead() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ leadId, customerId }: { leadId: string; customerId: string }) => {
-      const { error } = await supabase.from('leads').update({ status: 'converted', converted_customer_id: customerId }).eq('id', leadId)
+      const { error } = await supabase.from('leads').update({ status: 'converted', converted_customer_id: customerId } as never).eq('id', leadId)
       if (error) throw error
     },
     onSuccess: () => {

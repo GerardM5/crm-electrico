@@ -5,12 +5,13 @@ import { queryKeys } from './query-keys'
 
 export type ContractRow = Tables<'contracts'>
 
-export function useContracts(filter: { customerId?: string } = {}) {
+export function useContracts(filterOrId?: string | { customerId?: string }) {
+  const customerId = typeof filterOrId === 'string' ? filterOrId : filterOrId?.customerId
   return useQuery<ContractRow[]>({
-    queryKey: queryKeys.contracts(filter),
+    queryKey: queryKeys.contracts({ customerId }),
     queryFn: async () => {
       let q = supabase.from('contracts').select('*').order('created_at', { ascending: false })
-      if (filter.customerId) q = q.eq('customer_id', filter.customerId)
+      if (customerId) q = q.eq('customer_id', customerId)
       const { data, error } = await q
       if (error) throw error
       return data as ContractRow[]
@@ -22,7 +23,7 @@ export function useCreateContract() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (payload: InsertDto<'contracts'>) => {
-      const { data, error } = await supabase.from('contracts').insert(payload).select().single()
+      const { data, error } = await supabase.from('contracts').insert(payload as never).select().single()
       if (error) throw error
       return data as ContractRow
     },

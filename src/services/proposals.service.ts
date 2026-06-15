@@ -22,7 +22,7 @@ export function useCreateProposal() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (payload: InsertDto<'proposals'>) => {
-      const { data, error } = await supabase.from('proposals').insert(payload).select().single()
+      const { data, error } = await supabase.from('proposals').insert(payload as never).select().single()
       if (error) throw error
       return data as ProposalRow
     },
@@ -34,7 +34,7 @@ export function useUpdateProposal() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, ...payload }: UpdateDto<'proposals'> & { id: string }) => {
-      const { data, error } = await supabase.from('proposals').update(payload).eq('id', id).select().single()
+      const { data, error } = await supabase.from('proposals').update(payload as never).eq('id', id).select().single()
       if (error) throw error
       return data as ProposalRow
     },

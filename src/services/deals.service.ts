@@ -35,7 +35,7 @@ export function useCreateDeal() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (payload: InsertDto<'deals'>) => {
-      const { data, error } = await supabase.from('deals').insert(payload).select().single()
+      const { data, error } = await supabase.from('deals').insert(payload as never).select().single()
       if (error) throw error
       return data as DealRow
     },
@@ -47,9 +47,20 @@ export function useUpdateDeal() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, ...payload }: UpdateDto<'deals'> & { id: string }) => {
-      const { data, error } = await supabase.from('deals').update(payload).eq('id', id).select().single()
+      const { data, error } = await supabase.from('deals').update(payload as never).eq('id', id).select().single()
       if (error) throw error
       return data as DealRow
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.deals() }),
+  })
+}
+
+export function useMoveDeals() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ dealId, stageId }: { dealId: string; stageId: string }) => {
+      const { error } = await supabase.from('deals').update({ stage_id: stageId } as never).eq('id', dealId)
+      if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.deals() }),
   })

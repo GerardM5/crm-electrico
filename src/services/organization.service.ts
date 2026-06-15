@@ -20,7 +20,7 @@ export function useUpdateOrganization() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, ...payload }: UpdateDto<'organizations'> & { id: string }) => {
-      const { data, error } = await supabase.from('organizations').update(payload).eq('id', id).select().single()
+      const { data, error } = await supabase.from('organizations').update(payload as never).eq('id', id).select().single()
       if (error) throw error
       return data as OrganizationRow
     },

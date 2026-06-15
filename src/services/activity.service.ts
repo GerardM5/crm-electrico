@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import type { Tables } from '../types/database.types'
 
@@ -34,5 +34,29 @@ export function useCustomerActivity(customerId: string) {
       return data as ActivityLogRow[]
     },
     enabled: !!customerId,
+  })
+}
+
+// Alias for routes that import useActivityLogs
+export const useActivityLogs = useCustomerActivity
+
+export function useLogActivity() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ entityType, entityId, action, metadata = {} }: {
+      entityType: string
+      entityId: string
+      action: string
+      metadata?: Record<string, unknown>
+    }) => {
+      const { error } = await supabase.from('activity_logs').insert({
+        entity_type: entityType,
+        entity_id: entityId,
+        action,
+        metadata,
+      } as never)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['activity'] }),
   })
 }

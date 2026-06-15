@@ -24,7 +24,7 @@ export function useCreateTask() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (payload: InsertDto<'tasks'>) => {
-      const { data, error } = await supabase.from('tasks').insert(payload).select().single()
+      const { data, error } = await supabase.from('tasks').insert(payload as never).select().single()
       if (error) throw error
       return data as TaskRow
     },
@@ -36,7 +36,7 @@ export function useUpdateTask() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, ...payload }: UpdateDto<'tasks'> & { id: string }) => {
-      const { data, error } = await supabase.from('tasks').update(payload).eq('id', id).select().single()
+      const { data, error } = await supabase.from('tasks').update(payload as never).eq('id', id).select().single()
       if (error) throw error
       return data as TaskRow
     },

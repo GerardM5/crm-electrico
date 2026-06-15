@@ -5,12 +5,13 @@ import { queryKeys } from './query-keys'
 
 export type DocumentRow = Tables<'documents'>
 
-export function useDocuments(filter: { customerId?: string } = {}) {
+export function useDocuments(filterOrId?: string | { customerId?: string }) {
+  const customerId = typeof filterOrId === 'string' ? filterOrId : filterOrId?.customerId
   return useQuery<DocumentRow[]>({
-    queryKey: queryKeys.documents(filter),
+    queryKey: queryKeys.documents({ customerId }),
     queryFn: async () => {
       let q = supabase.from('documents').select('*').order('created_at', { ascending: false })
-      if (filter.customerId) q = q.eq('customer_id', filter.customerId)
+      if (customerId) q = q.eq('customer_id', customerId)
       const { data, error } = await q
       if (error) throw error
       return data as DocumentRow[]
@@ -25,10 +26,12 @@ export function useUploadDocument() {
       file,
       customerId,
       type,
+      uploadedBy,
     }: {
       file: File
       customerId: string
       type: DocumentRow['type']
+      uploadedBy?: string
     }) => {
       const bucket = 'documents'
       const filePath = `${customerId}/${Date.now()}-${file.name}`
@@ -43,7 +46,8 @@ export function useUploadDocument() {
         file_name: file.name,
         mime_type: file.type,
         size_bytes: file.size,
-      }).select().single()
+        uploaded_by: uploadedBy,
+      } as never).select().single()
       if (error) throw error
       return data as DocumentRow
     },

@@ -23,7 +23,7 @@ export function useCreateSimulation() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (payload: InsertDto<'saving_simulations'>) => {
-      const { data, error } = await supabase.from('saving_simulations').insert(payload).select().single()
+      const { data, error } = await supabase.from('saving_simulations').insert(payload as never).select().single()
       if (error) throw error
       return data as SimulationRow
     },

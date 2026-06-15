@@ -32,7 +32,7 @@ export function useUpdateProfile() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, ...payload }: UpdateDto<'profiles'> & { id: string }) => {
-      const { data, error } = await supabase.from('profiles').update(payload).eq('id', id).select().single()
+      const { data, error } = await supabase.from('profiles').update(payload as never).eq('id', id).select().single()
       if (error) throw error
       return data as ProfileRow
     },

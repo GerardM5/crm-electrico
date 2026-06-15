@@ -22,7 +22,7 @@ export function useCreateInstallation() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (payload: InsertDto<'installations'>) => {
-      const { data, error } = await supabase.from('installations').insert(payload).select().single()
+      const { data, error } = await supabase.from('installations').insert(payload as never).select().single()
       if (error) throw error
       return data as InstallationRow
     },
@@ -34,7 +34,7 @@ export function useUpdateInstallation() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, ...payload }: UpdateDto<'installations'> & { id: string }) => {
-      const { data, error } = await supabase.from('installations').update(payload).eq('id', id).select().single()
+      const { data, error } = await supabase.from('installations').update(payload as never).eq('id', id).select().single()
       if (error) throw error
       return data as InstallationRow
     },
