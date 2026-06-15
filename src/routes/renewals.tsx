@@ -1,4 +1,4 @@
-import { Search } from 'lucide-react'
+import { Mail, Phone, Search } from 'lucide-react'
 import { useMemo } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../components/data-table/Toolbar'
@@ -8,11 +8,13 @@ import { Field, Input, Select } from '../components/ui/input'
 import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
 import { contractStatusLabels } from '../config/constants'
 import { ContractFormDialog } from '../features/contracts/ContractFormDialog'
+import { RenewalContactDialog } from '../features/renewals/RenewalContactDialog'
 import { useDebounce } from '../hooks/use-debounce'
 import { usePagination } from '../hooks/use-pagination'
 import { getContractRenewalStage, getDaysToContractEnd } from '../lib/customer-workflow'
-import { formatDate } from '../lib/formatters'
+import { formatDate, formatDateTime, relativeTime } from '../lib/formatters'
 import { cn } from '../lib/utils'
+import { getContactChannel, useRenewalContacts } from '../services/activity.service'
 import { useContractsDueForRenewal } from '../services/contracts.service'
 
 type StageFilter = 'all' | 'due' | 'urgent' | 'overdue'
@@ -47,6 +49,18 @@ export function RenewalsRoute() {
   }
 
   const { data: contracts = [] } = useContractsDueForRenewal(60)
+  const customerIds = useMemo(
+    () => contracts.flatMap((contract) => contract.customer?.id ? [contract.customer.id] : []),
+    [contracts],
+  )
+  const { data: renewalContacts = [] } = useRenewalContacts(customerIds)
+  const latestContactByCustomer = useMemo(() => {
+    const latest = new Map<string, (typeof renewalContacts)[number]>()
+    for (const contact of renewalContacts) {
+      if (!latest.has(contact.entity_id)) latest.set(contact.entity_id, contact)
+    }
+    return latest
+  }, [renewalContacts])
 
   const renewalQueue = useMemo(() => {
     const q = debouncedSearch.toLowerCase()
@@ -99,11 +113,14 @@ export function RenewalsRoute() {
         />
       ) : (
         <DataTable
-          headers={['Cliente', 'Comercializadora', 'CUPS', 'Vencimiento', 'Días', 'Estado contrato', 'Acciones']}
+          headers={['Cliente', 'Comercializadora', 'CUPS', 'Vencimiento', 'Días', 'Último contacto', 'Estado contrato', 'Acciones']}
           pagination={{ page: pagination.page, pageSize: pagination.pageSize, total: pagination.total, totalPages: pagination.totalPages, onPageChange: pagination.setPage, onPageSizeChange: pagination.setPageSize }}
         >
           {pagination.items.map((contract) => {
             const days = getDaysToContractEnd(contract)
+            const customerId = contract.customer?.id
+            const latestContact = customerId ? latestContactByCustomer.get(customerId) : undefined
+            const contactChannel = latestContact ? getContactChannel(latestContact) : null
             return (
               <Tr
                 key={contract.id}
@@ -120,12 +137,35 @@ export function RenewalsRoute() {
                 <Td variant="muted">{formatDate(contract.ends_at ?? undefined)}</Td>
                 <Td><DaysBadge days={days} /></Td>
                 <Td>
+                  {latestContact ? (
+                    <div title={formatDateTime(latestContact.created_at)}>
+                      <p className="flex items-center gap-1.5 text-sm text-foreground">
+                        {contactChannel === 'email' ? <Mail className="size-3.5" /> : <Phone className="size-3.5" />}
+                        {relativeTime(latestContact.created_at)}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {latestContact.actor?.full_name ?? 'Usuario no disponible'}
+                      </p>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Sin contacto</span>
+                  )}
+                </Td>
+                <Td>
                   <StatusBadge value={contractStatusLabels[contract.status as keyof typeof contractStatusLabels] ?? contract.status} />
                 </Td>
                 <Td>
-                  <div className="flex gap-1" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="presentation">
-                    {contract.customer?.id && (
-                      <ContractFormDialog customerId={contract.customer.id} />
+                  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="presentation">
+                    {customerId && (
+                      <>
+                        <RenewalContactDialog
+                          customerId={customerId}
+                          customerName={contract.customer?.name ?? 'Cliente'}
+                          contractId={contract.id}
+                          contacts={renewalContacts}
+                        />
+                        <ContractFormDialog customerId={customerId} />
+                      </>
                     )}
                   </div>
                 </Td>
