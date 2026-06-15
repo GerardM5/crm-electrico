@@ -1,113 +1,104 @@
-import { addMonths } from 'date-fns'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from "vitest";
+import {
+	getContractRenewalStage,
+	getDaysToContractEnd,
+} from "../lib/customer-workflow";
+import type { Tables } from "../types/database.types";
 
-// ─── Mocks ──────────────────────────────────────────────────────────────────
-
-const mockUpdateMutate = vi.fn()
-const mockLogMutate = vi.fn()
-const mockToast = { success: vi.fn(), error: vi.fn() }
-const mockToastError = vi.fn()
-
-vi.mock('../services/customers.service', () => ({
-  useUpdateCustomer: () => ({ mutate: mockUpdateMutate, isPending: false }),
-}))
-
-vi.mock('../services/activity.service', () => ({
-  useLogActivity: () => ({ mutate: mockLogMutate }),
-}))
-
-vi.mock('sonner', () => ({ toast: mockToast }))
-
-vi.mock('./use-toast-error', () => ({ useToastError: () => mockToastError }))
-
-vi.mock('../lib/formatters', () => ({
-  formatDate: (iso: string) => iso.slice(0, 10),
-}))
-
-// ─── System Under Test ───────────────────────────────────────────────────────
-
-// Import AFTER mocks are registered
-const { useCustomerActions } = await import('./use-customer-actions')
+type Contract = Tables<"contracts">;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function toDateColumn(date: Date) {
-  return date.toISOString().slice(0, 10)
-}
+const base: Contract = {
+	id: "c1",
+	customer_id: "cust1",
+	deal_id: null,
+	proposal_id: null,
+	contract_number: "CTR-001",
+	status: "active",
+	signed_at: null,
+	file_path: null,
+	cups: "ES0031405483930001YT0F",
+	provider: "Iberdrola",
+	product: "PYME Fijo",
+	tariff_type: "2.0TD",
+	power_kw: 5.5,
+	annual_consumption_kwh: null,
+	energy_price_eur: null,
+	power_price_eur: null,
+	amount_eur: 1200,
+	commission_eur: 120,
+	starts_at: "2024-01-01",
+	ends_at: null,
+	notes: null,
+	created_by: null,
+	created_at: "2024-01-01T00:00:00Z",
+	updated_at: "2024-01-01T00:00:00Z",
+};
 
-const customer = { id: 'c1', name: 'Energiza SA' }
+// ─── getDaysToContractEnd ────────────────────────────────────────────────────
 
-describe('useCustomerActions – renewCustomer', () => {
-  let capturedOptions: { onSuccess?: () => void; onError?: () => void }
+describe("getDaysToContractEnd", () => {
+	it("returns undefined when ends_at is null", () => {
+		expect(getDaysToContractEnd({ ...base, ends_at: null })).toBeUndefined();
+	});
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockUpdateMutate.mockImplementation((_payload: unknown, options: typeof capturedOptions) => {
-      capturedOptions = options
-    })
-  })
+	it("returns 0 on the expiry day itself", () => {
+		const today = new Date("2025-06-15");
+		expect(
+			getDaysToContractEnd({ ...base, ends_at: "2025-06-15" }, today),
+		).toBe(0);
+	});
 
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
+	it("returns negative when contract is overdue", () => {
+		const today = new Date("2025-06-15");
+		expect(
+			getDaysToContractEnd({ ...base, ends_at: "2025-06-10" }, today),
+		).toBe(-5);
+	});
 
-  it('calls updateCustomer with status "renewed"', () => {
-    const { renewCustomer } = useCustomerActions()
-    renewCustomer(customer)
+	it("returns positive when contract has not yet expired", () => {
+		const today = new Date("2025-06-15");
+		expect(
+			getDaysToContractEnd({ ...base, ends_at: "2025-07-15" }, today),
+		).toBe(30);
+	});
+});
 
-    const [payload] = mockUpdateMutate.mock.calls[0]
-    expect(payload.status).toBe('renewed')
-  })
+// ─── getContractRenewalStage ─────────────────────────────────────────────────
 
-  it('sets contract_signed_at to today', () => {
-    const today = new Date()
-    const { renewCustomer } = useCustomerActions()
-    renewCustomer(customer)
+describe("getContractRenewalStage", () => {
+	it('returns "unscheduled" when ends_at is null', () => {
+		expect(getContractRenewalStage({ ...base, ends_at: null })).toBe(
+			"unscheduled",
+		);
+	});
 
-    const [payload] = mockUpdateMutate.mock.calls[0]
-    expect(payload.contract_signed_at).toBe(toDateColumn(today))
-  })
+	it('returns "overdue" when ends_at is in the past', () => {
+		const today = new Date("2025-06-15");
+		expect(
+			getContractRenewalStage({ ...base, ends_at: "2025-06-01" }, today),
+		).toBe("overdue");
+	});
 
-  it('sets renewal_date to today + 12 months', () => {
-    const today = new Date()
-    const expected = toDateColumn(addMonths(today, 12))
-    const { renewCustomer } = useCustomerActions()
-    renewCustomer(customer)
+	it('returns "urgent" when ≤ 30 days remaining', () => {
+		const today = new Date("2025-06-15");
+		expect(
+			getContractRenewalStage({ ...base, ends_at: "2025-07-10" }, today),
+		).toBe("urgent");
+	});
 
-    const [payload] = mockUpdateMutate.mock.calls[0]
-    expect(payload.renewal_date).toBe(expected)
-  })
+	it('returns "urgent" on expiry day (0 days)', () => {
+		const today = new Date("2025-06-15");
+		expect(
+			getContractRenewalStage({ ...base, ends_at: "2025-06-15" }, today),
+		).toBe("urgent");
+	});
 
-  it('logs activity with action "renewed" on success', () => {
-    const { renewCustomer } = useCustomerActions()
-    renewCustomer(customer)
-
-    // Simulate success callback
-    capturedOptions.onSuccess?.()
-
-    expect(mockLogMutate).toHaveBeenCalledOnce()
-    const [logPayload] = mockLogMutate.mock.calls[0]
-    expect(logPayload.action).toBe('renewed')
-    expect(logPayload.entityId).toBe('c1')
-  })
-
-  it('shows success toast on success', () => {
-    const { renewCustomer } = useCustomerActions()
-    renewCustomer(customer)
-
-    capturedOptions.onSuccess?.()
-
-    expect(mockToast.success).toHaveBeenCalledOnce()
-    const [message] = mockToast.success.mock.calls[0]
-    expect(message).toContain('Energiza SA')
-  })
-
-  it('calls onError handler when mutation fails', () => {
-    const { renewCustomer } = useCustomerActions()
-    renewCustomer(customer)
-
-    capturedOptions.onError?.()
-
-    expect(mockToastError).toHaveBeenCalledOnce()
-  })
-})
+	it('returns "due" when > 30 days remaining', () => {
+		const today = new Date("2025-06-15");
+		expect(
+			getContractRenewalStage({ ...base, ends_at: "2025-08-01" }, today),
+		).toBe("due");
+	});
+});
