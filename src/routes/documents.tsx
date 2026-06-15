@@ -1,4 +1,4 @@
-import { Search, Upload } from 'lucide-react'
+import { Search, Trash2, Upload } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { PageHeader } from '../components/data-table/Toolbar'
@@ -14,7 +14,7 @@ import { useToastError } from '../hooks/use-toast-error'
 import { formatDate } from '../lib/formatters'
 import { isPdfDocument } from '../lib/storage'
 import { useCustomers } from '../services/customers.service'
-import { type UploadStep, useDocuments, useUploadDocument } from '../services/documents.service'
+import { type UploadStep, useDeleteDocument, useDocuments, useUploadDocument } from '../services/documents.service'
 import type { DocumentRow } from '../services/documents.service'
 import type { DocumentType } from '../types/database.types'
 
@@ -23,6 +23,7 @@ export function DocumentsRoute() {
   const { data: customersResult } = useCustomers({ pageSize: 500 })
   const { data: documents = [] } = useDocuments()
   const uploadDocument = useUploadDocument()
+  const deleteDocument = useDeleteDocument()
   const onError = useToastError()
 
   const customers = customersResult?.data ?? []
@@ -130,7 +131,7 @@ export function DocumentsRoute() {
             <EmptyState title="Sin documentos" description="Sube un archivo (PDF, DNI, contrato) para un cliente y aparecera aqui." />
           ) : (
             <DataTable
-              headers={['Archivo', 'Cliente', 'Tipo', 'Fecha', 'Ruta', 'Vista']}
+              headers={['Archivo', 'Cliente', 'Tipo', 'Fecha', 'Ruta', 'Vista', 'Acciones']}
               pagination={{ page: pagination.page, pageSize: pagination.pageSize, total: pagination.total, totalPages: pagination.totalPages, onPageChange: pagination.setPage, onPageSizeChange: pagination.setPageSize }}
             >
               {pagination.items.map((document: DocumentRow) => (
@@ -150,6 +151,23 @@ export function DocumentsRoute() {
                     ) : (
                       <span className="text-xs text-muted-foreground">No PDF</span>
                     )}
+                  </Td>
+                  <Td>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                      disabled={deleteDocument.isPending}
+                      onClick={() => deleteDocument.mutate(
+                        { id: document.id, bucket: document.bucket, file_path: document.file_path },
+                        {
+                          onSuccess: () => toast.success('Documento eliminado'),
+                          onError,
+                        }
+                      )}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </Td>
                 </Tr>
               ))}

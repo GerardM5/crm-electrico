@@ -37,6 +37,29 @@ function uploadErrorMessage(error: { message?: string }): string {
 	return "No se pudo subir el archivo. Revisa tu conexión e inténtalo de nuevo.";
 }
 
+export function useDeleteDocument() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async ({
+			id,
+			bucket,
+			file_path,
+		}: { id: string; bucket: string; file_path: string }) => {
+			const { error: storageError } = await supabase.storage
+				.from(bucket)
+				.remove([file_path]);
+			if (storageError)
+				throw new Error("No se pudo eliminar el archivo del almacenamiento.");
+			const { error } = await supabase.from("documents").delete().eq("id", id);
+			if (error)
+				throw new Error("No se pudo eliminar el registro del documento.");
+		},
+		onSuccess: () => {
+			void qc.invalidateQueries({ queryKey: queryKeys.documents() });
+		},
+	});
+}
+
 export function useUploadDocument() {
 	const qc = useQueryClient();
 	return useMutation({

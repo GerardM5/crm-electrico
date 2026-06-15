@@ -37,3 +37,21 @@ create policy documents_select on public.documents
       )
     )
   );
+
+-- WRITE (split FOR ALL into explicit ops to avoid USING leaking into SELECT) --
+drop policy if exists documents_write on public.documents;
+
+create policy documents_insert on public.documents
+  for insert with check (
+    public.get_my_role() = any(array['owner', 'admin', 'sales']::app_role[])
+  );
+
+create policy documents_update on public.documents
+  for update
+  using (public.get_my_role() = any(array['owner', 'admin', 'sales']::app_role[]))
+  with check (public.get_my_role() = any(array['owner', 'admin', 'sales']::app_role[]));
+
+create policy documents_delete on public.documents
+  for delete using (
+    public.get_my_role() = any(array['owner', 'admin']::app_role[])
+  );

@@ -1,6 +1,7 @@
 import { Trash2, Upload } from 'lucide-react'
 import { type ReactNode, useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { toast } from 'sonner'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { DocumentUploadDialog } from '../components/documents/DocumentUploadDialog'
 import { PdfViewerDialog } from '../components/documents/PdfViewerDialog'
@@ -15,7 +16,7 @@ import { formatDate } from '../lib/formatters'
 import { isPdfDocument } from '../lib/storage'
 import { useContracts, useDeleteContract } from '../services/contracts.service'
 import { useCustomer } from '../services/customers.service'
-import { useDocuments } from '../services/documents.service'
+import { useDeleteDocument, useDocuments } from '../services/documents.service'
 import { useProfiles } from '../services/profiles.service'
 
 export function CustomerDetailRoute() {
@@ -26,6 +27,7 @@ export function CustomerDetailRoute() {
   const { data: contracts = [] } = useContracts(id)
   const { data: profiles = [] } = useProfiles()
   const deleteContract = useDeleteContract()
+  const deleteDocument = useDeleteDocument()
 
   const owner = useMemo(
     () => profiles.find((p) => p.id === customer?.assigned_to),
@@ -190,7 +192,7 @@ export function CustomerDetailRoute() {
             }
           />
         </div>
-        <DataTable headers={['Archivo', 'Tipo', 'Fecha', 'Ruta', 'Vista']}>
+        <DataTable headers={['Archivo', 'Tipo', 'Fecha', 'Ruta', 'Vista', 'Acciones']}>
           {documents.map((document) => (
             <Tr key={document.id} hover>
               <Td variant="primary">{document.file_name}</Td>
@@ -203,6 +205,20 @@ export function CustomerDetailRoute() {
                 ) : (
                   <span className="text-xs text-muted-foreground">No PDF</span>
                 )}
+              </Td>
+              <Td>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                  disabled={deleteDocument.isPending}
+                  onClick={() => deleteDocument.mutate(
+                    { id: document.id, bucket: document.bucket, file_path: document.file_path },
+                    { onSuccess: () => toast.success('Documento eliminado') }
+                  )}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </Td>
             </Tr>
           ))}
