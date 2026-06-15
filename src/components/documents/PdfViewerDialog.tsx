@@ -34,11 +34,19 @@ export function PdfViewerDialog({
 
   useEffect(() => {
     if (!open || !canPreview) return
-    setUrl(null)
-    setUrlError(false)
+    let active = true
     getStorageSignedUrl(source.bucket, source.file_path)
-      .then(setUrl)
-      .catch(() => setUrlError(true))
+      .then((signed) => {
+        if (active) setUrl(signed)
+      })
+      .catch(() => {
+        if (active) setUrlError(true)
+      })
+    return () => {
+      active = false
+      setUrl(null)
+      setUrlError(false)
+    }
   }, [open, source.bucket, source.file_path, canPreview])
 
   async function copyPath() {

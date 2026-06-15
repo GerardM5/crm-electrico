@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { safeStorageFileName } from "../lib/storage";
 import { supabase } from "../lib/supabase";
 import type { Tables } from "../types/database.types";
 import { queryKeys } from "./query-keys";
@@ -30,21 +31,19 @@ export function useUploadDocument() {
 	return useMutation({
 		mutationFn: async ({
 			file,
-			organizationId,
 			customerId,
 			type,
 			uploadedBy,
 			onProgress,
 		}: {
 			file: File;
-			organizationId: string;
 			customerId: string;
 			type: DocumentRow["type"];
 			uploadedBy?: string;
 			onProgress?: (step: UploadStep) => void;
 		}) => {
 			const bucket = "documents";
-			const filePath = `${organizationId}/${customerId}/${Date.now()}-${file.name}`;
+			const filePath = `${customerId}/${Date.now()}-${safeStorageFileName(file.name)}`;
 
 			onProgress?.("uploading");
 			const { error: uploadError } = await supabase.storage
@@ -56,7 +55,6 @@ export function useUploadDocument() {
 			const { data, error } = await supabase
 				.from("documents")
 				.insert({
-					organization_id: organizationId,
 					customer_id: customerId,
 					type,
 					bucket,

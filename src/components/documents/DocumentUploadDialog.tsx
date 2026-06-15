@@ -44,7 +44,6 @@ export function DocumentUploadDialog({
     uploadDocument.mutate(
       {
         file,
-        organizationId: currentUser.organization_id,
         customerId,
         type,
         uploadedBy: currentUser.id,

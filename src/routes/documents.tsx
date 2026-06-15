@@ -60,7 +60,6 @@ export function DocumentsRoute() {
     uploadDocument.mutate(
       {
         file: selectedFile,
-        organizationId: currentUser.organization_id,
         customerId,
         type,
         uploadedBy: currentUser.id,

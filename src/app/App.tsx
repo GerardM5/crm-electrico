@@ -1,20 +1,21 @@
-import { Suspense, lazy } from 'react'
+import { Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ErrorBoundary } from '../components/feedback/ErrorBoundary'
 import { PageSkeleton } from '../components/feedback/Skeleton'
 import { AppShell } from '../components/layout/AppShell'
 import { ProtectedRoute } from '../features/auth/ProtectedRoute'
+import { lazyWithRetry } from '../lib/lazy'
 
-const LoginRoute = lazy(() => import('../routes/login').then((m) => ({ default: m.LoginRoute })))
-const ForgotPasswordRoute = lazy(() => import('../routes/forgot-password').then((m) => ({ default: m.ForgotPasswordRoute })))
-const SetPasswordRoute = lazy(() => import('../routes/set-password').then((m) => ({ default: m.SetPasswordRoute })))
-const DashboardRoute = lazy(() => import('../routes/dashboard').then((m) => ({ default: m.DashboardRoute })))
-const CustomersRoute = lazy(() => import('../routes/customers').then((m) => ({ default: m.CustomersRoute })))
-const CustomerDetailRoute = lazy(() => import('../routes/customer-detail').then((m) => ({ default: m.CustomerDetailRoute })))
-const RenewalsRoute = lazy(() => import('../routes/renewals').then((m) => ({ default: m.RenewalsRoute })))
-const DocumentsRoute = lazy(() => import('../routes/documents').then((m) => ({ default: m.DocumentsRoute })))
-const ContractsRoute = lazy(() => import('../routes/contracts').then((m) => ({ default: m.ContractsRoute })))
-const SettingsRoute = lazy(() => import('../routes/settings').then((m) => ({ default: m.SettingsRoute })))
+const LoginRoute = lazyWithRetry(() => import('../routes/login').then((m) => ({ default: m.LoginRoute })))
+const ForgotPasswordRoute = lazyWithRetry(() => import('../routes/forgot-password').then((m) => ({ default: m.ForgotPasswordRoute })))
+const SetPasswordRoute = lazyWithRetry(() => import('../routes/set-password').then((m) => ({ default: m.SetPasswordRoute })))
+const DashboardRoute = lazyWithRetry(() => import('../routes/dashboard').then((m) => ({ default: m.DashboardRoute })))
+const CustomersRoute = lazyWithRetry(() => import('../routes/customers').then((m) => ({ default: m.CustomersRoute })))
+const CustomerDetailRoute = lazyWithRetry(() => import('../routes/customer-detail').then((m) => ({ default: m.CustomerDetailRoute })))
+const RenewalsRoute = lazyWithRetry(() => import('../routes/renewals').then((m) => ({ default: m.RenewalsRoute })))
+const DocumentsRoute = lazyWithRetry(() => import('../routes/documents').then((m) => ({ default: m.DocumentsRoute })))
+const ContractsRoute = lazyWithRetry(() => import('../routes/contracts').then((m) => ({ default: m.ContractsRoute })))
+const SettingsRoute = lazyWithRetry(() => import('../routes/settings').then((m) => ({ default: m.SettingsRoute })))
 
 
 const routeFallback = <PageSkeleton kpis={0} tableRows={8} />

@@ -111,7 +111,7 @@ export function CustomerFormDialog({ customer }: { customer?: CustomerRow }) {
     >
       <form className="grid gap-4" onSubmit={handleSubmit(onSubmit as never)}>
         {/* ── Datos generales ── */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid items-start gap-4 md:grid-cols-2">
           <SectionHeader title="Datos generales" />
 
           <Field label="Nombre" error={errors.name?.message} required>
@@ -140,7 +140,7 @@ export function CustomerFormDialog({ customer }: { customer?: CustomerRow }) {
         </div>
 
         {/* ── Estado y asignación ── */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid items-start gap-4 md:grid-cols-2">
           <SectionHeader title="Estado y asignación" />
 
           <Field label="Estado" error={(errors as Record<string, { message?: string }>).status?.message} required>
@@ -167,7 +167,7 @@ export function CustomerFormDialog({ customer }: { customer?: CustomerRow }) {
         </div>
 
         {/* ── Contacto ── */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid items-start gap-4 md:grid-cols-2">
           <SectionHeader title="Contacto" />
 
           <Field label="Persona de contacto" error={errors.contact_name?.message} hint="Si se deja vacío se usará el nombre del cliente">

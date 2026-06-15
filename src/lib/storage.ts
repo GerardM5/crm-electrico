@@ -28,13 +28,24 @@ export const storageBuckets = {
 	},
 };
 
+export function safeStorageFileName(fileName: string) {
+	const withoutDiacritics = fileName
+		.normalize("NFD")
+		.replace(/[\u0300-\u036f]/gu, "");
+	return (
+		withoutDiacritics
+			.replace(/[^a-zA-Z0-9._-]+/g, "-")
+			.replace(/^-+|-+$/g, "") || "archivo"
+	);
+}
+
 export function buildStoragePath(
 	organizationId: string,
 	customerId: string,
 	entityId: string,
 	fileName: string,
 ) {
-	const safeName = fileName.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
+	const safeName = safeStorageFileName(fileName).toLowerCase();
 	return `${organizationId}/${customerId}/${entityId}/${safeName}`;
 }
 

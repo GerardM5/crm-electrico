@@ -130,7 +130,7 @@ export function ContractFormDialog({
     >
       <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)}>
         {/* ── Identificación ── */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid items-start gap-4 md:grid-cols-2">
           <SectionHeader title="Identificación" />
 
           <Field label="Estado" error={errors.status?.message} required>
@@ -156,7 +156,7 @@ export function ContractFormDialog({
         </div>
 
         {/* ── Suministro ── */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid items-start gap-4 md:grid-cols-2">
           <SectionHeader title="Suministro" />
 
           <Field label="Comercializadora" error={errors.provider?.message}>
@@ -177,7 +177,7 @@ export function ContractFormDialog({
         </div>
 
         {/* ── Datos técnicos ── */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid items-start gap-4 md:grid-cols-2">
           <SectionHeader title="Datos técnicos" />
 
           <Field label="Potencia contratada" error={errors.power_kw?.message} hint="Kilovatios (kW)">
@@ -194,7 +194,7 @@ export function ContractFormDialog({
         </div>
 
         {/* ── Precios ── */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid items-start gap-4 md:grid-cols-2">
           <SectionHeader title="Precios y comisión" />
 
           <Field label="Precio energía" error={errors.energy_price_eur?.message} hint="€ por kWh consumido">
@@ -223,7 +223,7 @@ export function ContractFormDialog({
         </div>
 
         {/* ── Vigencia ── */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid items-start gap-4 md:grid-cols-2">
           <SectionHeader title="Vigencia del contrato" />
 
           <Field label="Fecha de inicio" error={errors.starts_at?.message}>
