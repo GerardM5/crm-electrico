@@ -78,27 +78,6 @@ export function RenewalsRoute() {
   const pageItems = renewalQueue.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
   void _setPage
 
-  const contactingCustomer = contactingCustomerId ? allCustomers.find((c) => c.id === contactingCustomerId) : undefined
-
-  function openContactDialog(customerId: string) {
-    setContactingCustomerId(customerId)
-    setContactedAt(formatDateTimeLocal(new Date()))
-    setCallNotes('')
-  }
-
-  function closeContactDialog() {
-    setContactingCustomerId(null)
-    setCallNotes('')
-  }
-
-  function submitContactLog(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!contactingCustomerId) return
-    updateCustomer.mutate({ id: contactingCustomerId, last_contact_at: new Date(contactedAt).toISOString() })
-    logActivity.mutate({ entityType: 'customer', entityId: contactingCustomerId, action: 'contacted', metadata: { label: `Llamada registrada: ${callNotes}` } })
-    closeContactDialog()
-  }
-
   return (
     <div>
       <PageHeader
@@ -152,14 +131,20 @@ export function RenewalsRoute() {
                 <Td><DaysBadge days={days} /></Td>
                 <Td variant="muted">{profilesById[customer.assigned_to ?? ''] ?? '-'}</Td>
                 <Td>
-                  <div className="flex gap-1">
-                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs"
-                      onClick={(e) => { e.stopPropagation(); openContactDialog(customer.id) }}>
-                      <Phone className="h-3 w-3" />Contactar
-                    </Button>
+                  {/* biome-ignore lint/a11y/useKeyWithClickEvents: wrapper only stops row navigation */}
+                  <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                    <ContactLogDialog
+                      customerId={customer.id}
+                      customerName={customer.name}
+                      trigger={
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs">
+                          <Phone className="h-3 w-3" />Contactar
+                        </Button>
+                      }
+                    />
                     {customer.status !== 'renewed' && (
                       <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
-                        onClick={(e) => { e.stopPropagation(); updateCustomer.mutate({ id: customer.id, status: 'renewed' }) }}>
+                        onClick={() => renewCustomer(customer)}>
                         <RefreshCw className="h-3 w-3" />Renovado
                       </Button>
                     )}
