@@ -129,37 +129,69 @@ function OrganizationTab() {
         <p className="text-sm text-muted-foreground">Datos legales y de contacto de la organización.</p>
       </CardHeader>
       <CardContent>
-        <form className="grid gap-5" onSubmit={handleSubmit}>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Nombre comercial">
-              <Input value={org.name} onChange={(e) => setOrg((p) => ({ ...p, name: e.target.value }))} />
+        <form className="grid gap-6" onSubmit={handleSubmit}>
+          {/* ── Identidad ── */}
+          <div className="grid items-start gap-4 sm:grid-cols-2">
+            <p className="col-span-full text-xs font-semibold uppercase tracking-wider text-muted-foreground">Identidad</p>
+
+            <Field label="Nombre comercial" required hint="Nombre que aparece en la aplicación">
+              <InputGroup leading={<Building2 />}>
+                <Input value={org.name} onChange={(e) => setOrg((p) => ({ ...p, name: e.target.value }))} placeholder="Mi Empresa S.L." />
+              </InputGroup>
             </Field>
-            <Field label="Razón social">
-              <Input value={org.legal_name} onChange={(e) => setOrg((p) => ({ ...p, legal_name: e.target.value }))} />
+
+            <Field label="Razón social" hint="Denominación legal completa">
+              <Input value={org.legal_name} onChange={(e) => setOrg((p) => ({ ...p, legal_name: e.target.value }))} placeholder="Mi Empresa Servicios S.L." />
             </Field>
-            <Field label="CIF / NIF">
-              <Input value={org.tax_id} onChange={(e) => setOrg((p) => ({ ...p, tax_id: e.target.value }))} />
-            </Field>
-            <Field label="Email">
-              <Input type="email" autoComplete="email" value={org.email} onChange={(e) => setOrg((p) => ({ ...p, email: e.target.value }))} />
-            </Field>
-            <Field label="Teléfono">
-              <Input type="tel" inputMode="tel" autoComplete="tel" value={org.phone} onChange={(e) => setOrg((p) => ({ ...p, phone: e.target.value }))} />
-            </Field>
-            <Field label="Dirección">
-              <Input value={org.address} onChange={(e) => setOrg((p) => ({ ...p, address: e.target.value }))} />
-            </Field>
-            <Field label="Ciudad">
-              <Input value={org.city} onChange={(e) => setOrg((p) => ({ ...p, city: e.target.value }))} />
-            </Field>
-            <Field label="Provincia">
-              <Input value={org.province} onChange={(e) => setOrg((p) => ({ ...p, province: e.target.value }))} />
-            </Field>
-            <Field label="Código postal">
-              <Input inputMode="numeric" value={org.postal_code} onChange={(e) => setOrg((p) => ({ ...p, postal_code: e.target.value }))} />
+
+            <Field label="CIF / NIF" hint="Número de identificación fiscal">
+              <InputGroup leading={<IdCard />}>
+                <Input value={org.tax_id} onChange={(e) => setOrg((p) => ({ ...p, tax_id: e.target.value }))} placeholder="B12345678" />
+              </InputGroup>
             </Field>
           </div>
-          <div>
+
+          {/* ── Contacto ── */}
+          <div className="grid items-start gap-4 border-t pt-4 sm:grid-cols-2">
+            <p className="col-span-full text-xs font-semibold uppercase tracking-wider text-muted-foreground">Contacto</p>
+
+            <Field label="Email">
+              <InputGroup leading={<Mail />}>
+                <Input type="email" autoComplete="email" value={org.email} onChange={(e) => setOrg((p) => ({ ...p, email: e.target.value }))} placeholder="contacto@empresa.com" />
+              </InputGroup>
+            </Field>
+
+            <Field label="Teléfono">
+              <InputGroup leading={<Phone />}>
+                <Input type="tel" inputMode="tel" autoComplete="tel" value={org.phone} onChange={(e) => setOrg((p) => ({ ...p, phone: e.target.value }))} placeholder="600 123 456" />
+              </InputGroup>
+            </Field>
+          </div>
+
+          {/* ── Dirección ── */}
+          <div className="grid items-start gap-4 border-t pt-4 sm:grid-cols-2">
+            <p className="col-span-full text-xs font-semibold uppercase tracking-wider text-muted-foreground">Dirección</p>
+
+            <Field label="Dirección" className="sm:col-span-2">
+              <InputGroup leading={<MapPin />}>
+                <Input value={org.address} onChange={(e) => setOrg((p) => ({ ...p, address: e.target.value }))} placeholder="Calle Gran Vía, 1" />
+              </InputGroup>
+            </Field>
+
+            <Field label="Ciudad">
+              <Input value={org.city} onChange={(e) => setOrg((p) => ({ ...p, city: e.target.value }))} placeholder="Madrid" />
+            </Field>
+
+            <Field label="Provincia">
+              <Input value={org.province} onChange={(e) => setOrg((p) => ({ ...p, province: e.target.value }))} placeholder="Madrid" />
+            </Field>
+
+            <Field label="Código postal" hint="5 dígitos">
+              <Input inputMode="numeric" value={org.postal_code} onChange={(e) => setOrg((p) => ({ ...p, postal_code: e.target.value }))} placeholder="28001" />
+            </Field>
+          </div>
+
+          <div className="border-t pt-4">
             <Button type="submit" className="w-fit" disabled={updateOrganization.isPending}>
               {updateOrganization.isPending ? 'Guardando...' : 'Guardar cambios'}
             </Button>
