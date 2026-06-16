@@ -74,8 +74,6 @@ export function getActivityLabel(
 			return `Incidencia eliminada: ${metadata.title ?? ""}`;
 		case "renewal_contact":
 			return "Contacto de renovación";
-		case "renewal_alert_sent":
-			return "Alerta de renovación enviada";
 		default:
 			return action.replace(/_/g, " ");
 	}
