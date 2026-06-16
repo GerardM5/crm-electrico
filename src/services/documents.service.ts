@@ -6,6 +6,7 @@ import { queryKeys } from "./query-keys";
 
 export type DocumentRow = Tables<"documents">;
 
+/** Documents for a single customer (customer-detail) — returns full array, bounded by customer */
 export function useDocuments(filterOrId?: string | { customerId?: string }) {
 	const customerId =
 		typeof filterOrId === "string" ? filterOrId : filterOrId?.customerId;
@@ -20,6 +21,33 @@ export function useDocuments(filterOrId?: string | { customerId?: string }) {
 			const { data, error } = await q;
 			if (error) throw error;
 			return data as DocumentRow[];
+		},
+	});
+}
+
+export interface AllDocumentsFilter {
+	search?: string;
+	type?: string;
+	page?: number;
+	pageSize?: number;
+}
+
+/** All documents (global page) — server-side pagination, search by file_name, type filter */
+export function useAllDocuments(filter: AllDocumentsFilter = {}) {
+	const { search, type, page = 0, pageSize = 25 } = filter;
+	return useQuery<{ data: DocumentRow[]; count: number }>({
+		queryKey: queryKeys.documents({ ...filter, global: true }),
+		queryFn: async () => {
+			let q = supabase
+				.from("documents")
+				.select("*", { count: "exact" })
+				.order("created_at", { ascending: false });
+			if (type && type !== "all") q = q.eq("type", type as never);
+			if (search) q = q.ilike("file_name", `%${search}%`);
+			q = q.range(page * pageSize, (page + 1) * pageSize - 1);
+			const { data, error, count } = await q;
+			if (error) throw error;
+			return { data: data as DocumentRow[], count: count ?? 0 };
 		},
 	});
 }

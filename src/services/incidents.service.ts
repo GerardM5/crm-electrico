@@ -27,18 +27,46 @@ export function useIncidents(customerId?: string) {
 	});
 }
 
-/** All incidents (for the global page, with customer join) */
-export function useAllIncidents() {
-	return useQuery<IncidentWithCustomer[]>({
-		queryKey: queryKeys.incidents({}),
+export interface AllIncidentsFilter {
+	search?: string;
+	status?: string;
+	priority?: string;
+	page?: number;
+	pageSize?: number;
+}
+
+/** All incidents (global page) — server-side pagination, search, status and priority filters */
+export function useAllIncidents(filter: AllIncidentsFilter = {}) {
+	const { search, status, priority, page = 0, pageSize = 25 } = filter;
+	return useQuery<{ data: IncidentWithCustomer[]; count: number }>({
+		queryKey: queryKeys.incidents({ ...filter, global: true }),
 		queryFn: async () => {
-			const { data, error } = await supabase
+			let q = supabase
 				.from("incidents")
-				.select("*, customer:customers(id, name, company)")
-				.not("status", "in", '("resolved","closed")')
+				.select("*, customer:customers(id, name, company)", { count: "exact" })
 				.order("created_at", { ascending: false });
+
+			if (status && status !== "all") {
+				q = q.eq("status", status as never);
+			} else if (!status || status === "open") {
+				q = q.not("status", "in", '("resolved","closed")');
+			}
+			// status === "all" → no additional filter
+
+			if (priority && priority !== "all") {
+				q = q.eq("priority", priority as never);
+			}
+			if (search) {
+				q = q.ilike("title", `%${search}%`);
+			}
+
+			q = q.range(page * pageSize, (page + 1) * pageSize - 1);
+			const { data, error, count } = await q;
 			if (error) throw error;
-			return (data ?? []) as IncidentWithCustomer[];
+			return {
+				data: (data ?? []) as IncidentWithCustomer[],
+				count: count ?? 0,
+			};
 		},
 	});
 }
