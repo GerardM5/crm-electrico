@@ -26,14 +26,6 @@ function SectionHeader({ title, description }: { title: string; description?: st
   )
 }
 
-/** Map system-managed statuses to their editable equivalent */
-function toEditableStatus(s: string): 'new' | 'active' | 'inactive' | 'lost' {
-  if (s === 'new') return 'new'
-  if (s === 'inactive') return 'inactive'
-  if (s === 'lost') return 'lost'
-  return 'active' // active | renewal_due | renewed → active
-}
-
 export function CustomerFormDialog({ customer }: { customer?: CustomerRow }) {
   const isEditing = Boolean(customer)
   const [open, setOpen] = useState(false)
@@ -48,7 +40,6 @@ export function CustomerFormDialog({ customer }: { customer?: CustomerRow }) {
       ? {
         name: customer.name,
         type: customer.type,
-        status: toEditableStatus(customer.status),
         legal_name: customer.legal_name ?? '',
         tax_id: customer.dni ?? '',
         contact_name: customer.contact_name ?? '',
@@ -65,7 +56,6 @@ export function CustomerFormDialog({ customer }: { customer?: CustomerRow }) {
       }
       : {
         type: 'residential',
-        status: 'new',
         assigned_to: currentUser?.id ?? '',
         products_services: '',
         email: '',
@@ -82,7 +72,6 @@ export function CustomerFormDialog({ customer }: { customer?: CustomerRow }) {
       company: values.legal_name || null,
       legal_name: values.legal_name || null,
       dni: values.tax_id || null,
-      status: values.status,
       contact_name: values.contact_name || values.name,
       email: values.email || null,
       phone: values.phone || null,
@@ -153,18 +142,9 @@ export function CustomerFormDialog({ customer }: { customer?: CustomerRow }) {
           </Field>
         </div>
 
-        {/* ── Estado y asignación ── */}
+        {/* ── Asignación ── */}
         <div className="grid items-start gap-4 md:grid-cols-2">
-          <SectionHeader title="Estado y asignación" />
-
-          <Field label="Estado" error={(errors as Record<string, { message?: string }>).status?.message}>
-            <Select {...register('status')}>
-              <option value="new">Nuevo</option>
-              <option value="active">Activo</option>
-              <option value="inactive">Baja</option>
-              <option value="lost">Perdido</option>
-            </Select>
-          </Field>
+          <SectionHeader title="Asignación" />
 
           <Field
             label="Comercial responsable"

@@ -7,13 +7,7 @@ export type Json =
 	| Json[];
 
 export type AppRole = "owner" | "admin" | "sales" | "technician" | "viewer";
-export type CustomerStatus =
-	| "new"
-	| "active"
-	| "renewal_due"
-	| "renewed"
-	| "inactive"
-	| "lost";
+export type CustomerStatus = "new" | "active" | "inactive";
 export type CustomerType =
 	| "residential"
 	| "business"

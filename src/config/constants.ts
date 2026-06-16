@@ -8,10 +8,7 @@ export const customerTypeLabels = {
 export const customerStatusLabels = {
 	new: "Nuevo",
 	active: "Activo",
-	renewal_due: "Renovacion pendiente",
-	renewed: "Renovado",
 	inactive: "Baja",
-	lost: "Perdido",
 };
 
 export const incidentStatusLabels = {

@@ -134,11 +134,9 @@ export function CustomersRoute() {
         <Field label="Estado" className="w-44">
           <Select value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="all">Todos</option>
+            <option value="new">Nuevos</option>
             <option value="active">Activos</option>
-            <option value="renewal_due">Renovacion pendiente</option>
-            <option value="renewed">Renovados</option>
             <option value="inactive">Baja</option>
-            <option value="lost">Perdidos</option>
           </Select>
         </Field>
         {currentUser?.role !== 'sales' && (

@@ -15,7 +15,6 @@ import { DataTable, Td, Tr } from '../components/ui/table'
 import { Tabs } from '../components/ui/tabs'
 import { useAuth } from '../features/auth/AuthContext'
 import { useTheme } from '../hooks/use-theme'
-
 import { appBrand } from '~/config/nav'
 import { contractStatusLabels, customerStatusLabels } from '../config/constants'
 import { exportToCSV } from '../lib/export'
@@ -488,6 +487,10 @@ function TeamTab() {
 // ─── Data Tab ─────────────────────────────────────────────────────────────────
 
 function parseCsv(text: string): string[][] {
+  // Auto-detect delimiter: count ';' vs ',' in the first line
+  const firstLine = text.split(/\r?\n/)[0] ?? ''
+  const delimiter = (firstLine.split(';').length >= firstLine.split(',').length) ? ';' : ','
+
   const rows: string[][] = []
   let row: string[] = []
   let field = ''
@@ -507,7 +510,7 @@ function parseCsv(text: string): string[][] {
       }
     } else if (char === '"') {
       inQuotes = true
-    } else if (char === ',') {
+    } else if (char === delimiter) {
       row.push(field)
       field = ''
     } else if (char === '\n' || char === '\r') {
@@ -526,8 +529,6 @@ function parseCsv(text: string): string[][] {
   }
   return rows.filter((r) => r.some((cell) => cell.trim() !== ''))
 }
-
-const VALID_CUSTOMER_STATUSES = Object.keys(customerStatusLabels)
 
 function DataTab() {
   const createCustomer = useCreateCustomer()
@@ -642,19 +643,29 @@ function DataTab() {
         toast.error('El archivo CSV no contiene filas de datos.')
         return
       }
-      const headers = rows[0].map((h) => h.trim().toLowerCase())
-      const idx = (name: string) => headers.findIndex((h) => h === name)
+      // Normalize headers: strip BOM, trim, lowercase
+      const headers = rows[0].map((h) => h.replace(/^\uFEFF/, '').trim().toLowerCase())
+      const idx = (...names: string[]) => {
+        for (const name of names) {
+          const i = headers.findIndex((h) => h === name)
+          if (i !== -1) return i
+        }
+        return -1
+      }
+
       const nameIdx = idx('nombre')
       if (nameIdx === -1) {
         toast.error('El CSV debe incluir una columna "Nombre".')
         return
       }
-      const dniIdx = idx('dni')
-      const statusIdx = idx('estado')
-      const renewalIdx = idx('fecha renovacion')
-      const emailIdx = idx('email')
-      const phoneIdx = idx('teléfono') !== -1 ? idx('teléfono') : idx('telefono')
-      const cityIdx = idx('ciudad')
+
+      const col = (row: string[], ...names: string[]) => {
+        const i = idx(...names)
+        return i !== -1 ? row[i]?.trim() || null : null
+      }
+
+      const VALID_TYPES = ['residential', 'business', 'community', 'property_manager'] as const
+      type CustomerType = typeof VALID_TYPES[number]
 
       let created = 0
       let skipped = 0
@@ -664,19 +675,38 @@ function DataTab() {
           skipped++
           continue
         }
-        const rawStatus = statusIdx !== -1 ? row[statusIdx]?.trim() : ''
-        const status = VALID_CUSTOMER_STATUSES.includes(rawStatus) ? rawStatus : 'active'
+        const rawType = col(row, 'tipo')?.toLowerCase()
+        const type: CustomerType = VALID_TYPES.includes(rawType as CustomerType)
+          ? (rawType as CustomerType)
+          : 'residential'
+
+        const rawServices = col(row, 'servicios contratados')
+        const products_services = rawServices
+          ? rawServices.split(',').map((s) => s.trim()).filter(Boolean)
+          : []
+
         try {
           await createCustomer.mutateAsync({
-            type: 'residential',
+            type,
             name,
-            dni: dniIdx !== -1 ? row[dniIdx]?.trim() || null : null,
-            status: status as never,
-            contact_name: name,
-            email: emailIdx !== -1 ? row[emailIdx]?.trim() || null : null,
-            phone: phoneIdx !== -1 ? row[phoneIdx]?.trim() || null : null,
-            city: cityIdx !== -1 ? row[cityIdx]?.trim() || null : null,
-            renewal_date: renewalIdx !== -1 ? row[renewalIdx]?.trim() || null : null,
+            company: col(row, 'empresa'),
+            dni: col(row, 'dni'),
+            legal_name: col(row, 'nombre legal', 'razón social'),
+            tax_id: col(row, 'nif', 'cif', 'nif/cif', 'tax_id'),
+            contact_name: col(row, 'persona de contacto', 'contacto') ?? name,
+            email: col(row, 'email'),
+            phone: col(row, 'teléfono', 'telefono'),
+            address: col(row, 'dirección', 'direccion'),
+            city: col(row, 'ciudad'),
+            province: col(row, 'provincia'),
+            postal_code: col(row, 'código postal', 'codigo postal', 'cp'),
+            mailing_address: col(row, 'dirección postal', 'direccion postal'),
+            mailing_city: col(row, 'ciudad postal'),
+            mailing_province: col(row, 'provincia postal'),
+            mailing_postal_code: col(row, 'cp postal'),
+            iban: col(row, 'iban'),
+            notes: col(row, 'notas', 'observaciones'),
+            ...(products_services.length > 0 ? { products_services } : {}),
           })
           created++
         } catch {
@@ -744,14 +774,18 @@ function DataTab() {
         <CardHeader>
           <CardTitle>Importar clientes</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Sube un CSV con las columnas Nombre, DNI, Estado, Fecha renovacion, Email, Teléfono y Ciudad. Solo el nombre es obligatorio.
+            Sube un CSV (separador <code className="font-mono">,</code> o <code className="font-mono">;</code>) con las columnas del cliente.
+            Solo <strong>Nombre</strong> es obligatorio. El estado se deriva automáticamente de los contratos.
           </p>
         </CardHeader>
         <CardContent>
           <div className="rounded-lg border border-border bg-muted/30 p-4">
             <p className="mb-1 text-sm font-medium text-foreground">Clientes CSV</p>
             <p className="mb-3 text-xs text-muted-foreground">
-              Compatible con el archivo generado por «Descargar CSV». Cada fila crea un nuevo cliente.
+              Compatible con el archivo generado por «Descargar CSV». Columnas reconocidas:
+              Nombre*, Empresa, DNI, Tipo, Nombre legal, NIF/CIF, Persona de contacto, Email, Teléfono,
+              Dirección, Ciudad, Provincia, Código postal, IBAN, Servicios contratados, Notas.
+              Cada fila crea un nuevo cliente.
             </p>
             <input
               ref={importInputRef}
