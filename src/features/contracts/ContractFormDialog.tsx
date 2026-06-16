@@ -179,7 +179,7 @@ export function ContractFormDialog({
         setOpen(next)
         if (!next) reset()
       }}
-      size="lg"
+      size="xl"
       title={isEditing ? 'Editar contrato' : prefillFrom ? 'Renovar contrato' : 'Nuevo contrato'}
       trigger={
         controlledOpen !== undefined ? undefined : isEditing ? (

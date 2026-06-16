@@ -107,6 +107,7 @@ export function CustomerFormDialog({ customer }: { customer?: CustomerRow }) {
     <Dialog
       open={open}
       onOpenChange={setOpen}
+      size="lg"
       title={isEditing ? 'Editar cliente' : 'Nuevo cliente'}
       trigger={
         isEditing ? (
