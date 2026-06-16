@@ -128,7 +128,7 @@ export function RenewalsRoute() {
                 className="cursor-pointer"
                 onClick={() => navigate(`/customers/${contract.customer?.id}`)}
               >
-                <Td>
+                <Td className="whitespace-nowrap">
                   <p className="font-medium text-foreground">{contract.customer?.name ?? '—'}</p>
                   <p className="text-xs text-muted-foreground">{contract.customer?.company ?? ''}</p>
                 </Td>
@@ -136,10 +136,10 @@ export function RenewalsRoute() {
                 <Td variant="muted">{contract.cups ?? '—'}</Td>
                 <Td variant="muted">{formatDate(contract.ends_at ?? undefined)}</Td>
                 <Td><DaysBadge days={days} /></Td>
-                <Td>
+                <Td className="min-w-44">
                   {latestContact ? (
                     <div title={formatDateTime(latestContact.created_at)}>
-                      <p className="flex items-center gap-1.5 text-sm text-foreground">
+                      <p className="flex items-center gap-1.5 whitespace-nowrap text-sm text-foreground">
                         {contactChannel === 'email' ? <Mail className="size-3.5" /> : <Phone className="size-3.5" />}
                         {relativeTime(latestContact.created_at)}
                       </p>
