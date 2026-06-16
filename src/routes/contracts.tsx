@@ -14,6 +14,10 @@ import type { ContractStatus } from '../types/database.types'
 
 const PAGE_SIZE = 25
 
+function setParam(p: URLSearchParams, key: string, value: string | undefined) {
+  if (value) p.set(key, value); else p.delete(key)
+}
+
 export function ContractsRoute() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
@@ -21,23 +25,35 @@ export function ContractsRoute() {
 
   const search = params.get('q') ?? ''
   const status = params.get('status') ?? 'all'
+  const startsFrom = params.get('startsFrom') ?? ''
+  const startsTo = params.get('startsTo') ?? ''
+  const endsFrom = params.get('endsFrom') ?? ''
+  const endsTo = params.get('endsTo') ?? ''
   const page = Math.max(1, Number(params.get('page') ?? '1'))
 
   function setSearch(v: string) {
-    setParams((p) => { const n = new URLSearchParams(p); if (v) n.set('q', v); else n.delete('q'); n.delete('page'); return n }, { replace: true })
+    setParams((p) => { const n = new URLSearchParams(p); setParam(n, 'q', v); n.delete('page'); return n }, { replace: true })
   }
   function setStatus(v: string) {
-    setParams((p) => { const n = new URLSearchParams(p); if (v !== 'all') n.set('status', v); else n.delete('status'); n.delete('page'); return n }, { replace: true })
+    setParams((p) => { const n = new URLSearchParams(p); setParam(n, 'status', v !== 'all' ? v : undefined); n.delete('page'); return n }, { replace: true })
+  }
+  function setDateParam(key: string, v: string) {
+    setParams((p) => { const n = new URLSearchParams(p); setParam(n, key, v || undefined); n.delete('page'); return n }, { replace: true })
   }
   function setPage(p: number) {
     setParams((prev) => { const n = new URLSearchParams(prev); if (p > 1) n.set('page', String(p)); else n.delete('page'); return n }, { replace: true })
   }
 
+  const hasFilters = !!(search || status !== 'all' || startsFrom || startsTo || endsFrom || endsTo)
   const debouncedSearch = useDebounce(search, 250)
 
   const { data: result, isLoading } = useAllContracts({
     search: debouncedSearch || undefined,
     status: status !== 'all' ? status as ContractStatus : undefined,
+    startsFrom: startsFrom || undefined,
+    startsTo: startsTo || undefined,
+    endsFrom: endsFrom || undefined,
+    endsTo: endsTo || undefined,
     page: page - 1,
     pageSize: PAGE_SIZE,
   })
@@ -65,13 +81,25 @@ export function ContractsRoute() {
             />
           </div>
         </Field>
-        <Field label="Estado" className="w-52">
+        <Field label="Estado" className="w-44">
           <Select value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="all">Todos</option>
             {Object.entries(contractStatusLabels).map(([k, v]) => (
               <option key={k} value={k}>{v}</option>
             ))}
           </Select>
+        </Field>
+        <Field label="Inicio desde" className="w-36">
+          <Input type="date" value={startsFrom} onChange={(e) => setDateParam('startsFrom', e.target.value)} />
+        </Field>
+        <Field label="Inicio hasta" className="w-36">
+          <Input type="date" value={startsTo} onChange={(e) => setDateParam('startsTo', e.target.value)} />
+        </Field>
+        <Field label="Vto. desde" className="w-36">
+          <Input type="date" value={endsFrom} onChange={(e) => setDateParam('endsFrom', e.target.value)} />
+        </Field>
+        <Field label="Vto. hasta" className="w-36">
+          <Input type="date" value={endsTo} onChange={(e) => setDateParam('endsTo', e.target.value)} />
         </Field>
       </div>
 

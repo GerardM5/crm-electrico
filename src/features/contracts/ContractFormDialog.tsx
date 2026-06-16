@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { addYears, format } from 'date-fns'
-import { Euro, Loader2, Pencil, Plus, Trash2, Zap } from 'lucide-react'
+import { CopyCheck, Euro, Loader2, MapPin, Pencil, Plus, Trash2, Zap } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -11,6 +11,7 @@ import { contractStatusLabels } from '../../config/constants'
 import { useToastError } from '../../hooks/use-toast-error'
 import { type ContractFormValues, contractSchema } from '../../schemas/forms.schema'
 import { type ContractRow, useCreateContract, useDeleteContract, useUpdateContract } from '../../services/contracts.service'
+import { useCustomer } from '../../services/customers.service'
 
 function SectionHeader({ title, description }: { title: string; description?: string }) {
   return (
@@ -54,6 +55,7 @@ export function ContractFormDialog({
   const createContract = useCreateContract()
   const updateContract = useUpdateContract()
   const deleteContract = useDeleteContract()
+  const { data: customer } = useCustomer(customerId)
   const onError = useToastError()
   const isPending = createContract.isPending || updateContract.isPending
 
@@ -97,6 +99,10 @@ export function ContractFormDialog({
       power_price_p6_eur: source?.power_price_p6_eur ?? undefined,
       commission_company_eur: source?.commission_company_eur ?? 0,
       commission_commercial_eur: source?.commission_commercial_eur ?? 0,
+      supply_address: source?.supply_address ?? '',
+      supply_city: source?.supply_city ?? '',
+      supply_province: source?.supply_province ?? '',
+      supply_postal_code: source?.supply_postal_code ?? '',
       starts_at: contract?.starts_at?.slice(0, 10) ?? '',
       ends_at: contract?.ends_at?.slice(0, 10) ?? '',
       notes: source?.notes ?? '',
@@ -123,6 +129,10 @@ export function ContractFormDialog({
       power_price_p6_eur: numOrNull(values.power_price_p6_eur),
       commission_company_eur: values.commission_company_eur ?? 0,
       commission_commercial_eur: values.commission_commercial_eur ?? 0,
+      supply_address: values.supply_address || null,
+      supply_city: values.supply_city || null,
+      supply_province: values.supply_province || null,
+      supply_postal_code: values.supply_postal_code || null,
       starts_at: values.starts_at || null,
       ends_at: values.ends_at || null,
       notes: values.notes || null,
