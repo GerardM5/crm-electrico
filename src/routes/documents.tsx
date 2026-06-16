@@ -135,19 +135,28 @@ export function DocumentsRoute() {
             <Field label="Buscar" className="min-w-48 flex-1">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Archivo o cliente..." />
+                <Input className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nombre de archivo..." />
               </div>
+            </Field>
+            <Field label="Tipo" className="w-36">
+              <Select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+                <option value="all">Todos</option>
+                <option value="invoice">Factura</option>
+                <option value="dni">DNI</option>
+                <option value="cif">CIF</option>
+                <option value="other">Otro</option>
+              </Select>
             </Field>
           </div>
 
-          {filteredDocuments.length === 0 ? (
+          {documents.length === 0 ? (
             <EmptyState title="Sin documentos" description="Sube un archivo (PDF, DNI, contrato) para un cliente y aparecera aqui." />
           ) : (
             <DataTable
               headers={['Archivo', 'Cliente', 'Tipo', 'Fecha', 'Ruta', { label: 'Acciones', align: 'right' }]}
-              pagination={{ page: pagination.page, pageSize: pagination.pageSize, total: pagination.total, totalPages: pagination.totalPages, onPageChange: pagination.setPage, onPageSizeChange: pagination.setPageSize }}
+              pagination={{ page, pageSize: PAGE_SIZE, total, totalPages, onPageChange: setPage, onPageSizeChange: () => { } }}
             >
-              {pagination.items.map((document: DocumentRow) => (
+              {documents.map((document: DocumentRow) => (
                 <Tr key={document.id} hover>
                   <Td variant="primary">{document.file_name}</Td>
                   <Td variant="muted">{customerById[document.customer_id ?? ''] ?? '-'}</Td>
