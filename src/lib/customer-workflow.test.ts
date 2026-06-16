@@ -48,12 +48,10 @@ const base: Customer = {
 // ─── getRenewalStage ────────────────────────────────────────────────────────
 
 describe("getRenewalStage", () => {
-	it('returns "closed" for lost status', () => {
-		expect(getRenewalStage({ ...base, status: "lost" })).toBe("closed");
-	});
-
 	it('returns "closed" for inactive status', () => {
-		expect(getRenewalStage({ ...base, status: "inactive" })).toBe("closed");
+		expect(getRenewalStage({ ...base, status: "inactive" } as never)).toBe(
+			"closed",
+		);
 	});
 
 	it('returns "unscheduled" when renewal_date is null', () => {

@@ -41,8 +41,7 @@ export function getRenewalStage(customer: Customer, today = new Date()) {
 	const alertDate = getRenewalAlertDate(customer);
 	const alertStart = alertDate ? startOfDay(alertDate) : undefined;
 
-	if (customer.status === "lost" || customer.status === "inactive")
-		return "closed";
+	if (customer.status === "inactive") return "closed";
 	if (!renewalDate || !alertStart) return "unscheduled";
 	if (differenceInCalendarDays(renewalDate, start) < 0) return "overdue";
 	if (isAfter(alertStart, start)) return "scheduled";
