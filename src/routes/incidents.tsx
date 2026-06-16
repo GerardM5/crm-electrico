@@ -7,6 +7,7 @@ import { Button } from '../components/ui/button'
 import { DataTable, EmptyState, Td, Tr } from '../components/ui/table'
 import { incidentPriorityLabels, incidentStatusLabels } from '../config/constants'
 import { IncidentFormDialog } from '../features/incidents/IncidentFormDialog'
+import { usePagination } from '../hooks/use-pagination'
 import { useToastError } from '../hooks/use-toast-error'
 import { formatDate, relativeTime } from '../lib/formatters'
 import { useAllIncidents, useResolveIncident } from '../services/incidents.service'
@@ -22,6 +23,7 @@ export function IncidentsRoute() {
   const { data: incidents = [], isLoading } = useAllIncidents()
   const resolveIncident = useResolveIncident()
   const onError = useToastError()
+  const pagination = usePagination(incidents, 25)
 
   function handleResolve(id: string) {
     resolveIncident.mutate(id, {
@@ -48,8 +50,9 @@ export function IncidentsRoute() {
       ) : (
         <DataTable
           headers={['Cliente', 'Tipo / Título', 'Prioridad', 'Estado', 'Creada', { label: 'Acciones', align: 'right' }]}
+          pagination={{ page: pagination.page, pageSize: pagination.pageSize, total: pagination.total, totalPages: pagination.totalPages, onPageChange: pagination.setPage, onPageSizeChange: pagination.setPageSize }}
         >
-          {incidents.map((incident) => (
+          {pagination.items.map((incident) => (
             <Tr key={incident.id} hover>
               <Td variant="primary">
                 {incident.customer ? (

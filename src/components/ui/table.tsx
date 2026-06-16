@@ -1,11 +1,5 @@
 import { ChevronLeft, ChevronRight, FileX2 } from 'lucide-react'
-import {
-  type HTMLAttributes,
-  type ReactNode,
-  type TdHTMLAttributes,
-  type ThHTMLAttributes,
-  forwardRef,
-} from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/utils'
 
 // ── Pagination ────────────────────────────────────────────────────────────────
@@ -78,77 +72,64 @@ function TablePagination({
 
 // ── Primitives ────────────────────────────────────────────────────────────────
 
-export const Tr = forwardRef<
-  HTMLTableRowElement,
-  HTMLAttributes<HTMLTableRowElement> & { hover?: boolean }
->(({ className, hover = false, ...props }, ref) => (
-  <tr
-    ref={ref}
-    className={cn(hover && 'cursor-default transition-colors hover:bg-accent/60', className)}
-    {...props}
-  />
-))
-Tr.displayName = 'Tr'
+export function Tr({ className, hover = false, ref, ...props }: ComponentProps<'tr'> & { hover?: boolean }) {
+  return (
+    <tr
+      ref={ref}
+      className={cn(hover && 'cursor-default transition-colors hover:bg-accent/60', className)}
+      {...props}
+    />
+  )
+}
 
 export type TdVariant = 'default' | 'primary' | 'muted' | 'mono'
 
-export const Td = forwardRef<
-  HTMLTableCellElement,
-  TdHTMLAttributes<HTMLTableCellElement> & {
-    variant?: TdVariant
-    align?: 'left' | 'right' | 'center'
-  }
->(({ className, variant = 'default', align = 'left', ...props }, ref) => (
-  <td
-    ref={ref}
-    className={cn(
-      'px-4 py-3',
-      variant === 'primary' && 'font-medium text-foreground',
-      variant === 'muted' && 'text-muted-foreground',
-      variant === 'mono' && 'font-mono text-xs text-muted-foreground',
-      align === 'right' && 'text-right',
-      align === 'center' && 'text-center',
-      className,
-    )}
-    {...props}
-  />
-))
-Td.displayName = 'Td'
+export function Td({ className, variant = 'default', align = 'left', ref, ...props }: ComponentProps<'td'> & { variant?: TdVariant; align?: 'left' | 'right' | 'center' }) {
+  return (
+    <td
+      ref={ref}
+      className={cn(
+        'px-4 py-3',
+        variant === 'primary' && 'font-medium text-foreground',
+        variant === 'muted' && 'text-muted-foreground',
+        variant === 'mono' && 'font-mono text-xs text-muted-foreground',
+        align === 'right' && 'text-right',
+        align === 'center' && 'text-center',
+        className,
+      )}
+      {...props}
+    />
+  )
+}
 
-export const Th = forwardRef<
-  HTMLTableCellElement,
-  ThHTMLAttributes<HTMLTableCellElement> & { align?: 'left' | 'right' | 'center' }
->(({ className, align = 'left', ...props }, ref) => (
-  <th
-    ref={ref}
-    className={cn(
-      'px-4 py-3 font-semibold',
-      align === 'right' && 'text-right',
-      align === 'center' && 'text-center',
-      className,
-    )}
-    {...props}
-  />
-))
-Th.displayName = 'Th'
+export function Th({ className, align = 'left', ref, ...props }: ComponentProps<'th'> & { align?: 'left' | 'right' | 'center' }) {
+  return (
+    <th
+      ref={ref}
+      className={cn(
+        'px-4 py-3 font-semibold',
+        align === 'right' && 'text-right',
+        align === 'center' && 'text-center',
+        className,
+      )}
+      {...props}
+    />
+  )
+}
 
-export const TableHead = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(
-  ({ className, ...props }, ref) => (
+export function TableHead({ className, ref, ...props }: ComponentProps<'thead'>) {
+  return (
     <thead
       ref={ref}
       className={cn('bg-muted text-xs uppercase tracking-wide text-muted-foreground', className)}
       {...props}
     />
-  ),
-)
-TableHead.displayName = 'TableHead'
+  )
+}
 
-export const TableBody = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(
-  ({ className, ...props }, ref) => (
-    <tbody ref={ref} className={cn('divide-y divide-border', className)} {...props} />
-  ),
-)
-TableBody.displayName = 'TableBody'
+export function TableBody({ className, ref, ...props }: ComponentProps<'tbody'>) {
+  return <tbody ref={ref} className={cn('divide-y divide-border', className)} {...props} />
+}
 
 // ── ColDef — string (backward compat) or rich object ─────────────────────────
 

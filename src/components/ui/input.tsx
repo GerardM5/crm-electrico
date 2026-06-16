@@ -1,5 +1,5 @@
 import { ChevronDown } from 'lucide-react'
-import { type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes, forwardRef } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/utils'
 
 const inputBase =
@@ -62,28 +62,21 @@ export function InputGroup({
   )
 }
 
-export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
-  ({ className, ...props }, ref) => (
-    <input ref={ref} className={cn(inputBase, 'h-9', className)} {...props} />
-  ),
-)
-Input.displayName = 'Input'
+export function Input({ className, ref, ...props }: ComponentProps<'input'>) {
+  return <input ref={ref} className={cn(inputBase, 'h-9', className)} {...props} />
+}
 
-export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(
-  ({ className, ...props }, ref) => (
-    <textarea ref={ref} className={cn(inputBase, 'min-h-24 resize-none', className)} {...props} />
-  ),
-)
-Textarea.displayName = 'Textarea'
+export function Textarea({ className, ref, ...props }: ComponentProps<'textarea'>) {
+  return <textarea ref={ref} className={cn(inputBase, 'min-h-24 resize-none', className)} {...props} />
+}
 
-export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(
-  ({ className, children, ...props }, ref) => (
+export function Select({ className, children, ref, ...props }: ComponentProps<'select'>) {
+  return (
     <div className="relative">
       <select ref={ref} className={cn(inputBase, 'h-9 appearance-none pr-8', className)} {...props}>
         {children}
       </select>
       <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
     </div>
-  ),
-)
-Select.displayName = 'Select'
+  )
+}

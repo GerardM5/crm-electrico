@@ -1,13 +1,13 @@
 import { ChevronLeft, ChevronRight, FileText, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { PageHeader } from '../components/data-table/Toolbar'
+import { CustomerCombobox } from '../components/forms/CustomerCombobox'
 import { Button } from '../components/ui/button'
 import { Dialog } from '../components/ui/dialog'
 import { Field, Input, Select, Textarea } from '../components/ui/input'
 import { useAuth } from '../features/auth/AuthContext'
 import { cn } from '../lib/utils'
 import { type ContractForCalendar, useContractsByMonth } from '../services/contracts.service'
-import { useCustomers } from '../services/customers.service'
 import { type TaskWithCustomer, useCreateTask, useDeleteTask, useTasks, useUpdateTask } from '../services/tasks.service'
 import type { ContractStatus, TaskPriority, TaskStatus } from '../types/database.types'
 
@@ -80,8 +80,6 @@ export function AgendaRoute() {
 
   const { data: tasks = [] } = useTasks({ month: ym })
   const { data: contracts = [] } = useContractsByMonth(ym)
-  const { data: customersResult } = useCustomers({ pageSize: 500 })
-  const customers = customersResult?.data ?? []
 
   const eventsByDay = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>()
@@ -200,13 +198,11 @@ export function AgendaRoute() {
         open={createOpen}
         onOpenChange={setCreateOpen}
         prefillDate={prefillDate}
-        customers={customers}
       />
 
       {selected?.kind === 'task' && (
         <TaskDetailDialog
           task={selected.data}
-          customers={customers}
           onClose={() => setSelected(null)}
         />
       )}
@@ -222,15 +218,12 @@ export function AgendaRoute() {
 
 /* ── Create dialog ───────────────────────────────────────────────── */
 
-type CustomerOption = { id: string; name: string; company: string | null }
-
 function CreateTaskDialog({
-  open, onOpenChange, prefillDate, customers,
+  open, onOpenChange, prefillDate,
 }: {
   open: boolean
   onOpenChange: (v: boolean) => void
   prefillDate: string
-  customers: CustomerOption[]
 }) {
   const { profile } = useAuth()
   const create = useCreateTask()
@@ -284,12 +277,7 @@ function CreateTaskDialog({
           </Select>
         </Field>
         <Field label="Cliente (opcional)">
-          <Select value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
-            <option value="">Sin cliente</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}{c.company ? ` — ${c.company}` : ''}</option>
-            ))}
-          </Select>
+          <CustomerCombobox value={customerId} onChange={setCustomerId} />
         </Field>
         <Field label="Notas">
           <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Detalles adicionales..." />
@@ -306,10 +294,9 @@ function CreateTaskDialog({
 /* ── Detail/Edit dialog ──────────────────────────────────────────── */
 
 function TaskDetailDialog({
-  task, customers, onClose,
+  task, onClose,
 }: {
   task: TaskWithCustomer
-  customers: CustomerOption[]
   onClose: () => void
 }) {
   const update = useUpdateTask()
@@ -374,12 +361,7 @@ function TaskDetailDialog({
             </Select>
           </Field>
           <Field label="Cliente">
-            <Select value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
-              <option value="">Sin cliente</option>
-              {customers.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}{c.company ? ` — ${c.company}` : ''}</option>
-              ))}
-            </Select>
+            <CustomerCombobox value={customerId} onChange={setCustomerId} />
           </Field>
           <Field label="Notas">
             <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />

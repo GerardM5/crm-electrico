@@ -13,6 +13,7 @@ import { useAuth } from '../features/auth/AuthContext'
 import { ContractFormDialog } from '../features/contracts/ContractFormDialog'
 import { CustomerFormDialog } from '../features/customers/CustomerFormDialog'
 import { IncidentFormDialog } from '../features/incidents/IncidentFormDialog'
+import { usePagination } from '../hooks/use-pagination'
 import { getDaysToContractEnd } from '../lib/customer-workflow'
 import { formatDate, formatDateTime, relativeTime } from '../lib/formatters'
 import { canDownloadPdf } from '../lib/permissions'
@@ -65,6 +66,10 @@ export function CustomerDetailRoute() {
   const deleteDocument = useDeleteDocument()
   const { data: incidents = [] } = useIncidents(id)
   const resolveIncident = useResolveIncident()
+
+  const contractsPagination = usePagination(contracts, 25)
+  const documentsPagination = usePagination(documents, 25)
+  const incidentsPagination = usePagination(incidents, 25)
 
   const owner = useMemo(
     () => profiles.find((p) => p.id === customer?.assigned_to),
@@ -188,8 +193,11 @@ export function CustomerDetailRoute() {
             description="Este cliente aún no tiene contratos energéticos registrados."
           />
         ) : (
-          <DataTable headers={['CUPS', 'Comercializadora', 'Producto', 'Tarifa', 'Importe', 'Comisión', 'Vigencia', 'Estado', '']}>
-            {contracts.map((contract) => (
+          <DataTable
+            headers={['CUPS', 'Comercializadora', 'Producto', 'Tarifa', 'Importe', 'Comisión', 'Vigencia', 'Estado', '']}
+            pagination={{ page: contractsPagination.page, pageSize: contractsPagination.pageSize, total: contractsPagination.total, totalPages: contractsPagination.totalPages, onPageChange: contractsPagination.setPage, onPageSizeChange: contractsPagination.setPageSize }}
+          >
+            {contractsPagination.items.map((contract) => (
               <Tr key={contract.id} hover>
                 <Td variant="primary">{contract.cups ?? '—'}</Td>
                 <Td variant="muted">{contract.provider ?? '—'}</Td>
@@ -236,8 +244,11 @@ export function CustomerDetailRoute() {
             }
           />
         </div>
-        <DataTable headers={['Archivo', 'Tipo', 'Fecha', 'Ruta', { label: 'Acciones', align: 'right' }]}>
-          {documents.map((document) => (
+        <DataTable
+          headers={['Archivo', 'Tipo', 'Fecha', 'Ruta', { label: 'Acciones', align: 'right' }]}
+          pagination={{ page: documentsPagination.page, pageSize: documentsPagination.pageSize, total: documentsPagination.total, totalPages: documentsPagination.totalPages, onPageChange: documentsPagination.setPage, onPageSizeChange: documentsPagination.setPageSize }}
+        >
+          {documentsPagination.items.map((document) => (
             <Tr key={document.id} hover>
               <Td variant="primary">{document.file_name}</Td>
               <Td variant="muted">{document.type}</Td>
@@ -286,8 +297,11 @@ export function CustomerDetailRoute() {
             description="Este cliente no tiene incidencias abiertas."
           />
         ) : (
-          <DataTable headers={['Tipo / Título', 'Prioridad', 'Estado', 'Creada', { label: 'Acciones', align: 'right' }]}>
-            {incidents.map((incident) => (
+          <DataTable
+            headers={['Tipo / Título', 'Prioridad', 'Estado', 'Creada', { label: 'Acciones', align: 'right' }]}
+            pagination={{ page: incidentsPagination.page, pageSize: incidentsPagination.pageSize, total: incidentsPagination.total, totalPages: incidentsPagination.totalPages, onPageChange: incidentsPagination.setPage, onPageSizeChange: incidentsPagination.setPageSize }}
+          >
+            {incidentsPagination.items.map((incident) => (
               <Tr key={incident.id} hover>
                 <Td variant="primary">{incident.title}</Td>
                 <Td variant="muted">

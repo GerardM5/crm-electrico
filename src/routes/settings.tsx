@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { z } from 'zod'
+import { appBrand } from '~/config/nav'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { Avatar, AvatarFallback } from '../components/ui/avatar'
 import { Button } from '../components/ui/button'
@@ -13,10 +14,10 @@ import { Dialog } from '../components/ui/dialog'
 import { Field, Input, InputGroup, Select } from '../components/ui/input'
 import { DataTable, Td, Tr } from '../components/ui/table'
 import { Tabs } from '../components/ui/tabs'
-import { useAuth } from '../features/auth/AuthContext'
-import { useTheme } from '../hooks/use-theme'
-import { appBrand } from '~/config/nav'
 import { contractStatusLabels, customerStatusLabels } from '../config/constants'
+import { useAuth } from '../features/auth/AuthContext'
+import { usePagination } from '../hooks/use-pagination'
+import { useTheme } from '../hooks/use-theme'
 import { exportToCSV } from '../lib/export'
 import { formatDate } from '../lib/formatters'
 import type { ThemePreference } from '../lib/theme'
@@ -381,6 +382,7 @@ function TeamTab() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   const customers = customersResult?.data ?? []
+  const pagination = usePagination(profiles, 25)
 
   return (
     <Card>
@@ -396,8 +398,11 @@ function TeamTab() {
         </div>
       </CardHeader>
       <CardContent>
-        <DataTable headers={['Miembro', 'Rol', 'Acceso', 'Clientes', 'Gestión', '']}>
-          {profiles.map((profile) => {
+        <DataTable
+          headers={['Miembro', 'Rol', 'Acceso', 'Clientes', 'Gestión', '']}
+          pagination={{ page: pagination.page, pageSize: pagination.pageSize, total: pagination.total, totalPages: pagination.totalPages, onPageChange: pagination.setPage, onPageSizeChange: pagination.setPageSize }}
+        >
+          {pagination.items.map((profile) => {
             const assigned = customers.filter((c) => c.assigned_to === profile.id).length
             const fullAccess = profile.role === 'owner' || profile.role === 'admin'
             const isMe = profile.id === currentUser?.id
