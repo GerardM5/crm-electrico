@@ -1,5 +1,6 @@
 import { Search, Trash2, Upload } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { PdfViewerDialog } from '../components/documents/PdfViewerDialog'
@@ -9,49 +10,60 @@ import { Field, Input, Select } from '../components/ui/input'
 import { DataTable, EmptyState, Td, Tr, TruncatePath } from '../components/ui/table'
 import { useAuth } from '../features/auth/AuthContext'
 import { useDebounce } from '../hooks/use-debounce'
-import { usePagination } from '../hooks/use-pagination'
 import { useToastError } from '../hooks/use-toast-error'
 import { formatDate } from '../lib/formatters'
 import { canDownloadPdf } from '../lib/permissions'
 import { isPdfDocument } from '../lib/storage'
 import { useCustomers } from '../services/customers.service'
-import { type UploadStep, useDeleteDocument, useDocuments, useUploadDocument } from '../services/documents.service'
+import { type UploadStep, useAllDocuments, useDeleteDocument, useUploadDocument } from '../services/documents.service'
 import type { DocumentRow } from '../services/documents.service'
 import type { DocumentType } from '../types/database.types'
+
+const PAGE_SIZE = 25
 
 export function DocumentsRoute() {
   const { profile: currentUser } = useAuth()
   const { data: customersResult } = useCustomers({ pageSize: 500 })
-  const { data: documents = [] } = useDocuments()
   const uploadDocument = useUploadDocument()
   const deleteDocument = useDeleteDocument()
   const onError = useToastError()
 
   const customers = customersResult?.data ?? []
+
+  // Upload form state (local — not URL-synced)
   const [customerId, setCustomerId] = useState('')
   const [type, setType] = useState<DocumentType>('other')
-  const [search, setSearch] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploadStep, setUploadStep] = useState<UploadStep | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Filter + pagination state in URL
+  const [params, setParams] = useSearchParams()
+  const search = params.get('q') ?? ''
+  const typeFilter = params.get('type') ?? 'all'
+  const page = Math.max(1, Number(params.get('page') ?? '1'))
+
+  function setSearch(v: string) { setParams((p) => { const n = new URLSearchParams(p); if (v) n.set('q', v); else n.delete('q'); n.delete('page'); return n }, { replace: true }) }
+  function setTypeFilter(v: string) { setParams((p) => { const n = new URLSearchParams(p); if (v !== 'all') n.set('type', v); else n.delete('type'); n.delete('page'); return n }, { replace: true }) }
+  function setPage(p: number) { setParams((prev) => { const n = new URLSearchParams(prev); if (p > 1) n.set('page', String(p)); else n.delete('page'); return n }, { replace: true }) }
+
   const debouncedSearch = useDebounce(search, 250)
+
+  const { data: result } = useAllDocuments({
+    search: debouncedSearch || undefined,
+    type: typeFilter !== 'all' ? typeFilter : undefined,
+    page: page - 1,
+    pageSize: PAGE_SIZE,
+  })
+
+  const documents = result?.data ?? []
+  const total = result?.count ?? 0
+  const totalPages = Math.ceil(total / PAGE_SIZE)
 
   const customerById = useMemo(
     () => Object.fromEntries(customers.map((c) => [c.id, c.name])),
     [customers],
   )
-
-  const filteredDocuments = useMemo(() => {
-    const q = debouncedSearch.toLowerCase()
-    if (!q) return documents
-    return documents.filter(
-      (d) =>
-        d.file_name.toLowerCase().includes(q) ||
-        (customerById[d.customer_id ?? ''] ?? '').toLowerCase().includes(q),
-    )
-  }, [documents, debouncedSearch, customerById])
-
-  const pagination = usePagination(filteredDocuments, 25)
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     setSelectedFile(e.target.files?.[0] ?? null)
