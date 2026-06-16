@@ -1,4 +1,4 @@
-import { endOfDay, startOfMonth, startOfQuarter, startOfYear, subMonths } from 'date-fns'
+import { startOfMonth, startOfQuarter, startOfYear, subMonths } from 'date-fns'
 import { Download, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'

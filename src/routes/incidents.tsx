@@ -1,4 +1,4 @@
-import { CheckCircle2, TriangleAlert } from 'lucide-react'
+import { CheckCircle2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { PageHeader } from '../components/data-table/Toolbar'
