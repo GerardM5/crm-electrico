@@ -106,7 +106,7 @@ export function ContractsRoute() {
       {!isLoading && contracts.length === 0 ? (
         <EmptyState
           title="Sin contratos"
-          description={debouncedSearch || status !== 'all' ? 'Prueba a ajustar los filtros de búsqueda.' : 'Todavía no hay contratos registrados.'}
+          description={hasFilters ? 'Prueba a ajustar los filtros de búsqueda.' : 'Todavía no hay contratos registrados.'}
         />
       ) : (
         <DataTable

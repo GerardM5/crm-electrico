@@ -129,10 +129,6 @@ export function CustomerDetailRoute() {
             <DetailRow label="Teléfono" value={customer.phone ?? '—'} />
             <DetailRow label="IBAN" value={customer.iban ?? '—'} />
             <DetailRow
-              label="Dirección de suministro"
-              value={formatAddress(customer.address, customer.postal_code, customer.city, customer.province)}
-            />
-            <DetailRow
               label="Dirección de correspondencia"
               value={formatAddress(customer.mailing_address, customer.mailing_postal_code, customer.mailing_city, customer.mailing_province)}
             />

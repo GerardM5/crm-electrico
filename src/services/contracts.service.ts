@@ -87,9 +87,21 @@ export function useAllContracts(params: ContractsListParams = {}) {
 			if (endsFrom) q = q.gte("ends_at", endsFrom);
 			if (endsTo) q = q.lte("ends_at", endsTo);
 			if (search) {
-				q = q.or(
-					`contract_number.ilike.%${search}%,cups.ilike.%${search}%,provider.ilike.%${search}%,product.ilike.%${search}%`,
-				);
+				const orFilters = [
+					`contract_number.ilike.%${search}%`,
+					`cups.ilike.%${search}%`,
+					`provider.ilike.%${search}%`,
+					`product.ilike.%${search}%`,
+				];
+				const { data: matchedCustomers } = await supabase
+					.from("customers")
+					.select("id")
+					.or(`name.ilike.%${search}%,company.ilike.%${search}%`);
+				const customerIds = (matchedCustomers ?? []).map((c) => c.id);
+				if (customerIds.length > 0) {
+					orFilters.push(`customer_id.in.(${customerIds.join(",")})`);
+				}
+				q = q.or(orFilters.join(","));
 			}
 
 			const { data, error, count } = await q;

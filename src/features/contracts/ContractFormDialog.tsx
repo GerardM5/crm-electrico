@@ -57,6 +57,18 @@ export function ContractFormDialog({
   const deleteContract = useDeleteContract()
   const { data: customer } = useCustomer(customerId)
   const onError = useToastError()
+
+  // The customer's address to optionally copy into the contract's supply address.
+  // Falls back to legacy supply fields for customers created before the move.
+  const customerAddress = customer
+    ? (() => {
+      const address = customer.mailing_address ?? customer.address ?? ''
+      const postal_code = customer.mailing_postal_code ?? customer.postal_code ?? ''
+      const city = customer.mailing_city ?? customer.city ?? ''
+      const province = customer.mailing_province ?? customer.province ?? ''
+      return address || postal_code || city || province ? { address, postal_code, city, province } : null
+    })()
+    : null
   const isPending = createContract.isPending || updateContract.isPending
 
   function handleDelete() {
@@ -198,6 +210,51 @@ export function ContractFormDialog({
             hint="Código Universal del Punto de Suministro — 20 caracteres alfanuméricos"
           >
             <Input {...register('cups')} placeholder="ES0021000000000000AA" />
+          </Field>
+        </div>
+
+        {/* ── Dirección de suministro ── */}
+        <div className="grid items-start gap-4 md:grid-cols-2">
+          <div className="col-span-full border-t pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Dirección de suministro</p>
+                <p className="mt-0.5 text-xs text-muted-foreground/70">Dirección física del punto de suministro</p>
+              </div>
+              {customerAddress && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setValue('supply_address', customerAddress.address)
+                    setValue('supply_postal_code', customerAddress.postal_code)
+                    setValue('supply_city', customerAddress.city)
+                    setValue('supply_province', customerAddress.province)
+                  }}
+                  className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <CopyCheck className="h-3.5 w-3.5" />
+                  Copiar del cliente
+                </button>
+              )}
+            </div>
+          </div>
+
+          <Field label="Dirección" error={errors.supply_address?.message}>
+            <InputGroup leading={<MapPin />}>
+              <Input {...register('supply_address')} placeholder="Calle, número, piso…" />
+            </InputGroup>
+          </Field>
+
+          <Field label="Código postal" error={(errors as Record<string, { message?: string }>).supply_postal_code?.message}>
+            <Input inputMode="numeric" {...register('supply_postal_code')} placeholder="28001" />
+          </Field>
+
+          <Field label="Ciudad" error={errors.supply_city?.message}>
+            <Input {...register('supply_city')} placeholder="Madrid, Barcelona…" />
+          </Field>
+
+          <Field label="Provincia" error={errors.supply_province?.message}>
+            <Input {...register('supply_province')} placeholder="Madrid" />
           </Field>
         </div>
 
