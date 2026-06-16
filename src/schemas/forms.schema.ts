@@ -30,6 +30,14 @@ export const contractSchema = z.object({
 	power_price_p6_eur: optionalNumber,
 	commission_company_eur: z.coerce.number().min(0).default(0),
 	commission_commercial_eur: z.coerce.number().min(0).default(0),
+	supply_address: z.string().optional(),
+	supply_city: z.string().optional(),
+	supply_province: z.string().optional(),
+	supply_postal_code: z
+		.string()
+		.regex(/^\d{5}$/, "El codigo postal debe tener 5 digitos")
+		.optional()
+		.or(z.literal("")),
 	starts_at: z.string().optional(),
 	ends_at: z.string().optional(),
 	notes: z.string().optional(),

@@ -22,6 +22,10 @@ export type ContractWithCustomerInfo = ContractRow & {
 export interface ContractsListParams {
 	search?: string;
 	status?: ContractStatus;
+	startsFrom?: string;
+	startsTo?: string;
+	endsFrom?: string;
+	endsTo?: string;
 	page?: number;
 	pageSize?: number;
 }
@@ -45,9 +49,31 @@ export function useContracts(filterOrId?: string | { customerId?: string }) {
 }
 
 export function useAllContracts(params: ContractsListParams = {}) {
-	const { search, status, page = 0, pageSize = 25 } = params;
+	const {
+		search,
+		status,
+		startsFrom,
+		startsTo,
+		endsFrom,
+		endsTo,
+		page = 0,
+		pageSize = 25,
+	} = params;
 	return useQuery<{ data: ContractWithCustomer[]; count: number }>({
-		queryKey: ["contracts", "all", { search, status, page, pageSize }],
+		queryKey: [
+			"contracts",
+			"all",
+			{
+				search,
+				status,
+				startsFrom,
+				startsTo,
+				endsFrom,
+				endsTo,
+				page,
+				pageSize,
+			},
+		],
 		queryFn: async () => {
 			let q = supabase
 				.from("contracts")
@@ -56,6 +82,10 @@ export function useAllContracts(params: ContractsListParams = {}) {
 				.range(page * pageSize, page * pageSize + pageSize - 1);
 
 			if (status) q = q.eq("status", status);
+			if (startsFrom) q = q.gte("starts_at", startsFrom);
+			if (startsTo) q = q.lte("starts_at", startsTo);
+			if (endsFrom) q = q.gte("ends_at", endsFrom);
+			if (endsTo) q = q.lte("ends_at", endsTo);
 			if (search) {
 				q = q.or(
 					`contract_number.ilike.%${search}%,cups.ilike.%${search}%,provider.ilike.%${search}%,product.ilike.%${search}%`,

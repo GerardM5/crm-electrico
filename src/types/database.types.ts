@@ -615,6 +615,10 @@ export type Database = {
 					commission_eur: number;
 					commission_company_eur: number;
 					commission_commercial_eur: number;
+					supply_address: string | null;
+					supply_city: string | null;
+					supply_province: string | null;
+					supply_postal_code: string | null;
 					notes: string | null;
 					created_at: string;
 					updated_at: string;
@@ -648,6 +652,10 @@ export type Database = {
 					commission_eur?: number;
 					commission_company_eur?: number;
 					commission_commercial_eur?: number;
+					supply_address?: string | null;
+					supply_city?: string | null;
+					supply_province?: string | null;
+					supply_postal_code?: string | null;
 					notes?: string | null;
 					created_at?: string;
 					updated_at?: string;
@@ -679,6 +687,10 @@ export type Database = {
 					commission_eur?: number;
 					commission_company_eur?: number;
 					commission_commercial_eur?: number;
+					supply_address?: string | null;
+					supply_city?: string | null;
+					supply_province?: string | null;
+					supply_postal_code?: string | null;
 					notes?: string | null;
 					updated_at?: string;
 				};

@@ -11,14 +11,6 @@ export const customerSchema = z
 		contact_name: z.string().optional(),
 		email: optionalEmail,
 		phone: optionalPhone,
-		address: z.string().optional(),
-		city: z.string().optional(),
-		province: z.string().optional(),
-		postal_code: z
-			.string()
-			.regex(/^\d{5}$/, "El codigo postal debe tener 5 digitos")
-			.optional()
-			.or(z.literal("")),
 		mailing_address: z.string().optional(),
 		mailing_city: z.string().optional(),
 		mailing_province: z.string().optional(),
