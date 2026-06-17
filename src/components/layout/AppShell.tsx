@@ -23,15 +23,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col bg-sidebar border-r border-sidebar-border/60">
       {/* Brand */}
-      <Link to="/dashboard" className="flex h-16 shrink-0 items-center gap-3 px-5 hover:opacity-80 transition-opacity">
-        <div className="relative shrink-0">
-          <img src={logo} alt={appBrand.name} className="h-8 w-8 rounded-full border border-sidebar-border/60 object-contain" />
-          <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-sidebar" />
-        </div>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold tracking-tight text-sidebar-foreground">{appBrand.name}</p>
-          <p className="truncate text-[11px] text-muted-foreground/70">{appBrand.description}</p>
-        </div>
+      <Link to="/dashboard" className="flex h-16 shrink-0 items-center px-4 transition-opacity hover:opacity-80">
+        <img src={logo} alt={appBrand.name} className="h-auto max-h-11 w-full rounded-md object-contain" />
       </Link>
 
       <Separator className="mx-4 w-auto bg-sidebar-border/50" />

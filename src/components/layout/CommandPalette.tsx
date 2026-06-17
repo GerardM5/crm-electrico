@@ -203,8 +203,8 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
               <span><kbd className="font-mono">↑↓</kbd> navegar</span>
               <span><kbd className="font-mono">↵</kbd> abrir</span>
             </div>
-            <div className="flex items-center gap-1">
-              <img src={logo} alt="" className="h-3 w-3 object-contain" />
+            <div className="flex min-w-0 items-center gap-2">
+              <img src={logo} alt="" className="h-4 w-20 rounded-sm object-contain" />
               <span>{appBrand.name}</span>
             </div>
           </div>

@@ -71,7 +71,7 @@ export const navItems = [
 ];
 
 export const appBrand = {
-	name: "OPTIENERGIA CRM",
-	description: "Panel de administración",
+	name: "Ahorrafácilluz CRM",
+	description: "Asesoría energética",
 	icon: Zap,
 };

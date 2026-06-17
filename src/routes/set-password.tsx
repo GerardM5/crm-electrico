@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
+import logoUrl from '../assets/media/logo.png'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Field, Input } from '../components/ui/input'
@@ -42,9 +43,7 @@ export function SetPasswordRoute() {
       <Card className="w-full max-w-sm">
         <CardContent className="p-8">
           <div className="mb-8">
-            <div className="mb-4 grid h-12 w-12 place-items-center rounded-lg bg-primary text-primary-foreground">
-              <appBrand.icon className="h-6 w-6" />
-            </div>
+            <img src={logoUrl} alt={`Logo de ${appBrand.name}`} className="mb-5 h-auto w-full rounded-md object-contain" />
             <h1 className="text-xl font-semibold text-foreground">Nueva contraseña</h1>
             <p className="mt-1 text-sm text-muted-foreground">Elige una contraseña segura para tu cuenta.</p>
           </div>
