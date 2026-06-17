@@ -97,6 +97,7 @@ export function ContractFormDialog({
       // dates are never copied on renewal — they must be set fresh
       cups: source?.cups ?? '',
       provider: source?.provider ?? '',
+      sales_channel: source?.sales_channel ?? '',
       product: source?.product ?? '',
       tariff_type: source?.tariff_type ?? '',
       power_kw: source?.power_kw ?? undefined,
@@ -126,6 +127,7 @@ export function ContractFormDialog({
       status: values.status,
       cups: values.cups || null,
       provider: values.provider || null,
+      sales_channel: values.sales_channel || null,
       product: values.product || null,
       tariff_type: values.tariff_type || null,
       power_kw: numOrNull(values.power_kw),
@@ -264,6 +266,10 @@ export function ContractFormDialog({
 
           <Field label="Comercializadora" error={errors.provider?.message}>
             <Input {...register('provider')} placeholder="Iberdrola, Endesa, Naturgy…" />
+          </Field>
+
+          <Field label="Canal de venta" error={errors.sales_channel?.message}>
+            <Input {...register('sales_channel')} placeholder="Proveedor, broker, colaborador…" />
           </Field>
 
           <Field label="Producto / oferta" error={errors.product?.message}>

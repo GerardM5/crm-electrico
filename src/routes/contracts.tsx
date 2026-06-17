@@ -48,6 +48,7 @@ export function ContractsRoute() {
           Empresa: ct.customer?.company ?? '',
           Estado: contractStatusLabels[ct.status as keyof typeof contractStatusLabels] ?? ct.status,
           Comercializadora: ct.provider ?? '',
+          'Canal de venta': ct.sales_channel ?? '',
           Producto: ct.product ?? '',
           CUPS: ct.cups ?? '',
           Tarifa: ct.tariff_type ?? '',
@@ -110,7 +111,7 @@ export function ContractsRoute() {
     <div>
       <PageHeader
         title="Contratos"
-        description="Listado global de todos los contratos. Busca por número, CUPS, comercializadora o producto."
+        description="Listado global de todos los contratos. Busca por CUPS, comercializadora, canal de venta o producto."
       />
 
       <div className="mb-6 flex flex-wrap items-end gap-3">
@@ -121,7 +122,7 @@ export function ContractsRoute() {
               className="pl-9"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cliente, nº contrato, CUPS, comercializadora, producto..."
+              placeholder="Cliente, CUPS, comercializadora, canal de venta, producto..."
             />
           </div>
         </Field>
@@ -154,7 +155,7 @@ export function ContractsRoute() {
         />
       ) : (
         <DataTable
-          headers={['Cliente', 'Estado', 'Producto / Comercializadora', 'CUPS', 'Inicio', 'Fin', 'Comisión empresa']}
+          headers={['Cliente', 'Estado', 'Producto / Comercializadora', 'Canal de venta', 'CUPS', 'Inicio', 'Fin', 'Comisión empresa']}
           pagination={{ page, pageSize: PAGE_SIZE, total, totalPages, onPageChange: setPage, onPageSizeChange: () => { } }}
         >
           {contracts.map((contract) => (
@@ -182,6 +183,7 @@ export function ContractsRoute() {
                 <p className="truncate text-sm text-foreground">{contract.product ?? '-'}</p>
                 <p className="truncate text-xs text-muted-foreground">{contract.provider ?? ''}</p>
               </Td>
+              <Td variant="muted" className="max-w-40 truncate">{contract.sales_channel ?? '-'}</Td>
               <Td variant="muted" className="whitespace-nowrap font-mono text-xs">{contract.cups ?? '-'}</Td>
               <Td variant="muted" className="whitespace-nowrap">{formatDate(contract.starts_at ?? undefined)}</Td>
               <Td variant="muted" className="whitespace-nowrap">{formatDate(contract.ends_at ?? undefined)}</Td>

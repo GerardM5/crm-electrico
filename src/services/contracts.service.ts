@@ -90,6 +90,7 @@ export function useAllContracts(params: ContractsListParams = {}) {
 				const orFilters = [
 					`cups.ilike.%${search}%`,
 					`provider.ilike.%${search}%`,
+					`sales_channel.ilike.%${search}%`,
 					`product.ilike.%${search}%`,
 				];
 				const { data: matchedCustomers } = await supabase
@@ -183,6 +184,7 @@ export type ContractForCalendar = {
 	id: string;
 	ends_at: string;
 	provider: string | null;
+	sales_channel: string | null;
 	product: string | null;
 	status: ContractStatus;
 	customer: { id: string; name: string; company: string | null } | null;
@@ -199,7 +201,7 @@ export function useContractsByMonth(month: string) {
 			const { data, error } = await supabase
 				.from("contracts")
 				.select(
-					"id, ends_at, provider, product, status, customer:customers(id, name, company)",
+					"id, ends_at, provider, sales_channel, product, status, customer:customers(id, name, company)",
 				)
 				.not("ends_at", "is", null)
 				.gte("ends_at", start)
@@ -240,7 +242,7 @@ export async function fetchAllContractsForExport(
 		.order("created_at", { ascending: false });
 	if (search)
 		q = q.or(
-			`cups.ilike.%${search}%,provider.ilike.%${search}%,product.ilike.%${search}%,contract_number.ilike.%${search}%`,
+			`cups.ilike.%${search}%,provider.ilike.%${search}%,sales_channel.ilike.%${search}%,product.ilike.%${search}%`,
 		);
 	if (status) q = q.eq("status", status);
 	if (startsFrom) q = q.gte("starts_at", startsFrom);

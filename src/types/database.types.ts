@@ -594,6 +594,7 @@ export type Database = {
 					file_path: string | null;
 					cups: string | null;
 					provider: string | null;
+					sales_channel: string | null;
 					product: string | null;
 					tariff_type: string | null;
 					power_kw: number | null;
@@ -630,6 +631,7 @@ export type Database = {
 					file_path?: string | null;
 					cups?: string | null;
 					provider?: string | null;
+					sales_channel?: string | null;
 					product?: string | null;
 					tariff_type?: string | null;
 					power_kw?: number | null;
@@ -664,6 +666,7 @@ export type Database = {
 					file_path?: string | null;
 					cups?: string | null;
 					provider?: string | null;
+					sales_channel?: string | null;
 					product?: string | null;
 					tariff_type?: string | null;
 					power_kw?: number | null;

@@ -610,6 +610,7 @@ function DataTab() {
           'Comercial asignado': profilesById[ct.customer?.assigned_to ?? ''] ?? '',
           Estado: contractStatusLabels[ct.status as keyof typeof contractStatusLabels] ?? ct.status,
           Comercializadora: ct.provider ?? '',
+          'Canal de venta': ct.sales_channel ?? '',
           Producto: ct.product ?? '',
           CUPS: ct.cups ?? '',
           Tarifa: ct.tariff_type ?? '',

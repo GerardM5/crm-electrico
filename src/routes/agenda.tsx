@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, FileText, Plus } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { CustomerCombobox } from '../components/forms/CustomerCombobox'
 import { Button } from '../components/ui/button'
@@ -194,11 +194,14 @@ export function AgendaRoute() {
         ))}
       </div>
 
-      <CreateTaskDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        prefillDate={prefillDate}
-      />
+      {createOpen && (
+        <CreateTaskDialog
+          key={prefillDate}
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          prefillDate={prefillDate}
+        />
+      )}
 
       {selected?.kind === 'task' && (
         <TaskDetailDialog
@@ -234,9 +237,6 @@ function CreateTaskDialog({
   const [priority, setPriority] = useState<TaskPriority>('medium')
   const [description, setDescription] = useState('')
   const [customerId, setCustomerId] = useState('')
-
-  // sync prefill date when dialog opens
-  useEffect(() => { setDate(prefillDate) }, [prefillDate])
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -444,6 +444,12 @@ function ContractExpiryDialog({
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Comercializadora</p>
               <p className="mt-0.5">{contract.provider}</p>
+            </div>
+          )}
+          {contract.sales_channel && (
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Canal de venta</p>
+              <p className="mt-0.5">{contract.sales_channel}</p>
             </div>
           )}
           {contract.product && (

@@ -16,6 +16,7 @@ export const contractSchema = z.object({
 		.default("pending_processing"),
 	cups: z.string().optional(),
 	provider: z.string().optional(),
+	sales_channel: z.string().optional(),
 	product: z.string().optional(),
 	tariff_type: z.string().optional(),
 	power_kw: optionalNumber,

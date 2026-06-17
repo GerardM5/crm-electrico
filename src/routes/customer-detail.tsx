@@ -194,13 +194,14 @@ export function CustomerDetailRoute() {
           />
         ) : (
           <DataTable
-            headers={['CUPS', 'Comercializadora', 'Producto', 'Tarifa', 'Importe', 'Comisión', 'Vigencia', 'Estado', '']}
+            headers={['CUPS', 'Comercializadora', 'Canal de venta', 'Producto', 'Tarifa', 'Importe', 'Comisión', 'Vigencia', 'Estado', '']}
             pagination={{ page: contractsPagination.page, pageSize: contractsPagination.pageSize, total: contractsPagination.total, totalPages: contractsPagination.totalPages, onPageChange: contractsPagination.setPage, onPageSizeChange: contractsPagination.setPageSize }}
           >
             {contractsPagination.items.map((contract) => (
               <Tr key={contract.id} hover>
                 <Td variant="primary">{contract.cups ?? '—'}</Td>
                 <Td variant="muted">{contract.provider ?? '—'}</Td>
+                <Td variant="muted">{contract.sales_channel ?? '—'}</Td>
                 <Td variant="muted">{contract.product ?? '—'}</Td>
                 <Td variant="muted">{contract.tariff_type ?? '—'}</Td>
                 <Td variant="muted">{contract.amount_eur.toLocaleString('es-ES')} EUR</Td>

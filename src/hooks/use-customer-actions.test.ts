@@ -19,6 +19,7 @@ const base: Contract = {
 	file_path: null,
 	cups: "ES0031405483930001YT0F",
 	provider: "Iberdrola",
+	sales_channel: null,
 	product: "PYME Fijo",
 	tariff_type: "2.0TD",
 	power_kw: 5.5,
