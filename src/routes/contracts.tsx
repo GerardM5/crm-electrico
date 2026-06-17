@@ -58,6 +58,7 @@ export function ContractsRoute() {
           'Importe (€)': ct.amount_eur ?? '',
           'Comisión (€)': ct.commission_eur ?? '',
           'Comisión empresa (€)': ct.commission_company_eur ?? '',
+          'Comisión comercial (€)': ct.commission_commercial_eur ?? '',
           'Inicio vigencia': ct.starts_at ? formatDate(ct.starts_at) : '',
           'Fin vigencia': ct.ends_at ? formatDate(ct.ends_at) : '',
           'Fecha firma': ct.signed_at ? formatDate(ct.signed_at) : '',
@@ -155,7 +156,7 @@ export function ContractsRoute() {
         />
       ) : (
         <DataTable
-          headers={['Cliente', 'Estado', 'Producto / Comercializadora', 'Canal de venta', 'CUPS', 'Inicio', 'Fin', 'Comisión empresa']}
+          headers={['Cliente', 'Estado', 'Producto / Comercializadora', 'Canal de venta', 'CUPS', 'Inicio', 'Fin', 'Comisión empresa', 'Comisión comercial']}
           pagination={{ page, pageSize: PAGE_SIZE, total, totalPages, onPageChange: setPage, onPageSizeChange: () => { } }}
         >
           {contracts.map((contract) => (
@@ -188,6 +189,7 @@ export function ContractsRoute() {
               <Td variant="muted" className="whitespace-nowrap">{formatDate(contract.starts_at ?? undefined)}</Td>
               <Td variant="muted" className="whitespace-nowrap">{formatDate(contract.ends_at ?? undefined)}</Td>
               <Td variant="muted" className="whitespace-nowrap">{money.format(contract.commission_company_eur ?? 0)}</Td>
+              <Td variant="muted" className="whitespace-nowrap">{money.format(contract.commission_commercial_eur ?? 0)}</Td>
             </Tr>
           ))}
         </DataTable>
