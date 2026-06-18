@@ -141,12 +141,10 @@ export function ContractsRoute() {
         <Field label="Fin" className="w-36">
           <Input type="date" value={endsTo} onChange={(e) => setDateParam('endsTo', e.target.value)} />
         </Field>
-        <div className="flex items-end">
-          <Button variant="outline" onClick={handleExport} disabled={isExporting}>
-            <Download className="h-4 w-4" />
-            {isExporting ? 'Exportando...' : 'Exportar Excel'}
-          </Button>
-        </div>
+        <Button variant="outline" className="self-end" onClick={handleExport} disabled={isExporting}>
+          <Download className="h-4 w-4" />
+          {isExporting ? 'Exportando...' : 'Exportar Excel'}
+        </Button>
       </div>
 
       {!isLoading && contracts.length === 0 ? (

@@ -24,7 +24,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     <div className="flex h-full flex-col bg-sidebar border-r border-sidebar-border/60">
       {/* Brand */}
       <Link to="/dashboard" className="flex h-16 shrink-0 items-center px-4 transition-opacity hover:opacity-80">
-        <img src={logo} alt={appBrand.name} className="h-auto max-h-11 w-full rounded-md object-contain brightness-0 invert" />
+        <img src={logo} alt={appBrand.name} className="h-auto max-h-11 w-full rounded-md object-contain brightness-0" />
       </Link>
 
       <Separator className="mx-4 w-auto bg-sidebar-border/50" />
@@ -48,7 +48,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                           cn(
                             'group focus-ring relative flex h-9 items-center gap-3 rounded-lg px-3 text-sm font-medium outline-none transition-all duration-150',
                             isActive
-                              ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20'
+                              ? 'bg-sidebar-primary/15 text-sidebar-foreground font-semibold'
                               : 'text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground',
                           )
                         }

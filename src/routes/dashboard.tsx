@@ -1,4 +1,4 @@
-import { Activity, AlertTriangle, CalendarClock, CheckCircle2, ClipboardList, FileSignature, FileText, TrendingDown, TrendingUp, Users } from 'lucide-react'
+import { Activity, AlertTriangle, Ban, CalendarClock, CheckCircle2, ClipboardList, FileSignature, FileText, TrendingDown, TrendingUp, Users } from 'lucide-react'
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import logoUrl from '../assets/media/logo.png'
@@ -25,7 +25,8 @@ export function DashboardRoute() {
     const active = contracts.filter((c) => c.status === 'active').length
     const pendingSignature = contracts.filter((c) => c.status === 'pending_signature').length
     const pendingProcessing = contracts.filter((c) => c.status === 'pending_processing').length
-    return { total: contracts.length, active, pendingSignature, pendingProcessing }
+    const cancelled = contracts.filter((c) => c.status === 'cancelled').length
+    return { total: contracts.length, active, pendingSignature, pendingProcessing, cancelled }
   }, [contracts])
 
   const kpis = useMemo(() => {
@@ -54,17 +55,17 @@ export function DashboardRoute() {
   return (
     <div className="space-y-8">
       {/* ── Hero banner ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-[#06231f] px-6 py-8 shadow-xl md:px-10 md:py-10">
+      <div className="relative overflow-hidden rounded-2xl bg-[#5c1a17] px-6 py-8 shadow-xl md:px-10 md:py-10">
         {/* Background gradients */}
         <div
-          className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(251,191,36,0.35),transparent_30%),radial-gradient(circle_at_80%_15%,rgba(16,185,129,0.22),transparent_32%),linear-gradient(132deg,transparent_0_46%,rgba(255,255,255,0.09)_46%_46.6%,transparent_46.6%_52%,rgba(255,255,255,0.06)_52%_52.5%,transparent_52.5%)]"
+          className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(251,191,36,0.3),transparent_30%),radial-gradient(circle_at_80%_15%,rgba(243,115,108,0.3),transparent_32%),linear-gradient(132deg,transparent_0_46%,rgba(255,255,255,0.08)_46%_46.6%,transparent_46.6%_52%,rgba(255,255,255,0.05)_52%_52.5%,transparent_52.5%)]"
           aria-hidden
         />
         <div
           className="absolute inset-x-0 bottom-[-30%] h-[50%] -rotate-2 bg-[linear-gradient(90deg,rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(0deg,rgba(255,255,255,0.07)_1px,transparent_1px)] bg-[size:64px_48px] opacity-60"
           aria-hidden
         />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(6,35,31,0.05),rgba(6,35,31,0.65))]" aria-hidden />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(92,26,23,0.05),rgba(92,26,23,0.6))]" aria-hidden />
 
         <div className="relative flex flex-wrap items-center gap-6">
           <img
@@ -90,19 +91,20 @@ export function DashboardRoute() {
       />
 
       {/* KPIs — Cartera */}
-      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-sky-200/80 bg-sky-200/60 dark:border-sky-800/40 dark:bg-sky-900/20 sm:grid-cols-3 xl:grid-cols-5">
-        <Kpi title="Clientes activos" value={kpis.activeCount} icon={<Activity />} href="/customers?status=active" cellBg="bg-sky-50 hover:bg-sky-100/70 dark:bg-sky-950/50 dark:hover:bg-sky-900/50" />
-        <Kpi title="Contratos urgentes" value={kpis.urgentCount} icon={<CalendarClock />} href="/renewals" cellBg="bg-sky-50 hover:bg-sky-100/70 dark:bg-sky-950/50 dark:hover:bg-sky-900/50" />
-        <Kpi title="Vencen este mes" value={kpis.thisMonthCount} icon={<Users />} href="/renewals" cellBg="bg-sky-50 hover:bg-sky-100/70 dark:bg-sky-950/50 dark:hover:bg-sky-900/50" />
-        <Kpi title="Incidencias abiertas" value={openIncidents.length} icon={<AlertTriangle />} highlight={openIncidents.length > 0 ? 'danger' : undefined} href="/incidents" cellBg="bg-sky-50 hover:bg-sky-100/70 dark:bg-sky-950/50 dark:hover:bg-sky-900/50" />
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-rose-200/80 bg-rose-200/60 dark:border-rose-800/40 dark:bg-rose-900/20 sm:grid-cols-3 xl:grid-cols-5">
+        <Kpi title="Clientes activos" value={kpis.activeCount} icon={<Activity />} href="/customers?status=active" cellBg="bg-rose-50 hover:bg-rose-100/70 dark:bg-rose-950/50 dark:hover:bg-rose-900/50" />
+        <Kpi title="Contratos urgentes" value={kpis.urgentCount} icon={<CalendarClock />} href="/renewals" cellBg="bg-rose-50 hover:bg-rose-100/70 dark:bg-rose-950/50 dark:hover:bg-rose-900/50" />
+        <Kpi title="Vencen este mes" value={kpis.thisMonthCount} icon={<Users />} href="/renewals" cellBg="bg-rose-50 hover:bg-rose-100/70 dark:bg-rose-950/50 dark:hover:bg-rose-900/50" />
+        <Kpi title="Incidencias abiertas" value={openIncidents.length} icon={<AlertTriangle />} highlight={openIncidents.length > 0 ? 'danger' : undefined} href="/incidents" cellBg="bg-rose-50 hover:bg-rose-100/70 dark:bg-rose-950/50 dark:hover:bg-rose-900/50" />
       </section>
 
       {/* KPIs — Contratos */}
-      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-violet-200/80 bg-violet-200/60 dark:border-violet-800/40 dark:bg-violet-900/20 xl:grid-cols-4">
-        <Kpi title="Contratos totales" value={contractStats.total} icon={<FileText />} href="/contracts" cellBg="bg-violet-50 hover:bg-violet-100/70 dark:bg-violet-950/50 dark:hover:bg-violet-900/50" />
-        <Kpi title="Contratos activos" value={contractStats.active} icon={<CheckCircle2 />} href="/contracts?status=active" cellBg="bg-violet-50 hover:bg-violet-100/70 dark:bg-violet-950/50 dark:hover:bg-violet-900/50" />
-        <Kpi title="Pendientes de firma" value={contractStats.pendingSignature} icon={<FileSignature />} href="/contracts?status=pending_signature" cellBg="bg-violet-50 hover:bg-violet-100/70 dark:bg-violet-950/50 dark:hover:bg-violet-900/50" />
-        <Kpi title="Pendientes de tramitar" value={contractStats.pendingProcessing} icon={<ClipboardList />} highlight={contractStats.pendingProcessing > 0 ? 'warning' : undefined} href="/contracts?status=pending_processing" cellBg="bg-violet-50 hover:bg-violet-100/70 dark:bg-violet-950/50 dark:hover:bg-violet-900/50" />
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-orange-200/80 bg-orange-200/60 dark:border-orange-800/40 dark:bg-orange-900/20 xl:grid-cols-5">
+        <Kpi title="Contratos totales" value={contractStats.total} icon={<FileText />} href="/contracts" cellBg="bg-orange-50 hover:bg-orange-100/70 dark:bg-orange-950/50 dark:hover:bg-orange-900/50" />
+        <Kpi title="Contratos activos" value={contractStats.active} icon={<CheckCircle2 />} href="/contracts?status=active" cellBg="bg-orange-50 hover:bg-orange-100/70 dark:bg-orange-950/50 dark:hover:bg-orange-900/50" />
+        <Kpi title="Pendientes de firma" value={contractStats.pendingSignature} icon={<FileSignature />} href="/contracts?status=pending_signature" cellBg="bg-orange-50 hover:bg-orange-100/70 dark:bg-orange-950/50 dark:hover:bg-orange-900/50" />
+        <Kpi title="Pendientes de tramitar" value={contractStats.pendingProcessing} icon={<ClipboardList />} highlight={contractStats.pendingProcessing > 0 ? 'warning' : undefined} href="/contracts?status=pending_processing" cellBg="bg-orange-50 hover:bg-orange-100/70 dark:bg-orange-950/50 dark:hover:bg-orange-900/50" />
+        <Kpi title="Contratos cancelados" value={contractStats.cancelled} icon={<Ban />} highlight={contractStats.cancelled > 0 ? 'danger' : undefined} href="/contracts?status=cancelled" cellBg="bg-orange-50 hover:bg-orange-100/70 dark:bg-orange-950/50 dark:hover:bg-orange-900/50" />
       </section>
 
 
