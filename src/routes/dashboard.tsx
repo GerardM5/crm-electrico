@@ -89,19 +89,19 @@ export function DashboardRoute() {
       />
 
       {/* KPIs — Cartera */}
-      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-sky-200/80 bg-sky-200/60 dark:border-sky-800/40 dark:bg-sky-900/20 xl:grid-cols-3">
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-sky-200/80 bg-sky-200/60 dark:border-sky-800/40 dark:bg-sky-900/20 xl:grid-cols-4">
         <Kpi title="Clientes activos" value={kpis.activeCount} icon={<Activity />} href="/customers?status=active" cellBg="bg-sky-50 hover:bg-sky-100/70 dark:bg-sky-950/50 dark:hover:bg-sky-900/50" />
         <Kpi title="Contratos urgentes" value={kpis.urgentCount} icon={<CalendarClock />} href="/renewals" cellBg="bg-sky-50 hover:bg-sky-100/70 dark:bg-sky-950/50 dark:hover:bg-sky-900/50" />
         <Kpi title="Vencen este mes" value={kpis.thisMonthCount} icon={<Users />} href="/renewals" cellBg="bg-sky-50 hover:bg-sky-100/70 dark:bg-sky-950/50 dark:hover:bg-sky-900/50" />
+        <Kpi title="Incidencias abiertas" value={openIncidents.length} icon={<AlertTriangle />} highlight={openIncidents.length > 0 ? 'danger' : undefined} href="/incidents" cellBg="bg-sky-50 hover:bg-sky-100/70 dark:bg-sky-950/50 dark:hover:bg-sky-900/50" />
       </section>
 
       {/* KPIs — Contratos */}
-      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-violet-200/80 bg-violet-200/60 dark:border-violet-800/40 dark:bg-violet-900/20 xl:grid-cols-5">
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-violet-200/80 bg-violet-200/60 dark:border-violet-800/40 dark:bg-violet-900/20 xl:grid-cols-4">
         <Kpi title="Contratos totales" value={contractStats.total} icon={<FileText />} href="/contracts" cellBg="bg-violet-50 hover:bg-violet-100/70 dark:bg-violet-950/50 dark:hover:bg-violet-900/50" />
         <Kpi title="Contratos activos" value={contractStats.active} icon={<CheckCircle2 />} href="/contracts?status=active" cellBg="bg-violet-50 hover:bg-violet-100/70 dark:bg-violet-950/50 dark:hover:bg-violet-900/50" />
         <Kpi title="Pendientes de firma" value={contractStats.pendingSignature} icon={<FileSignature />} href="/contracts?status=pending_signature" cellBg="bg-violet-50 hover:bg-violet-100/70 dark:bg-violet-950/50 dark:hover:bg-violet-900/50" />
         <Kpi title="Pendientes de tramitar" value={contractStats.pendingProcessing} icon={<ClipboardList />} highlight={contractStats.pendingProcessing > 0 ? 'warning' : undefined} href="/contracts?status=pending_processing" cellBg="bg-violet-50 hover:bg-violet-100/70 dark:bg-violet-950/50 dark:hover:bg-violet-900/50" />
-        <Kpi title="Incidencias" value={contractStats.incidents} icon={<AlertTriangle />} highlight={contractStats.incidents > 0 ? 'danger' : undefined} href="/contracts?status=incident" cellBg="bg-violet-50 hover:bg-violet-100/70 dark:bg-violet-950/50 dark:hover:bg-violet-900/50" />
       </section>
 
       {/* Urgent contract renewals */}
