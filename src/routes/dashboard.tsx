@@ -92,7 +92,7 @@ export function DashboardRoute() {
       />
 
       {/* KPIs — Cartera */}
-      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-rose-200/80 bg-rose-200/60 dark:border-rose-800/40 dark:bg-rose-900/20 sm:grid-cols-3 xl:grid-cols-5">
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-rose-200/80 bg-rose-200/60 dark:border-rose-800/40 dark:bg-rose-900/20 sm:grid-cols-4">
         <Kpi title="Clientes activos" value={kpis.activeCount} icon={<Activity />} href="/customers?status=active" cellBg="bg-rose-50 hover:bg-rose-100/70 dark:bg-rose-950/50 dark:hover:bg-rose-900/50" />
         <Kpi title="Contratos urgentes" value={kpis.urgentCount} icon={<CalendarClock />} href="/renewals" cellBg="bg-rose-50 hover:bg-rose-100/70 dark:bg-rose-950/50 dark:hover:bg-rose-900/50" />
         <Kpi title="Vencen este mes" value={kpis.thisMonthCount} icon={<Users />} href="/renewals" cellBg="bg-rose-50 hover:bg-rose-100/70 dark:bg-rose-950/50 dark:hover:bg-rose-900/50" />
