@@ -44,3 +44,32 @@ export const contractStatusLabels = {
 	terminated: "Baja",
 	incident: "Incidencia",
 };
+
+/** Comercializadoras más comunes en el mercado eléctrico español */
+export const providerOptions = [
+	"Iberdrola",
+	"Endesa",
+	"Naturgy",
+	"Repsol",
+	"EDP Comercial",
+	"Holaluz",
+	"Octopus Energy",
+	"PepeEnergy",
+	"Aldro Energía",
+	"Factor Energía",
+	"Plenitude",
+	"Acciona Energía",
+	"Otra",
+] as const;
+
+/** Canales de venta / proveedores del comercial */
+export const salesChannelOptions = [
+	"Canal propio",
+	"Colaborador externo",
+	"Broker energético",
+	"Referido cliente",
+	"Puerta fría",
+	"Teléfono",
+	"Online / Web",
+	"Otro",
+] as const;

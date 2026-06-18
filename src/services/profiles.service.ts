@@ -66,16 +66,24 @@ export function useDeleteProfile() {
 	});
 }
 
-export function useInviteProfile() {
+export function useCreateMember() {
+	const qc = useQueryClient();
 	return useMutation({
 		mutationFn: async ({
 			email,
 			fullName,
 			role,
 			phone,
-		}: { email: string; fullName: string; role: string; phone?: string }) => {
-			const { error } = await supabase.functions.invoke("invite-member", {
-				body: { email, full_name: fullName, role, phone },
+			password,
+		}: {
+			email: string;
+			fullName: string;
+			role: string;
+			phone?: string;
+			password: string;
+		}) => {
+			const { error } = await supabase.functions.invoke("create-member", {
+				body: { email, full_name: fullName, role, phone, password },
 			});
 			if (error) {
 				// FunctionsHttpError carries the response body in error.context
@@ -91,5 +99,6 @@ export function useInviteProfile() {
 				throw error;
 			}
 		},
+		onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.profile }),
 	});
 }

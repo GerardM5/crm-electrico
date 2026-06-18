@@ -25,7 +25,7 @@ import { cn } from '../lib/utils'
 import { fetchAllContractsForExport } from '../services/contracts.service'
 import { fetchAllCustomersForExport, useCreateCustomer, useCustomers } from '../services/customers.service'
 import { useOrganization, useUpdateOrganization } from '../services/organization.service'
-import { useDeleteProfile, useInviteProfile, useProfiles, useUpdateProfile } from '../services/profiles.service'
+import { useCreateMember, useDeleteProfile, useProfiles, useUpdateProfile } from '../services/profiles.service'
 import type { AppRole } from '../types/database.types'
 
 // ─── Appearance Tab ──────────────────────────────────────────────────────────
@@ -212,13 +212,14 @@ const memberSchema = z.object({
   email: z.string().email('Email inválido'),
   role: z.enum(['owner', 'admin', 'sales'] as const),
   phone: z.string().optional(),
+  password: z.string().min(8, 'Mínimo 8 caracteres'),
 })
 type MemberFormValues = z.infer<typeof memberSchema>
 
 function MemberFormDialog() {
   const [open, setOpen] = useState(false)
-  const [inviteSent, setInviteSent] = useState<string | null>(null)
-  const inviteProfile = useInviteProfile()
+  const [createdEmail, setCreatedEmail] = useState<string | null>(null)
+  const createMember = useCreateMember()
 
   const { register, handleSubmit, reset, watch, setValue, formState: { errors, isSubmitting } } = useForm<MemberFormValues>({
     resolver: zodResolver(memberSchema),
@@ -228,11 +229,11 @@ function MemberFormDialog() {
   const selectedRole = watch('role')
 
   async function onSubmit(values: MemberFormValues) {
-    inviteProfile.mutate(
-      { fullName: values.full_name, email: values.email, role: values.role, phone: values.phone },
+    createMember.mutate(
+      { fullName: values.full_name, email: values.email, role: values.role, phone: values.phone, password: values.password },
       {
         onSuccess: () => {
-          setInviteSent(values.email)
+          setCreatedEmail(values.email)
           reset()
         },
       },
@@ -243,13 +244,13 @@ function MemberFormDialog() {
     setOpen(next)
     if (!next) {
       reset()
-      setInviteSent(null)
+      setCreatedEmail(null)
     }
   }
 
-  const buttonLabel = 'Invitar miembro'
-  const dialogTitle = 'Invitar miembro'
-  const dialogDescription = 'Se enviará un email de invitación. El miembro elige su contraseña al aceptarla.'
+  const buttonLabel = 'Crear miembro'
+  const dialogTitle = 'Crear miembro'
+  const dialogDescription = 'Crea la cuenta con su contraseña. El miembro podrá iniciar sesión directamente con esas credenciales.'
 
   return (
     <Dialog
@@ -302,6 +303,18 @@ function MemberFormDialog() {
             aria-invalid={!!errors.phone}
           />
         </Field>
+        <Field label="Contraseña" error={errors.password?.message} hint="Mínimo 8 caracteres" required>
+          <Input
+            {...register('password')}
+            id="member-password"
+            type="password"
+            placeholder="••••••••"
+            autoComplete="new-password"
+            aria-required
+            aria-invalid={!!errors.password}
+            aria-describedby={errors.password ? 'member-password-error' : undefined}
+          />
+        </Field>
         <fieldset className="grid gap-2">
           <legend className="text-sm font-medium text-foreground">
             Rol <span className="text-destructive" aria-hidden>*</span>
@@ -334,23 +347,23 @@ function MemberFormDialog() {
           </div>
           {errors.role && <span className="text-xs font-medium text-destructive">{errors.role.message}</span>}
         </fieldset>
-        {inviteProfile.isError && (
+        {createMember.isError && (
           <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            {inviteProfile.error instanceof Error
-              ? inviteProfile.error.message
-              : 'Error al enviar la invitación. Inténtalo de nuevo.'}
+            {createMember.error instanceof Error
+              ? createMember.error.message
+              : 'Error al crear el miembro. Inténtalo de nuevo.'}
           </p>
         )}
-        {inviteSent && (
+        {createdEmail && (
           <div className="flex items-center gap-2 rounded-md bg-primary/10 px-3 py-2 text-sm text-primary">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
-            Invitación enviada a <strong>{inviteSent}</strong>
+            Cuenta creada para <strong>{createdEmail}</strong>
           </div>
         )}
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="ghost" onClick={() => handleClose(false)}>Cancelar</Button>
-          <Button type="submit" disabled={isSubmitting || inviteProfile.isPending}>
-            {inviteProfile.isPending ? 'Enviando…' : 'Enviar invitación'}
+          <Button type="submit" disabled={isSubmitting || createMember.isPending}>
+            {createMember.isPending ? 'Creando…' : 'Crear miembro'}
           </Button>
         </div>
       </form>

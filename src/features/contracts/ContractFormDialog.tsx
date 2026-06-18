@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { Button } from '../../components/ui/button'
 import { Dialog } from '../../components/ui/dialog'
 import { Field, Input, InputGroup, Select, Textarea } from '../../components/ui/input'
-import { contractStatusLabels } from '../../config/constants'
+import { contractStatusLabels, providerOptions, salesChannelOptions } from '../../config/constants'
 import { useToastError } from '../../hooks/use-toast-error'
 import { type ContractFormValues, contractSchema } from '../../schemas/forms.schema'
 import { type ContractRow, useCreateContract, useDeleteContract, useUpdateContract } from '../../services/contracts.service'
@@ -265,11 +265,21 @@ export function ContractFormDialog({
           <SectionHeader title="Suministro" />
 
           <Field label="Comercializadora" error={errors.provider?.message}>
-            <Input {...register('provider')} placeholder="Iberdrola, Endesa, Naturgy…" />
+            <Select {...register('provider')}>
+              <option value="">— Seleccionar —</option>
+              {providerOptions.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </Select>
           </Field>
 
           <Field label="Canal de venta" error={errors.sales_channel?.message}>
-            <Input {...register('sales_channel')} placeholder="Proveedor, broker, colaborador…" />
+            <Select {...register('sales_channel')}>
+              <option value="">— Seleccionar —</option>
+              {salesChannelOptions.map((ch) => (
+                <option key={ch} value={ch}>{ch}</option>
+              ))}
+            </Select>
           </Field>
 
           <Field label="Producto / oferta" error={errors.product?.message}>

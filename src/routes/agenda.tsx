@@ -5,11 +5,12 @@ import { CustomerCombobox } from '../components/forms/CustomerCombobox'
 import { Button } from '../components/ui/button'
 import { Dialog } from '../components/ui/dialog'
 import { Field, Input, Select, Textarea } from '../components/ui/input'
+import { contractStatusLabels } from '../config/constants'
 import { useAuth } from '../features/auth/AuthContext'
 import { cn } from '../lib/utils'
 import { type ContractForCalendar, useContractsByMonth } from '../services/contracts.service'
 import { type TaskWithCustomer, useCreateTask, useDeleteTask, useTasks, useUpdateTask } from '../services/tasks.service'
-import type { ContractStatus, TaskPriority, TaskStatus } from '../types/database.types'
+import type { TaskPriority, TaskStatus } from '../types/database.types'
 
 const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
@@ -30,15 +31,7 @@ const statusLabels: Record<TaskStatus, string> = {
 
 const contractEventStyle = 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300'
 
-const contractStatusLabels: Record<ContractStatus, string> = {
-  pending_processing: 'Pendiente procesado',
-  processing: 'En trámite',
-  pending_signature: 'Pendiente firma',
-  active: 'Activo',
-  cancelled: 'Cancelado',
-  terminated: 'Terminado',
-  incident: 'Incidencia',
-}
+
 
 type CalendarEvent =
   | { kind: 'task'; data: TaskWithCustomer }

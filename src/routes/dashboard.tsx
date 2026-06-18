@@ -1,8 +1,10 @@
 import { Activity, AlertTriangle, CalendarClock, CheckCircle2, ClipboardList, FileSignature, FileText, TrendingDown, TrendingUp, Users } from 'lucide-react'
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
+import logoUrl from '../assets/media/logo.png'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { Button } from '../components/ui/button'
+import { appBrand } from '../config/nav'
 import { getContractRenewalStage, getDaysToContractEnd } from '../lib/customer-workflow'
 import { useContracts } from '../services/contracts.service'
 import { useCustomers } from '../services/customers.service'
@@ -49,30 +51,56 @@ export function DashboardRoute() {
 
   return (
     <div className="space-y-8">
+      {/* ── Hero banner ── */}
+      <div className="relative overflow-hidden rounded-2xl bg-[#06231f] px-6 py-8 shadow-xl md:px-10 md:py-10">
+        {/* Background gradients */}
+        <div
+          className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(251,191,36,0.35),transparent_30%),radial-gradient(circle_at_80%_15%,rgba(16,185,129,0.22),transparent_32%),linear-gradient(132deg,transparent_0_46%,rgba(255,255,255,0.09)_46%_46.6%,transparent_46.6%_52%,rgba(255,255,255,0.06)_52%_52.5%,transparent_52.5%)]"
+          aria-hidden
+        />
+        <div
+          className="absolute inset-x-0 bottom-[-30%] h-[50%] rotate-[-2deg] bg-[linear-gradient(90deg,rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(0deg,rgba(255,255,255,0.07)_1px,transparent_1px)] bg-[size:64px_48px] opacity-60"
+          aria-hidden
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(6,35,31,0.05),rgba(6,35,31,0.65))]" aria-hidden />
+
+        <div className="relative flex flex-wrap items-center gap-6">
+          <img
+            src={logoUrl}
+            alt={`Logo de ${appBrand.name}`}
+            className="h-auto w-36 shrink-0 rounded-lg object-contain drop-shadow-md md:w-44"
+          />
+          <div className="min-w-0">
+            <h2 className="text-xl font-semibold text-white md:text-2xl">{appBrand.name}</h2>
+            <p className="mt-1 text-sm text-white/60">{appBrand.description} · Panel de gestión de cartera</p>
+          </div>
+          <div className="ml-auto shrink-0">
+            <Button asChild className="bg-amber-400 text-amber-950 hover:bg-amber-300 font-semibold">
+              <Link to="/renewals">Ver renovaciones</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+
       <PageHeader
         title="Cartera y renovaciones"
         description="Vista central de clientes, contratos y vencimientos próximos."
-        action={
-          <Button asChild>
-            <Link to="/renewals">Ver cola de renovacion</Link>
-          </Button>
-        }
       />
 
-      {/* KPIs */}
-      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border xl:grid-cols-3">
-        <Kpi title="Clientes activos" value={kpis.activeCount} icon={<Activity />} href="/customers?status=active" />
-        <Kpi title="Contratos urgentes" value={kpis.urgentCount} icon={<CalendarClock />} href="/renewals" />
-        <Kpi title="Vencen este mes" value={kpis.thisMonthCount} icon={<Users />} href="/renewals" />
+      {/* KPIs — Cartera */}
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-sky-200/80 bg-sky-200/60 dark:border-sky-800/40 dark:bg-sky-900/20 xl:grid-cols-3">
+        <Kpi title="Clientes activos" value={kpis.activeCount} icon={<Activity />} href="/customers?status=active" cellBg="bg-sky-50 hover:bg-sky-100/70 dark:bg-sky-950/50 dark:hover:bg-sky-900/50" />
+        <Kpi title="Contratos urgentes" value={kpis.urgentCount} icon={<CalendarClock />} href="/renewals" cellBg="bg-sky-50 hover:bg-sky-100/70 dark:bg-sky-950/50 dark:hover:bg-sky-900/50" />
+        <Kpi title="Vencen este mes" value={kpis.thisMonthCount} icon={<Users />} href="/renewals" cellBg="bg-sky-50 hover:bg-sky-100/70 dark:bg-sky-950/50 dark:hover:bg-sky-900/50" />
       </section>
 
-      {/* Contract KPIs */}
-      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border xl:grid-cols-5">
-        <Kpi title="Contratos totales" value={contractStats.total} icon={<FileText />} href="/contracts" />
-        <Kpi title="Contratos activos" value={contractStats.active} icon={<CheckCircle2 />} href="/contracts?status=active" />
-        <Kpi title="Pendientes de firma" value={contractStats.pendingSignature} icon={<FileSignature />} href="/contracts?status=pending_signature" />
-        <Kpi title="Pendientes de tramitar" value={contractStats.pendingProcessing} icon={<ClipboardList />} highlight={contractStats.pendingProcessing > 0 ? 'warning' : undefined} href="/contracts?status=pending_processing" />
-        <Kpi title="Incidencias" value={contractStats.incidents} icon={<AlertTriangle />} highlight={contractStats.incidents > 0 ? 'danger' : undefined} href="/incidents" />
+      {/* KPIs — Contratos */}
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-violet-200/80 bg-violet-200/60 dark:border-violet-800/40 dark:bg-violet-900/20 xl:grid-cols-5">
+        <Kpi title="Contratos totales" value={contractStats.total} icon={<FileText />} href="/contracts" cellBg="bg-violet-50 hover:bg-violet-100/70 dark:bg-violet-950/50 dark:hover:bg-violet-900/50" />
+        <Kpi title="Contratos activos" value={contractStats.active} icon={<CheckCircle2 />} href="/contracts?status=active" cellBg="bg-violet-50 hover:bg-violet-100/70 dark:bg-violet-950/50 dark:hover:bg-violet-900/50" />
+        <Kpi title="Pendientes de firma" value={contractStats.pendingSignature} icon={<FileSignature />} href="/contracts?status=pending_signature" cellBg="bg-violet-50 hover:bg-violet-100/70 dark:bg-violet-950/50 dark:hover:bg-violet-900/50" />
+        <Kpi title="Pendientes de tramitar" value={contractStats.pendingProcessing} icon={<ClipboardList />} highlight={contractStats.pendingProcessing > 0 ? 'warning' : undefined} href="/contracts?status=pending_processing" cellBg="bg-violet-50 hover:bg-violet-100/70 dark:bg-violet-950/50 dark:hover:bg-violet-900/50" />
+        <Kpi title="Incidencias" value={contractStats.incidents} icon={<AlertTriangle />} highlight={contractStats.incidents > 0 ? 'danger' : undefined} href="/incidents" cellBg="bg-violet-50 hover:bg-violet-100/70 dark:bg-violet-950/50 dark:hover:bg-violet-900/50" />
       </section>
 
       {/* Urgent contract renewals */}
@@ -109,9 +137,10 @@ export function DashboardRoute() {
   )
 }
 
-function Kpi({ title, value, icon, trend, highlight, href }: { title: string; value: string | number; icon: React.ReactNode; trend?: number; highlight?: 'warning' | 'danger'; href?: string }) {
+function Kpi({ title, value, icon, trend, highlight, href, cellBg }: { title: string; value: string | number; icon: React.ReactNode; trend?: number; highlight?: 'warning' | 'danger'; href?: string; cellBg?: string }) {
   const isPositive = (trend ?? 0) >= 0
   const valueClass = highlight === 'danger' ? 'text-destructive' : highlight === 'warning' ? 'text-amber-500' : 'text-foreground'
+  const baseBg = cellBg ?? 'bg-background'
   const content = (
     <>
       <div>
@@ -132,14 +161,14 @@ function Kpi({ title, value, icon, trend, highlight, href }: { title: string; va
 
   if (href) {
     return (
-      <Link to={href} className="flex items-center justify-between bg-background px-5 py-5 transition-colors hover:bg-muted/50">
+      <Link to={href} className={`flex items-center justify-between px-5 py-5 transition-colors ${baseBg}`}>
         {content}
       </Link>
     )
   }
 
   return (
-    <div className="flex items-center justify-between bg-background px-5 py-5">
+    <div className={`flex items-center justify-between px-5 py-5 ${baseBg}`}>
       {content}
     </div>
   )

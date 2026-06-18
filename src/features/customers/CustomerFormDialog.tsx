@@ -8,6 +8,7 @@ import { Dialog } from '../../components/ui/dialog'
 import { Field, Input, InputGroup, Select, Textarea } from '../../components/ui/input'
 import { customerTypeLabels } from '../../config/constants'
 import { useAuth } from '../../features/auth/AuthContext'
+import { useToastError } from '../../hooks/use-toast-error'
 import { type CustomerFormValues, customerSchema } from '../../schemas/customer.schema'
 import { type CustomerRow, useCreateCustomer, useUpdateCustomer } from '../../services/customers.service'
 import { useProfiles } from '../../services/profiles.service'
@@ -34,6 +35,7 @@ export function CustomerFormDialog({ customer }: { customer?: CustomerRow }) {
   const { data: profiles = [] } = useProfiles()
   const createCustomer = useCreateCustomer()
   const updateCustomer = useUpdateCustomer()
+  const onError = useToastError()
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FullFormValues>({
     resolver: zodResolver(customerSchema) as never,
     defaultValues: customer
@@ -86,9 +88,9 @@ export function CustomerFormDialog({ customer }: { customer?: CustomerRow }) {
     }
 
     if (isEditing && customer) {
-      updateCustomer.mutate({ id: customer.id, ...common }, { onSuccess: () => { reset(); setOpen(false) } })
+      updateCustomer.mutate({ id: customer.id, ...common }, { onSuccess: () => { reset(); setOpen(false) }, onError })
     } else {
-      createCustomer.mutate(common, { onSuccess: (data) => { reset(); setOpen(false); navigate(`/customers/${data.id}`) } })
+      createCustomer.mutate(common, { onSuccess: (data) => { reset(); setOpen(false); navigate(`/customers/${data.id}`) }, onError })
     }
   }
 
