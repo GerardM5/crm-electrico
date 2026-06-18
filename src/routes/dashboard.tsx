@@ -1,7 +1,6 @@
 import { Activity, AlertTriangle, Ban, CalendarClock, CheckCircle2, ClipboardList, FileSignature, FileText, TrendingDown, TrendingUp, Users } from 'lucide-react'
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import logoDarkUrl from '../assets/media/logo-dark.png'
 import logoUrl from '../assets/media/logo.png'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { Button } from '../components/ui/button'
@@ -75,12 +74,7 @@ export function DashboardRoute() {
           <img
             src={logoUrl}
             alt={`Logo de ${appBrand.name}`}
-            className="h-auto w-36 shrink-0 rounded-lg object-contain drop-shadow-md md:w-44 dark:hidden"
-          />
-          <img
-            src={logoDarkUrl}
-            alt={`Logo de ${appBrand.name}`}
-            className="h-auto w-36 shrink-0 rounded-lg object-contain drop-shadow-md md:w-44 hidden dark:block"
+            className="h-auto w-36 shrink-0 rounded-lg object-contain drop-shadow-md md:w-44"
           />
           <div className="min-w-0">
             <h2 className="text-xl font-semibold text-white md:text-2xl">{appBrand.name}</h2>
