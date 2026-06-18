@@ -8,6 +8,7 @@ import { appBrand } from '../config/nav'
 import { getContractRenewalStage, getDaysToContractEnd } from '../lib/customer-workflow'
 import { useContracts } from '../services/contracts.service'
 import { useCustomers } from '../services/customers.service'
+import { useIncidents } from '../services/incidents.service'
 
 const renewalStageStyle: Record<string, { label: string; className: string }> = {
   overdue: { label: 'Vencido', className: 'text-destructive' },
@@ -18,6 +19,7 @@ const renewalStageStyle: Record<string, { label: string; className: string }> = 
 export function DashboardRoute() {
   const { data: customersResult } = useCustomers({ pageSize: 500 })
   const { data: contracts = [] } = useContracts()
+  const { data: openIncidents = [] } = useIncidents()
 
   const customers = customersResult?.data ?? []
 
@@ -25,8 +27,7 @@ export function DashboardRoute() {
     const active = contracts.filter((c) => c.status === 'active').length
     const pendingSignature = contracts.filter((c) => c.status === 'pending_signature').length
     const pendingProcessing = contracts.filter((c) => c.status === 'pending_processing').length
-    const incidents = contracts.filter((c) => c.status === 'incident').length
-    return { total: contracts.length, active, pendingSignature, pendingProcessing, incidents }
+    return { total: contracts.length, active, pendingSignature, pendingProcessing }
   }, [contracts])
 
   const kpis = useMemo(() => {
@@ -100,7 +101,7 @@ export function DashboardRoute() {
         <Kpi title="Contratos activos" value={contractStats.active} icon={<CheckCircle2 />} href="/contracts?status=active" cellBg="bg-violet-50 hover:bg-violet-100/70 dark:bg-violet-950/50 dark:hover:bg-violet-900/50" />
         <Kpi title="Pendientes de firma" value={contractStats.pendingSignature} icon={<FileSignature />} href="/contracts?status=pending_signature" cellBg="bg-violet-50 hover:bg-violet-100/70 dark:bg-violet-950/50 dark:hover:bg-violet-900/50" />
         <Kpi title="Pendientes de tramitar" value={contractStats.pendingProcessing} icon={<ClipboardList />} highlight={contractStats.pendingProcessing > 0 ? 'warning' : undefined} href="/contracts?status=pending_processing" cellBg="bg-violet-50 hover:bg-violet-100/70 dark:bg-violet-950/50 dark:hover:bg-violet-900/50" />
-        <Kpi title="Incidencias" value={contractStats.incidents} icon={<AlertTriangle />} highlight={contractStats.incidents > 0 ? 'danger' : undefined} href="/incidents" cellBg="bg-violet-50 hover:bg-violet-100/70 dark:bg-violet-950/50 dark:hover:bg-violet-900/50" />
+        <Kpi title="Incidencias" value={contractStats.incidents} icon={<AlertTriangle />} highlight={contractStats.incidents > 0 ? 'danger' : undefined} href="/contracts?status=incident" cellBg="bg-violet-50 hover:bg-violet-100/70 dark:bg-violet-950/50 dark:hover:bg-violet-900/50" />
       </section>
 
       {/* Urgent contract renewals */}
