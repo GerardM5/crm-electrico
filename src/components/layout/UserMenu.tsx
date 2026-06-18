@@ -46,15 +46,19 @@ export function UserMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-11 w-full gap-3 rounded-xl px-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-11 w-full gap-3 rounded-xl px-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        >
           <Avatar size="sm">
             <AvatarFallback>{initials(fullName)}</AvatarFallback>
           </Avatar>
           <div className="hidden min-w-0 text-left sm:block">
-            <p className="truncate text-sm font-semibold leading-none text-foreground">{fullName}</p>
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">{organizationName}</p>
+            <p className="truncate text-sm font-semibold leading-none text-sidebar-foreground">{fullName}</p>
+            <p className="mt-0.5 truncate text-xs text-sidebar-foreground/55">{organizationName}</p>
           </div>
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          <ChevronDown className="h-4 w-4 text-sidebar-foreground/50" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
