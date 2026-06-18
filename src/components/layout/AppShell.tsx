@@ -24,7 +24,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     <div className="flex h-full flex-col bg-sidebar border-r border-sidebar-border/60">
       {/* Brand */}
       <Link to="/dashboard" className="flex h-16 shrink-0 items-center px-4 transition-opacity hover:opacity-80">
-        <img src={logo} alt={appBrand.name} className="h-auto max-h-11 w-full rounded-md object-contain" />
+        <img src={logo} alt={appBrand.name} className="h-auto max-h-11 w-full rounded-md object-contain brightness-0 invert" />
       </Link>
 
       <Separator className="mx-4 w-auto bg-sidebar-border/50" />
