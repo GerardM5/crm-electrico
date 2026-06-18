@@ -27,8 +27,7 @@ export type ContractStatus =
 	| "pending_signature"
 	| "active"
 	| "cancelled"
-	| "terminated"
-	| "incident";
+	| "terminated";
 export type InstallationStatus =
 	| "pending"
 	| "scheduled"

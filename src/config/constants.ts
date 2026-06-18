@@ -42,7 +42,6 @@ export const contractStatusLabels = {
 	active: "Activo",
 	cancelled: "Cancelado",
 	terminated: "Baja",
-	incident: "Incidencia",
 };
 
 /** Comercializadoras más comunes en el mercado eléctrico español */
