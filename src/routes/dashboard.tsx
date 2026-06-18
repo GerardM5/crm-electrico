@@ -36,8 +36,9 @@ export function DashboardRoute() {
     const activeContracts = contracts.filter((c) => c.status === 'active' && c.ends_at)
     const urgentCount = activeContracts.filter((c) => ['overdue', 'urgent'].includes(getContractRenewalStage(c))).length
     const thisMonthCount = activeContracts.filter((c) => c.ends_at?.startsWith(thisMonth)).length
-    return { activeCount, urgentCount, thisMonthCount }
-  }, [customersResult, contracts])
+    const incidents = openIncidents.length
+    return { activeCount, urgentCount, thisMonthCount, incidents }
+  }, [customersResult, contracts, openIncidents])
 
   const urgentRenewals = useMemo(
     () =>
@@ -71,7 +72,7 @@ export function DashboardRoute() {
           <img
             src={logoUrl}
             alt={`Logo de ${appBrand.name}`}
-            className="h-auto w-36 shrink-0 rounded-lg object-contain drop-shadow-md md:w-44"
+            className="h-auto w-36 shrink-0 rounded-lg object-contain drop-shadow-md md:w-44 brightness-0 invert"
           />
           <div className="min-w-0">
             <h2 className="text-xl font-semibold text-white md:text-2xl">{appBrand.name}</h2>

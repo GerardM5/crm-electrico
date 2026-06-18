@@ -105,15 +105,15 @@
 	--input: oklch(0.87 0.018 22);
 	--ring: oklch(0.28 0.06 22);
 
-	/* Sidebar — coral claro */
-	--sidebar: oklch(0.82 0.12 22);
-	--sidebar-foreground: oklch(0.15 0.02 22);
-	--sidebar-border: oklch(0.74 0.11 22);
-	--sidebar-primary: oklch(0.15 0.02 22);
-	--sidebar-primary-foreground: oklch(0.82 0.12 22);
-	--sidebar-accent: oklch(0.76 0.13 22);
-	--sidebar-accent-foreground: oklch(0.15 0.02 22);
-	--sidebar-ring: oklch(0.15 0.02 22 / 40%);
+	/* Sidebar — blanco cálido con tinte coral muy sutil */
+	--sidebar: oklch(93.569% 0.03231 24.623);
+	--sidebar-foreground: oklch(0.12 0.02 22);
+	--sidebar-border: oklch(0.88 0.025 22);
+	--sidebar-primary: oklch(0.12 0.02 22);
+	--sidebar-primary-foreground: oklch(0.97 0.012 22);
+	--sidebar-accent: oklch(0.92 0.022 22);
+	--sidebar-accent-foreground: oklch(0.12 0.02 22);
+	--sidebar-ring: oklch(0.12 0.02 22 / 40%);
 
 	/* Charts */
 	--chart-1: oklch(0.65 0.17 22); /* coral    */
@@ -160,15 +160,15 @@
 	--input: oklch(1 0 0 / 15%);
 	--ring: oklch(0.72 0.18 22);
 
-	/* Sidebar — coral claro */
-	--sidebar: oklch(0.82 0.12 22);
-	--sidebar-foreground: oklch(0.15 0.02 22);
-	--sidebar-primary: oklch(0.15 0.02 22);
-	--sidebar-primary-foreground: oklch(0.82 0.12 22);
-	--sidebar-accent: oklch(0.76 0.13 22);
-	--sidebar-accent-foreground: oklch(0.15 0.02 22);
-	--sidebar-border: oklch(0.15 0.02 22 / 15%);
-	--sidebar-ring: oklch(0.15 0.02 22 / 40%);
+	/* Sidebar — oscuro cálido para dark mode */
+	--sidebar: oklch(0.18 0.02 22);
+	--sidebar-foreground: oklch(0.92 0.01 22);
+	--sidebar-primary: oklch(0.92 0.01 22);
+	--sidebar-primary-foreground: oklch(0.18 0.02 22);
+	--sidebar-accent: oklch(0.25 0.025 22);
+	--sidebar-accent-foreground: oklch(0.92 0.01 22);
+	--sidebar-border: oklch(1 0 0 / 10%);
+	--sidebar-ring: oklch(0.92 0.01 22 / 40%);
 
 	/* Charts */
 	--chart-1: oklch(0.72 0.18 22); /* coral    */
