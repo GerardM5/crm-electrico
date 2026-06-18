@@ -95,7 +95,7 @@ export function LoginRoute() {
         aria-hidden
       />
       <div
-        className="absolute inset-x-[-12%] bottom-[-20%] -z-10 h-[48%] rotate-[-3deg] bg-[linear-gradient(90deg,rgba(255,255,255,0.13)_1px,transparent_1px),linear-gradient(0deg,rgba(255,255,255,0.14)_1px,transparent_1px)] bg-[size:76px_56px] opacity-75"
+        className="absolute inset-x-[-12%] bottom-[-20%] -z-10 h-[48%] -rotate-3 bg-[linear-gradient(90deg,rgba(255,255,255,0.13)_1px,transparent_1px),linear-gradient(0deg,rgba(255,255,255,0.14)_1px,transparent_1px)] bg-size-[76px_56px] opacity-75"
         aria-hidden
       />
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(6,35,31,0.08),rgba(6,35,31,0.84))]" aria-hidden />
