@@ -1,6 +1,6 @@
-import { AlertTriangle, Bell, CheckCircle2, Clock, FileText, Mail, MessageSquare, Pencil, Phone, RefreshCw, Trash2, Upload, UserPlus } from 'lucide-react'
-import { type ReactNode, useMemo } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { AlertTriangle, Bell, CheckCircle2, Clock, FileText, Loader2, Mail, MessageSquare, Pencil, Phone, RefreshCw, Trash2, Upload, UserPlus } from 'lucide-react'
+import { type ReactNode, useMemo, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { PageHeader } from '../components/data-table/Toolbar'
 import { DocumentUploadDialog } from '../components/documents/DocumentUploadDialog'
@@ -20,7 +20,7 @@ import { canDownloadPdf, canViewCompanyCommission } from '../lib/permissions'
 import { isPdfDocument } from '../lib/storage'
 import { type ActivityLogWithActor, getActivityLabel, getContactChannel, getContactNotes, useCustomerActivity } from '../services/activity.service'
 import { useContracts, useDeleteContract } from '../services/contracts.service'
-import { useCustomer } from '../services/customers.service'
+import { useCustomer, useDeleteCustomer } from '../services/customers.service'
 import { useDeleteDocument, useDocuments } from '../services/documents.service'
 import { useIncidents, useResolveIncident } from '../services/incidents.service'
 import { useProfiles } from '../services/profiles.service'
@@ -55,8 +55,11 @@ function getActivityIconBg(action: string): string {
 
 export function CustomerDetailRoute() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const { profile: currentUser } = useAuth()
   const showCompanyCommission = canViewCompanyCommission(currentUser?.role ?? 'viewer')
+  const canDeleteCustomer = currentUser?.role === 'owner' || currentUser?.role === 'admin'
+  const [confirmDeleteCustomer, setConfirmDeleteCustomer] = useState(false)
 
   const { data: customer, isLoading } = useCustomer(id)
   const { data: documents = [] } = useDocuments(id)
@@ -65,6 +68,7 @@ export function CustomerDetailRoute() {
   const { data: profiles = [] } = useProfiles()
   const deleteContract = useDeleteContract()
   const deleteDocument = useDeleteDocument()
+  const deleteCustomer = useDeleteCustomer()
   const { data: incidents = [] } = useIncidents(id)
   const resolveIncident = useResolveIncident()
 
@@ -97,6 +101,24 @@ export function CustomerDetailRoute() {
     'Estado',
     '',
   ]
+
+  function handleDeleteCustomer() {
+    if (!customer) return
+
+    deleteCustomer.mutate(customer.id, {
+      onSuccess: ({ storageErrorCount }) => {
+        if (storageErrorCount > 0) {
+          toast.warning('Cliente eliminado. Algunos archivos no se pudieron borrar del almacenamiento.')
+        } else {
+          toast.success('Cliente eliminado')
+        }
+        navigate('/customers', { replace: true })
+      },
+      onError: (error) => {
+        toast.error(error instanceof Error ? error.message : 'No se pudo eliminar el cliente.')
+      },
+    })
+  }
 
   if (isLoading) {
     return <p className="text-sm text-muted-foreground">Cargando...</p>
@@ -424,6 +446,47 @@ export function CustomerDetailRoute() {
           </ol>
         )}
       </section>
+
+      {canDeleteCustomer && (
+        <section className="mt-10 border-t border-border pt-6">
+          {!confirmDeleteCustomer ? (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => setConfirmDeleteCustomer(true)}
+              disabled={deleteCustomer.isPending}
+            >
+              <Trash2 className="h-4 w-4" />
+              Eliminar cliente
+            </Button>
+          ) : (
+            <div className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-destructive">
+                Esta acción borrará el cliente y todos sus datos asociados. No se puede deshacer.
+              </p>
+              <div className="flex shrink-0 items-center gap-2">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={handleDeleteCustomer}
+                  disabled={deleteCustomer.isPending}
+                >
+                  {deleteCustomer.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  Sí, eliminar
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setConfirmDeleteCustomer(false)}
+                  disabled={deleteCustomer.isPending}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
     </div>
   )

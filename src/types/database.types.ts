@@ -953,6 +953,12 @@ export type Database = {
 		};
 		Views: Record<string, never>;
 		Functions: {
+			delete_customer_cascade: {
+				Args: {
+					p_customer_id: string;
+				};
+				Returns: undefined;
+			};
 			get_my_role: {
 				Args: Record<string, never>;
 				Returns: AppRole;

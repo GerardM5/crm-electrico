@@ -5,6 +5,14 @@ import { queryKeys } from "./query-keys";
 
 export type CustomerRow = Tables<"customers">;
 
+type CustomerDocumentForDeletion = Pick<Tables<"documents">, "bucket" | "file_path">;
+type DeleteCustomerRpcClient = {
+	rpc: (
+		fn: "delete_customer_cascade",
+		args: { p_customer_id: string },
+	) => PromiseLike<{ error: { message: string } | null }>;
+};
+
 interface CustomersFilter {
 	search?: string;
 	status?: string;
@@ -118,6 +126,62 @@ export function useUpdateCustomer() {
 		onSuccess: (_d, vars) => {
 			qc.invalidateQueries({ queryKey: queryKeys.customers() });
 			qc.invalidateQueries({ queryKey: queryKeys.customer(vars.id) });
+		},
+	});
+}
+
+async function removeCustomerDocumentFiles(
+	documents: CustomerDocumentForDeletion[],
+): Promise<number> {
+	const filesByBucket = documents.reduce<Record<string, string[]>>((acc, doc) => {
+		if (!doc.bucket || !doc.file_path) return acc;
+		acc[doc.bucket] = acc[doc.bucket] ?? [];
+		acc[doc.bucket].push(doc.file_path);
+		return acc;
+	}, {});
+
+	let failedBuckets = 0;
+	for (const [bucket, paths] of Object.entries(filesByBucket)) {
+		const { error } = await supabase.storage.from(bucket).remove(paths);
+		if (error) {
+			failedBuckets += 1;
+			console.error(`No se pudieron eliminar archivos del bucket ${bucket}`, error);
+		}
+	}
+
+	return failedBuckets;
+}
+
+export function useDeleteCustomer() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async (id: string) => {
+			const { data: documents, error: documentsError } = await supabase
+				.from("documents")
+				.select("bucket,file_path")
+				.eq("customer_id", id);
+			if (documentsError)
+				throw new Error("No se pudieron preparar los documentos del cliente.");
+
+			const { error } = await (
+				supabase as unknown as DeleteCustomerRpcClient
+			).rpc("delete_customer_cascade", { p_customer_id: id });
+			if (error) throw new Error(error.message);
+
+			const storageErrorCount = await removeCustomerDocumentFiles(
+				(documents ?? []) as CustomerDocumentForDeletion[],
+			);
+
+			return { storageErrorCount };
+		},
+		onSuccess: (_data, id) => {
+			qc.removeQueries({ queryKey: queryKeys.customer(id) });
+			qc.invalidateQueries({ queryKey: ["customers"], exact: false });
+			qc.invalidateQueries({ queryKey: ["contracts"], exact: false });
+			qc.invalidateQueries({ queryKey: ["documents"], exact: false });
+			qc.invalidateQueries({ queryKey: ["incidents"], exact: false });
+			qc.invalidateQueries({ queryKey: ["tasks"], exact: false });
+			qc.invalidateQueries({ queryKey: ["activity"], exact: false });
 		},
 	});
 }
