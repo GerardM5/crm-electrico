@@ -190,20 +190,20 @@ export function ContractsRoute() {
                   e.stopPropagation()
                   navigate(`/customers/${contract.customer_id}`)
                 }}
-                className="group max-w-48"
+                className="group max-w-48 align-middle"
               >
-                <p className="truncate font-medium text-foreground group-hover:underline">{contract.customer?.name ?? '-'}</p>
-                <p className="truncate text-xs text-muted-foreground">{contract.customer?.company ?? ''}</p>
+                <p className="truncate text-sm font-medium text-foreground group-hover:underline">{contract.customer?.name ?? '-'}</p>
+                <p className="mt-0.5 truncate text-sm text-muted-foreground">{contract.customer?.company ?? ''}</p>
               </Td>
               <Td className="whitespace-nowrap">
                 <StatusBadge value={contractStatusLabels[contract.status as keyof typeof contractStatusLabels] ?? contract.status} />
               </Td>
-              <Td className="max-w-48">
-                <p className="truncate text-sm text-foreground">{contract.product ?? '-'}</p>
-                <p className="truncate text-xs text-muted-foreground">{contract.provider ?? ''}</p>
+              <Td className="max-w-48 align-middle">
+                <p className="truncate text-sm font-medium text-foreground">{contract.product ?? '-'}</p>
+                <p className="mt-0.5 truncate text-sm text-muted-foreground">{contract.provider ?? ''}</p>
               </Td>
               <Td variant="muted" className="max-w-40 truncate">{contract.sales_channel ?? '-'}</Td>
-              <Td variant="muted" className="whitespace-nowrap font-mono text-xs">{contract.cups ?? '-'}</Td>
+              <Td variant="muted" className="whitespace-nowrap text-sm">{contract.cups ?? '-'}</Td>
               <Td variant="muted" className="whitespace-nowrap">{formatDate(contract.starts_at ?? undefined)}</Td>
               <Td variant="muted" className="whitespace-nowrap">{formatDate(contract.ends_at ?? undefined)}</Td>
               {showCompanyCommission && (
