@@ -16,7 +16,7 @@ import { IncidentFormDialog } from '../features/incidents/IncidentFormDialog'
 import { usePagination } from '../hooks/use-pagination'
 import { getDaysToContractEnd } from '../lib/customer-workflow'
 import { formatDate, formatDateTime, relativeTime } from '../lib/formatters'
-import { canDownloadPdf } from '../lib/permissions'
+import { canDownloadPdf, canViewCompanyCommission } from '../lib/permissions'
 import { isPdfDocument } from '../lib/storage'
 import { type ActivityLogWithActor, getActivityLabel, getContactChannel, getContactNotes, useCustomerActivity } from '../services/activity.service'
 import { useContracts, useDeleteContract } from '../services/contracts.service'
@@ -56,10 +56,11 @@ function getActivityIconBg(action: string): string {
 export function CustomerDetailRoute() {
   const { id } = useParams()
   const { profile: currentUser } = useAuth()
+  const showCompanyCommission = canViewCompanyCommission(currentUser?.role ?? 'viewer')
 
   const { data: customer, isLoading } = useCustomer(id)
   const { data: documents = [] } = useDocuments(id)
-  const { data: contracts = [] } = useContracts(id)
+  const { data: contracts = [] } = useContracts({ customerId: id, includeCompanyCommission: showCompanyCommission })
   const { data: activityLogs = [], isLoading: activityLoading } = useCustomerActivity(id ?? '')
   const { data: profiles = [] } = useProfiles()
   const deleteContract = useDeleteContract()
