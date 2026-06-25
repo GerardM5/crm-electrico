@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:backup": "supabase db dump --linked -f db-backup-schema.sql && supabase db dump --linked --data-only -f db-backup-data.sql"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",

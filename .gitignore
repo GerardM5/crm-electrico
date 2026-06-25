@@ -17,6 +17,11 @@ dist-ssr
 .env.*
 !.env.example
 
+# Database backups — never commit (repo publico + datos de clientes)
+backups/
+*.sql.gpg
+db-backup-*.sql
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
