@@ -864,7 +864,7 @@ export function SettingsRoute() {
   )
 
   return (
-    <div>
+    <div className="h-full overflow-y-auto">
       <PageHeader
         title="Ajustes"
         description="Personaliza la aplicación, gestiona tu empresa y exporta datos."

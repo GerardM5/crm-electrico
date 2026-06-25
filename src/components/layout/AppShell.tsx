@@ -111,7 +111,7 @@ export function AppShell() {
   }, [])
 
   return (
-    <div className="min-h-dvh bg-background">
+    <div className="h-dvh overflow-hidden bg-background">
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 lg:block">
         <SidebarContent />
@@ -130,8 +130,8 @@ export function AppShell() {
         </DialogPortal>
       </DialogRoot>
 
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border/60 bg-background/90 px-4 backdrop-blur-md">
+      <div className="flex h-dvh flex-col lg:pl-64">
+        <header className="z-20 flex h-14 shrink-0 items-center gap-3 border-b border-border/60 bg-background/90 px-4 backdrop-blur-md">
           {/* Left — mobile menu + page title */}
           <div className="flex min-w-0 items-center gap-2">
             <Button variant="ghost" size="icon" className="lg:hidden shrink-0" onClick={() => setDrawerOpen(true)} aria-label="Abrir menu">
@@ -172,7 +172,7 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-screen-2xl p-4 md:p-6">
+        <main className="mx-auto w-full min-h-0 max-w-screen-2xl flex-1 flex flex-col overflow-hidden p-4 md:p-6">
           <ErrorBoundary level="page">
             <Suspense fallback={<PageSkeleton />}>
               <Outlet />

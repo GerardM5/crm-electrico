@@ -117,7 +117,7 @@ export function CustomersRoute() {
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
   return (
-    <div>
+    <div className="flex flex-col h-full">
       <PageHeader
         title="Clientes"
         description="Base centralizada de clientes con contrato, renovacion, estado, comercial y servicios contratados."
@@ -172,6 +172,8 @@ export function CustomersRoute() {
         />
       ) : (
         <DataTable
+          fillHeight
+          className="flex-1 min-h-0"
           headers={['Cliente', 'Estado', 'Contrato', 'Renovacion', 'Servicios', 'Comercial']}
           pagination={{ page, pageSize: PAGE_SIZE, total, totalPages, onPageChange: setPage }}
         >

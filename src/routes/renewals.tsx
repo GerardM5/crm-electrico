@@ -78,7 +78,7 @@ export function RenewalsRoute() {
   const pagination = usePagination(renewalQueue, 25)
 
   return (
-    <div>
+    <div className="flex flex-col h-full">
       <PageHeader
         title="Renovaciones"
         description="Contratos activos con vencimiento en los próximos 60 días."
@@ -113,6 +113,8 @@ export function RenewalsRoute() {
         />
       ) : (
         <DataTable
+          fillHeight
+          className="flex-1 min-h-0"
           headers={['Cliente', 'Comercializadora', 'Canal de venta', 'CUPS', 'Vencimiento', 'Días', 'Último contacto', 'Estado contrato', 'Acciones']}
           pagination={{ page: pagination.page, pageSize: pagination.pageSize, total: pagination.total, totalPages: pagination.totalPages, onPageChange: pagination.setPage }}
         >

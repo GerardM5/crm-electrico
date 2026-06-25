@@ -47,7 +47,7 @@ export function DashboardRoute() {
 
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 h-full overflow-y-auto">
       {/* ── Hero banner ── */}
       <div className="relative overflow-hidden rounded-2xl bg-[#5c1a17] px-6 py-8 shadow-xl md:px-10 md:py-10">
         {/* Background gradients */}

@@ -60,7 +60,7 @@ export function IncidentsRoute() {
   }
 
   return (
-    <div>
+    <div className="flex flex-col h-full">
       <PageHeader
         title="Incidencias"
         description="Incidencias de clientes. Filtra por estado, prioridad o busca por título."
@@ -104,6 +104,8 @@ export function IncidentsRoute() {
         />
       ) : (
         <DataTable
+          fillHeight
+          className="flex-1 min-h-0"
           headers={['Cliente', 'Tipo / Título', 'Prioridad', 'Estado', 'Creada', { label: 'Acciones', align: 'right' }]}
           pagination={{ page, pageSize: PAGE_SIZE, total, totalPages, onPageChange: setPage }}
         >

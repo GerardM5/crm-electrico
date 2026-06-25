@@ -92,7 +92,7 @@ export function DocumentsRoute() {
   }
 
   return (
-    <div>
+    <div className="h-full overflow-y-auto">
       <PageHeader title="Documentos" description="Contratos, DNI y archivos varios asociados a cada cliente." />
       <div className="grid gap-4 xl:grid-cols-[420px_1fr]">
         <Card>

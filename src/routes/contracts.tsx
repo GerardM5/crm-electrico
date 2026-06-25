@@ -127,7 +127,7 @@ export function ContractsRoute() {
   ]
 
   return (
-    <div>
+    <div className="flex flex-col h-full">
       <PageHeader
         title="Contratos"
         description="Listado global de todos los contratos. Busca por CUPS, comercializadora, canal de venta o producto."
@@ -174,6 +174,8 @@ export function ContractsRoute() {
         />
       ) : (
         <DataTable
+          fillHeight
+          className="flex-1 min-h-0"
           headers={headers}
           pagination={{ page, pageSize: PAGE_SIZE, total, totalPages, onPageChange: setPage }}
         >

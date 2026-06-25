@@ -99,7 +99,7 @@ export function AgendaRoute() {
   }
 
   return (
-    <div>
+    <div className="h-full overflow-y-auto">
       <PageHeader
         title="Agenda"
         description="Reuniones, renovaciones y contactos programados."

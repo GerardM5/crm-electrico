@@ -136,7 +136,7 @@ export function CustomerDetailRoute() {
   }
 
   return (
-    <div>
+    <div className="h-full overflow-y-auto">
       <PageHeader
         title={customer.name}
         description={

@@ -1,15 +1,15 @@
-import { ChevronLeft, ChevronRight, FileX2 } from 'lucide-react'
-import type { ComponentProps, ReactNode } from 'react'
-import { cn } from '../../lib/utils'
+import { ChevronLeft, ChevronRight, FileX2 } from "lucide-react";
+import type { ComponentProps, ReactNode } from "react";
+import { cn } from "../../lib/utils";
 
 // ── Pagination ────────────────────────────────────────────────────────────────
 
 export interface TablePaginationProps {
-  page: number
-  pageSize: number
-  total: number
-  totalPages: number
-  onPageChange: (page: number) => void
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 function TablePagination({
@@ -19,13 +19,13 @@ function TablePagination({
   totalPages,
   onPageChange,
 }: TablePaginationProps) {
-  const from = total === 0 ? 0 : (page - 1) * pageSize + 1
-  const to = Math.min(page * pageSize, total)
+  const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const to = Math.min(page * pageSize, total);
 
   return (
     <div className="flex items-center justify-between border-t border-border px-4 py-3 text-sm text-muted-foreground">
       <span>
-        {total === 0 ? 'Sin resultados' : `${from}–${to} de ${total}`}
+        {total === 0 ? "Sin resultados" : `${from}–${to} de ${total}`}
       </span>
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1">
@@ -38,7 +38,9 @@ function TablePagination({
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="tabular-nums">{page} / {totalPages}</span>
+          <span className="tabular-nums">
+            {page} / {totalPages}
+          </span>
           <button
             type="button"
             disabled={page >= totalPages}
@@ -51,73 +53,114 @@ function TablePagination({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 // ── Primitives ────────────────────────────────────────────────────────────────
 
-export function Tr({ className, hover = false, ref, ...props }: ComponentProps<'tr'> & { hover?: boolean }) {
+export function Tr({
+  className,
+  hover = false,
+  ref,
+  ...props
+}: ComponentProps<"tr"> & { hover?: boolean }) {
   return (
     <tr
       ref={ref}
-      className={cn(hover && 'cursor-default transition-colors hover:bg-accent/60', className)}
+      className={cn(
+        hover && "cursor-default transition-colors hover:bg-accent/60",
+        className,
+      )}
       {...props}
     />
-  )
+  );
 }
 
-export type TdVariant = 'default' | 'primary' | 'muted' | 'mono'
+export type TdVariant = "default" | "primary" | "muted" | "mono";
 
-export function Td({ className, variant = 'default', align = 'left', ref, ...props }: ComponentProps<'td'> & { variant?: TdVariant; align?: 'left' | 'right' | 'center' }) {
+export function Td({
+  className,
+  variant = "default",
+  align = "left",
+  ref,
+  ...props
+}: ComponentProps<"td"> & {
+  variant?: TdVariant;
+  align?: "left" | "right" | "center";
+}) {
   return (
     <td
       ref={ref}
       className={cn(
-        'px-4 py-3',
-        variant === 'primary' && 'font-medium text-foreground',
-        variant === 'muted' && 'text-muted-foreground',
-        variant === 'mono' && 'font-mono text-xs text-muted-foreground',
-        align === 'right' && 'text-right',
-        align === 'center' && 'text-center',
+        "px-4 py-3",
+        variant === "primary" && "font-medium text-foreground",
+        variant === "muted" && "text-muted-foreground",
+        variant === "mono" && "font-mono text-xs text-muted-foreground",
+        align === "right" && "text-right",
+        align === "center" && "text-center",
         className,
       )}
       {...props}
     />
-  )
+  );
 }
 
-export function Th({ className, align = 'left', ref, ...props }: ComponentProps<'th'> & { align?: 'left' | 'right' | 'center' }) {
+export function Th({
+  className,
+  align = "left",
+  ref,
+  ...props
+}: ComponentProps<"th"> & { align?: "left" | "right" | "center" }) {
   return (
     <th
       ref={ref}
       className={cn(
-        'px-4 py-3 font-semibold',
-        align === 'right' && 'text-right',
-        align === 'center' && 'text-center',
+        "px-4 py-3 font-semibold",
+        align === "right" && "text-right",
+        align === "center" && "text-center",
         className,
       )}
       {...props}
     />
-  )
+  );
 }
 
-export function TableHead({ className, ref, ...props }: ComponentProps<'thead'>) {
+export function TableHead({
+  className,
+  ref,
+  ...props
+}: ComponentProps<"thead">) {
   return (
     <thead
       ref={ref}
-      className={cn('bg-muted text-xs uppercase tracking-wide text-muted-foreground', className)}
+      className={cn(
+        "bg-muted text-xs uppercase tracking-wide text-muted-foreground",
+        className,
+      )}
       {...props}
     />
-  )
+  );
 }
 
-export function TableBody({ className, ref, ...props }: ComponentProps<'tbody'>) {
-  return <tbody ref={ref} className={cn('divide-y divide-border', className)} {...props} />
+export function TableBody({
+  className,
+  ref,
+  ...props
+}: ComponentProps<"tbody">) {
+  return (
+    <tbody
+      ref={ref}
+      className={cn("divide-y divide-border", className)}
+      {...props}
+    />
+  );
 }
 
 // ── ColDef — string (backward compat) or rich object ─────────────────────────
 
-export type ColDef = string | { label: string; align?: 'left' | 'right' | 'center'; width?: string }
+export type ColDef =
+  | string
+  | { label: string; align?: "left" | "right" | "center"; width?: string };
 
 // ── DataTable compound ────────────────────────────────────────────────────────
 
@@ -126,36 +169,64 @@ export function DataTable({
   children,
   className,
   pagination,
+  fillHeight = false,
 }: {
-  headers: ColDef[]
-  children: ReactNode
-  className?: string
-  pagination?: TablePaginationProps
+  headers: ColDef[];
+  children: ReactNode;
+  className?: string;
+  pagination?: TablePaginationProps;
+  /**
+   * When true, the table fills its parent's bounded height (parent must supply
+   * flex-1 min-h-0 or equivalent). The body scrolls internally; pagination stays
+   * fixed at the bottom. Use on full-height list pages.
+   *
+   * When false (default), the table grows to its natural content height and the
+   * page scrolls.
+   */
+  fillHeight?: boolean;
 }) {
   return (
-    <div className={cn('overflow-hidden rounded-lg border border-border bg-card', className)}>
-      <div className="overflow-x-auto">
+    <div
+      className={cn(
+        "flex flex-col overflow-hidden rounded-lg border border-border bg-card",
+        className,
+      )}
+    >
+      <div className={fillHeight ? "flex-1 min-h-0 overflow-auto" : "overflow-x-auto"}>
         <table className="w-full min-w-190 border-collapse text-left text-sm">
-          <TableHead>
+          <TableHead className="sticky top-0 z-10">
             <tr>
               {headers.map((header) => {
-                const label = typeof header === 'string' ? header : header.label
-                const align = typeof header === 'string' ? 'left' : (header.align ?? 'left')
-                const width = typeof header === 'string' ? undefined : header.width
+                const label =
+                  typeof header === "string" ? header : header.label;
+                const align =
+                  typeof header === "string"
+                    ? "left"
+                    : (header.align ?? "left");
+                const width =
+                  typeof header === "string" ? undefined : header.width;
                 return (
-                  <Th key={label} align={align} style={width ? { width } : undefined}>
+                  <Th
+                    key={label}
+                    align={align}
+                    style={width ? { width } : undefined}
+                  >
                     {label}
                   </Th>
-                )
+                );
               })}
             </tr>
           </TableHead>
           <TableBody>{children}</TableBody>
         </table>
       </div>
-      {pagination && <TablePagination {...pagination} />}
+      {pagination && (
+        <div className="shrink-0">
+          <TablePagination {...pagination} />
+        </div>
+      )}
     </div>
-  )
+  );
 }
 
 export function EmptyState({
@@ -164,10 +235,10 @@ export function EmptyState({
   action,
   icon,
 }: {
-  title: string
-  description: string
-  action?: ReactNode
-  icon?: ReactNode
+  title: string;
+  description: string;
+  action?: ReactNode;
+  icon?: ReactNode;
 }) {
   return (
     <div className="grid place-items-center rounded-lg border border-dashed border-border bg-card p-8 text-center">
@@ -180,7 +251,7 @@ export function EmptyState({
         {action ? <div className="mt-4">{action}</div> : null}
       </div>
     </div>
-  )
+  );
 }
 
 /**
@@ -192,26 +263,30 @@ export function EmptyState({
  */
 export function TruncatePath({
   path,
-  separator = '/',
+  separator = "/",
   className,
 }: {
-  path: string
-  separator?: string
-  className?: string
+  path: string;
+  separator?: string;
+  className?: string;
 }) {
-  const lastIndex = path.lastIndexOf(separator)
+  const lastIndex = path.lastIndexOf(separator);
 
   if (lastIndex === -1) {
-    return <span className={cn('truncate font-mono text-xs', className)}>{path}</span>
+    return (
+      <span className={cn("truncate font-mono text-xs", className)}>
+        {path}
+      </span>
+    );
   }
 
-  const prefix = path.slice(0, lastIndex + 1)
-  const suffix = path.slice(lastIndex + 1)
+  const prefix = path.slice(0, lastIndex + 1);
+  const suffix = path.slice(lastIndex + 1);
 
   return (
-    <span className={cn('flex min-w-0 font-mono text-xs', className)}>
+    <span className={cn("flex min-w-0 font-mono text-xs", className)}>
       <span className="min-w-0 truncate opacity-50">{prefix}</span>
       <span className="shrink-0">{suffix}</span>
     </span>
-  )
+  );
 }
