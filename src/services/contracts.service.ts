@@ -83,6 +83,9 @@ function invalidateContractCustomerQueries(
 	qc.invalidateQueries({ queryKey: ["contracts"], exact: false });
 	qc.invalidateQueries({ queryKey: ["customers"], exact: false });
 	qc.invalidateQueries({ queryKey: ["customer"], exact: false });
+	// stats query uses staleTime:0 but explicit invalidation ensures
+	// dashboard refreshes immediately after any mutation in the same session
+	qc.invalidateQueries({ queryKey: ["contracts", "stats"], exact: true });
 }
 
 export function useContracts(
@@ -107,6 +110,44 @@ export function useContracts(
 			const { data, error } = await q;
 			if (error) throw error;
 			return data as unknown as ContractRow[];
+		},
+	});
+}
+
+export interface ContractStats {
+	total: number;
+	active: number;
+	pendingSignature: number;
+	pendingProcessing: number;
+	cancelled: number;
+	terminated: number;
+}
+
+/**
+ * Fetches contract counts per status directly from the server.
+ * Uses staleTime: 0 to always reflect real DB state on mount.
+ */
+export function useContractStats() {
+	return useQuery<ContractStats>({
+		queryKey: ["contracts", "stats"],
+		staleTime: 0,
+		queryFn: async () => {
+			const { data, error, count } = await supabase
+				.from("contracts")
+				.select("status", { count: "exact" })
+				.limit(10000);
+			if (error) throw error;
+			const rows = (data ?? []) as { status: ContractStatus }[];
+			return {
+				total: count ?? rows.length,
+				active: rows.filter((r) => r.status === "active").length,
+				pendingSignature: rows.filter((r) => r.status === "pending_signature")
+					.length,
+				pendingProcessing: rows.filter((r) => r.status === "pending_processing")
+					.length,
+				cancelled: rows.filter((r) => r.status === "cancelled").length,
+				terminated: rows.filter((r) => r.status === "terminated").length,
+			};
 		},
 	});
 }

@@ -413,7 +413,7 @@ function TeamTab() {
       <CardContent>
         <DataTable
           headers={['Miembro', 'Rol', 'Acceso', 'Clientes', 'Gestión', '']}
-          pagination={{ page: pagination.page, pageSize: pagination.pageSize, total: pagination.total, totalPages: pagination.totalPages, onPageChange: pagination.setPage, onPageSizeChange: pagination.setPageSize }}
+          pagination={{ page: pagination.page, pageSize: pagination.pageSize, total: pagination.total, totalPages: pagination.totalPages, onPageChange: pagination.setPage }}
         >
           {pagination.items.map((profile) => {
             const assigned = customers.filter((c) => c.assigned_to === profile.id).length

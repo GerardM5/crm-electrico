@@ -6,7 +6,7 @@ import { PageHeader } from '../components/data-table/Toolbar'
 import { Button } from '../components/ui/button'
 import { appBrand } from '../config/nav'
 import { getContractRenewalStage, getDaysToContractEnd } from '../lib/customer-workflow'
-import { useContracts } from '../services/contracts.service'
+import { useContractStats, useContracts } from '../services/contracts.service'
 import { useCustomers } from '../services/customers.service'
 import { useIncidents } from '../services/incidents.service'
 
@@ -20,15 +20,7 @@ export function DashboardRoute() {
   const { data: customersResult } = useCustomers({ pageSize: 500 })
   const { data: contracts = [] } = useContracts()
   const { data: openIncidents = [] } = useIncidents()
-
-  const contractStats = useMemo(() => {
-    const active = contracts.filter((c) => c.status === 'active').length
-    const pendingSignature = contracts.filter((c) => c.status === 'pending_signature').length
-    const pendingProcessing = contracts.filter((c) => c.status === 'pending_processing').length
-    const cancelled = contracts.filter((c) => c.status === 'cancelled').length
-    const terminated = contracts.filter((c) => c.status === 'terminated').length
-    return { total: contracts.length, active, pendingSignature, pendingProcessing, cancelled, terminated }
-  }, [contracts])
+  const { data: contractStats = { total: 0, active: 0, pendingSignature: 0, pendingProcessing: 0, cancelled: 0, terminated: 0 } } = useContractStats()
 
   const kpis = useMemo(() => {
     const customers = customersResult?.data ?? []

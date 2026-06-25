@@ -105,7 +105,7 @@ export function IncidentsRoute() {
       ) : (
         <DataTable
           headers={['Cliente', 'Tipo / Título', 'Prioridad', 'Estado', 'Creada', { label: 'Acciones', align: 'right' }]}
-          pagination={{ page, pageSize: PAGE_SIZE, total, totalPages, onPageChange: setPage, onPageSizeChange: () => { } }}
+          pagination={{ page, pageSize: PAGE_SIZE, total, totalPages, onPageChange: setPage }}
         >
           {incidents.map((incident) => (
             <Tr key={incident.id} hover>

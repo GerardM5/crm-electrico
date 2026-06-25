@@ -175,7 +175,7 @@ export function ContractsRoute() {
       ) : (
         <DataTable
           headers={headers}
-          pagination={{ page, pageSize: PAGE_SIZE, total, totalPages, onPageChange: setPage, onPageSizeChange: () => { } }}
+          pagination={{ page, pageSize: PAGE_SIZE, total, totalPages, onPageChange: setPage }}
         >
           {contracts.map((contract) => (
             <Tr

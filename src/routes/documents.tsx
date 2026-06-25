@@ -154,7 +154,7 @@ export function DocumentsRoute() {
           ) : (
             <DataTable
               headers={['Archivo', 'Cliente', 'Tipo', 'Fecha', 'Ruta', { label: 'Acciones', align: 'right' }]}
-              pagination={{ page, pageSize: PAGE_SIZE, total, totalPages, onPageChange: setPage, onPageSizeChange: () => { } }}
+              pagination={{ page, pageSize: PAGE_SIZE, total, totalPages, onPageChange: setPage }}
             >
               {documents.map((document: DocumentRow) => (
                 <Tr key={document.id} hover>

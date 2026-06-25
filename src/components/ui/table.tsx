@@ -10,8 +10,6 @@ export interface TablePaginationProps {
   total: number
   totalPages: number
   onPageChange: (page: number) => void
-  onPageSizeChange: (size: number) => void
-  pageSizeOptions?: number[]
 }
 
 function TablePagination({
@@ -20,8 +18,6 @@ function TablePagination({
   total,
   totalPages,
   onPageChange,
-  onPageSizeChange,
-  pageSizeOptions = [25, 50, 100],
 }: TablePaginationProps) {
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1
   const to = Math.min(page * pageSize, total)
@@ -32,18 +28,6 @@ function TablePagination({
         {total === 0 ? 'Sin resultados' : `${from}–${to} de ${total}`}
       </span>
       <div className="flex items-center gap-3">
-        <label className="flex items-center gap-1.5">
-          Filas
-          <select
-            value={pageSize}
-            onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="rounded border border-border bg-background px-1 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-          >
-            {pageSizeOptions.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </label>
         <div className="flex items-center gap-1">
           <button
             type="button"

@@ -231,7 +231,7 @@ export function CustomerDetailRoute() {
         ) : (
           <DataTable
             headers={contractTableHeaders}
-            pagination={{ page: contractsPagination.page, pageSize: contractsPagination.pageSize, total: contractsPagination.total, totalPages: contractsPagination.totalPages, onPageChange: contractsPagination.setPage, onPageSizeChange: contractsPagination.setPageSize }}
+            pagination={{ page: contractsPagination.page, pageSize: contractsPagination.pageSize, total: contractsPagination.total, totalPages: contractsPagination.totalPages, onPageChange: contractsPagination.setPage }}
           >
             {contractsPagination.items.map((contract) => (
               <Tr key={contract.id} hover>
@@ -286,7 +286,7 @@ export function CustomerDetailRoute() {
         </div>
         <DataTable
           headers={['Archivo', 'Tipo', 'Fecha', 'Ruta', { label: 'Acciones', align: 'right' }]}
-          pagination={{ page: documentsPagination.page, pageSize: documentsPagination.pageSize, total: documentsPagination.total, totalPages: documentsPagination.totalPages, onPageChange: documentsPagination.setPage, onPageSizeChange: documentsPagination.setPageSize }}
+          pagination={{ page: documentsPagination.page, pageSize: documentsPagination.pageSize, total: documentsPagination.total, totalPages: documentsPagination.totalPages, onPageChange: documentsPagination.setPage }}
         >
           {documentsPagination.items.map((document) => (
             <Tr key={document.id} hover>
@@ -339,7 +339,7 @@ export function CustomerDetailRoute() {
         ) : (
           <DataTable
             headers={['Tipo / Título', 'Prioridad', 'Estado', 'Creada', { label: 'Acciones', align: 'right' }]}
-            pagination={{ page: incidentsPagination.page, pageSize: incidentsPagination.pageSize, total: incidentsPagination.total, totalPages: incidentsPagination.totalPages, onPageChange: incidentsPagination.setPage, onPageSizeChange: incidentsPagination.setPageSize }}
+            pagination={{ page: incidentsPagination.page, pageSize: incidentsPagination.pageSize, total: incidentsPagination.total, totalPages: incidentsPagination.totalPages, onPageChange: incidentsPagination.setPage }}
           >
             {incidentsPagination.items.map((incident) => (
               <Tr key={incident.id} hover>
