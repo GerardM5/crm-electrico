@@ -1,4 +1,4 @@
-import { AlertTriangle, ExternalLink, Eye, FileText, ImageIcon } from 'lucide-react'
+import { AlertTriangle, Download, ExternalLink, Eye, FileText, ImageIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { getStorageSignedUrl, isImageDocument, isPdfDocument } from '../../lib/storage'
 import { cn } from '../../lib/utils'
@@ -117,6 +117,14 @@ export function FileViewerDialog({
 
         {canDownload && url ? (
           <div className="flex flex-wrap justify-end gap-3">
+            {isImage && (
+              <Button asChild variant="secondary">
+                <a href={url} download={source.file_name}>
+                  <Download className="h-4 w-4" />
+                  Descargar
+                </a>
+              </Button>
+            )}
             <Button asChild variant="secondary">
               <a href={url} target="_blank" rel="noreferrer">
                 <ExternalLink className="h-4 w-4" />
