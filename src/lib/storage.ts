@@ -57,6 +57,14 @@ export function isPdfDocument(fileName?: string, mimeType?: string) {
 	);
 }
 
+export function isImageDocument(fileName?: string, mimeType?: string) {
+	return (
+		mimeType?.startsWith("image/") ||
+		/\.(png|jpe?g|gif|webp|avif|bmp|svg)$/i.test(fileName ?? "") ||
+		false
+	);
+}
+
 export function getStoragePublicUrl(bucket: string, filePath: string) {
 	if (/^https?:\/\//i.test(filePath)) {
 		return filePath;

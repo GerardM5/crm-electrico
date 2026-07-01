@@ -3,7 +3,7 @@ import { useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { PageHeader } from '../components/data-table/Toolbar'
-import { PdfViewerDialog } from '../components/documents/PdfViewerDialog'
+import { FileViewerDialog } from '../components/documents/FileViewerDialog'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Field, Input, Select } from '../components/ui/input'
@@ -13,7 +13,7 @@ import { useDebounce } from '../hooks/use-debounce'
 import { useToastError } from '../hooks/use-toast-error'
 import { formatDate } from '../lib/formatters'
 import { canDownloadPdf } from '../lib/permissions'
-import { isPdfDocument } from '../lib/storage'
+import { isImageDocument, isPdfDocument } from '../lib/storage'
 import { useCustomers } from '../services/customers.service'
 import { type UploadStep, useAllDocuments, useDeleteDocument, useUploadDocument } from '../services/documents.service'
 import type { DocumentRow } from '../services/documents.service'
@@ -165,15 +165,16 @@ export function DocumentsRoute() {
                   <Td className="max-w-48"><TruncatePath path={document.file_path} /></Td>
                   <Td>
                     <div className="flex items-center justify-end gap-1">
-                      {isPdfDocument(document.file_name, document.mime_type ?? undefined) ? (
-                        <PdfViewerDialog
+                      {isPdfDocument(document.file_name, document.mime_type ?? undefined) ||
+                        isImageDocument(document.file_name, document.mime_type ?? undefined) ? (
+                        <FileViewerDialog
                           source={{ bucket: document.bucket, file_path: document.file_path, file_name: document.file_name, mime_type: document.mime_type ?? undefined }}
                           title={document.file_name}
                           description={`Documento asociado a ${customerById[document.customer_id ?? ''] ?? '-'}`}
                           canDownload={canDownloadPdf(currentUser?.role ?? 'viewer')}
                         />
                       ) : (
-                        <span className="text-xs text-muted-foreground">No PDF</span>
+                        <span className="text-xs text-muted-foreground">Sin vista previa</span>
                       )}
                       <Button
                         variant="ghost"

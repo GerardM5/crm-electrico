@@ -1,19 +1,19 @@
-import { AlertTriangle, Copy, ExternalLink, Eye, FileText } from 'lucide-react'
+import { AlertTriangle, Copy, ExternalLink, Eye, FileText, ImageIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { getStorageSignedUrl, isPdfDocument } from '../../lib/storage'
+import { getStorageSignedUrl, isImageDocument, isPdfDocument } from '../../lib/storage'
 import { cn } from '../../lib/utils'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { Dialog } from '../ui/dialog'
 
-type PdfSource = {
+type FileSource = {
   bucket: string
   file_path: string
   file_name: string
   mime_type?: string
 }
 
-export function PdfViewerDialog({
+export function FileViewerDialog({
   source,
   title,
   description,
@@ -21,7 +21,7 @@ export function PdfViewerDialog({
   buttonClassName,
   canDownload = true,
 }: {
-  source: PdfSource
+  source: FileSource
   title?: string
   description?: string
   buttonLabel?: string
@@ -32,7 +32,10 @@ export function PdfViewerDialog({
   const [copied, setCopied] = useState(false)
   const [url, setUrl] = useState<string | null>(null)
   const [urlError, setUrlError] = useState(false)
-  const canPreview = isPdfDocument(source.file_name, source.mime_type)
+
+  const isPdf = isPdfDocument(source.file_name, source.mime_type)
+  const isImage = isImageDocument(source.file_name, source.mime_type)
+  const canPreview = isPdf || isImage
 
   useEffect(() => {
     if (!open || !canPreview) return
@@ -57,6 +60,8 @@ export function PdfViewerDialog({
     window.setTimeout(() => setCopied(false), 1500)
   }
 
+  const previewBadge = isPdf ? 'Vista PDF lista' : isImage ? 'Vista imagen lista' : 'Sin vista previa'
+
   return (
     <Dialog
       open={open}
@@ -75,22 +80,32 @@ export function PdfViewerDialog({
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 p-3">
           <div className="flex min-w-0 items-center gap-3">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
-              <FileText className="h-5 w-5" />
+              {isImage ? <ImageIcon className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
             </div>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-foreground">{source.file_name}</p>
               <p className="truncate text-xs text-muted-foreground">{source.file_path}</p>
             </div>
           </div>
-          <Badge variant={canPreview ? 'emerald' : 'amber'}>{canPreview ? 'Vista PDF lista' : 'Sin vista previa'}</Badge>
+          <Badge variant={canPreview ? 'emerald' : 'amber'}>{previewBadge}</Badge>
         </div>
 
         {canPreview && url ? (
-          <iframe
-            title={source.file_name}
-            src={canDownload ? url : `${url}#toolbar=0&navpanes=0`}
-            className="h-[70dvh] w-full rounded-lg border border-border bg-background"
-          />
+          isPdf ? (
+            <iframe
+              title={source.file_name}
+              src={canDownload ? url : `${url}#toolbar=0&navpanes=0`}
+              className="h-[70dvh] w-full rounded-lg border border-border bg-background"
+            />
+          ) : (
+            <div className="grid max-h-[70dvh] place-items-center overflow-auto rounded-lg border border-border bg-background p-2">
+              <img
+                src={url}
+                alt={source.file_name}
+                className="max-h-[68dvh] w-auto object-contain"
+              />
+            </div>
+          )
         ) : canPreview && !urlError ? (
           <div className="grid place-items-center rounded-lg border border-dashed border-border bg-muted/30 p-10 text-center">
             <p className="text-sm text-muted-foreground">Cargando vista previa…</p>
@@ -99,7 +114,7 @@ export function PdfViewerDialog({
           <div className="grid place-items-center rounded-lg border border-dashed border-border bg-muted/30 p-10 text-center">
             <div className="max-w-md">
               <AlertTriangle className="mx-auto h-10 w-10 text-amber-500" />
-              <h3 className="mt-3 text-base font-semibold text-foreground">No se puede mostrar el PDF</h3>
+              <h3 className="mt-3 text-base font-semibold text-foreground">No se puede mostrar el archivo</h3>
               <p className="mt-2 text-sm text-muted-foreground">
                 No se pudo generar la URL firmada para este archivo.
               </p>
